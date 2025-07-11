@@ -17,7 +17,6 @@ export const useWorkflowStore = create(
       // Workflows et templates
       workflows: {},
       currentWorkflowId: null,
-      workflowTemplates: {},
       
       // Nouvelles propriétés manquantes
       nodeStats: {},
@@ -33,9 +32,6 @@ export const useWorkflowStore = create(
       expressions: {},
       customFunctions: {},
       testSessions: {},
-      breakpoints: {},
-      nodeGroups: [],
-      stickyNotes: [],
       workflowTemplates: {
         'welcome-email': {
           name: 'Email de bienvenue',
@@ -433,7 +429,6 @@ export const useWorkflowStore = create(
   },
 
   // Debug functionality
-  breakpoints: {},
   debugSession: null,
   currentDebugNode: null,
   
@@ -462,8 +457,6 @@ export const useWorkflowStore = create(
   }),
 
   // Node groups
-  nodeGroups: [],
-  
   addNodeGroup: (group) => set((state) => ({
     nodeGroups: [...(state.nodeGroups || []), group]
   })),
@@ -475,8 +468,6 @@ export const useWorkflowStore = create(
   })),
 
   // Sticky notes
-  stickyNotes: [],
-  
   addStickyNote: (note) => set((state) => ({
     stickyNotes: [...(state.stickyNotes || []), note]
   })),
@@ -498,33 +489,6 @@ export const useWorkflowStore = create(
     email: 'john@example.com',
     color: '#3b82f6'
   },
-      
-      // Méthodes manquantes
-      updateNode: (id, updates) => set((state) => ({
-        nodes: state.nodes.map(node => 
-          node.id === id ? { ...node, data: { ...node.data, ...updates } } : node
-        )
-      })),
-      
-      deleteNode: (id) => set((state) => ({
-        nodes: state.nodes.filter(node => node.id !== id),
-        edges: state.edges.filter(edge => edge.source !== id && edge.target !== id)
-      })),
-      
-      duplicateNode: (id) => {
-        const node = get().nodes.find(n => n.id === id);
-        if (node) {
-          const newNode = {
-            ...node,
-            id: `${node.id}_copy_${Date.now()}`,
-            position: {
-              x: node.position.x + 50,
-              y: node.position.y + 50,
-            },
-          };
-          set((state) => ({ nodes: [...state.nodes, newNode] }));
-        }
-      },
     }),
     {
       name: 'workflow-storage-v3',
