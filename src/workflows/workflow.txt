@@ -1,0 +1,5188 @@
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import ReactFlow, {
+  ReactFlowProvider,
+  addEdge,
+  useNodesState,
+  useEdgesState,
+  useReactFlow,
+  Controls,
+  Background,
+  MiniMap,
+  Panel,
+  MarkerType,
+  useKeyPress,
+  ConnectionMode,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+// Store Zustand complet avec toutes les fonctionnalités n8n
+const useWorkflowStore = create(
+  persist(
+    (set, get) => ({
+      // État de base
+      nodes: [],
+      edges: [],
+      selectedNode: null,
+      isExecuting: false,
+      executionResults: {},
+      executionErrors: {},
+      currentExecutingNode: null,
+      
+      // Workflows et templates
+      workflows: {},
+      currentWorkflowId: null,
+      workflowTemplates: {
+        'welcome-email': {
+          name: 'Email de bienvenue',
+          description: 'Envoie un email de bienvenue aux nouveaux utilisateurs',
+          category: 'Marketing',
+          nodes: [], // Template nodes
+          edges: [], // Template edges
+        },
+        'data-sync': {
+          name: 'Synchronisation de données',
+          description: 'Synchronise les données entre deux systèmes',
+          category: 'Data',
+          nodes: [],
+          edges: [],
+        },
+        'social-media': {
+          name: 'Publication réseaux sociaux',
+          description: 'Publie automatiquement sur plusieurs réseaux',
+          category: 'Social',
+          nodes: [],
+          edges: [],
+        }
+      },
+      
+      // Credentials management
+      credentials: {
+        google: { clientId: '', clientSecret: '', refreshToken: '' },
+        aws: { accessKeyId: '', secretAccessKey: '', region: 'us-east-1' },
+        openai: { apiKey: '' },
+        stripe: { apiKey: '' },
+        slack: { webhookUrl: '' },
+        github: { token: '' },
+      },
+      
+      // Exécution et historique
+      executionHistory: [],
+      executionLogs: [],
+      globalVariables: {},
+      environments: {
+        dev: { name: 'Development', apiUrl: 'http://localhost:3000', apiKey: 'dev-key' },
+        staging: { name: 'Staging', apiUrl: 'https://staging.api.com', apiKey: 'staging-key' },
+        prod: { name: 'Production', apiUrl: 'https://api.com', apiKey: 'prod-key' }
+      },
+      currentEnvironment: 'dev',
+      
+      // Configuration avancée
+      debugMode: false,
+      stepByStep: false,
+      darkMode: false,
+      collaborators: [],
+      workflowVersions: {},
+      webhookEndpoints: {},
+      scheduledJobs: {},
+      
+      // Statistiques détaillées
+      executionStats: {
+        totalExecutions: 0,
+        successfulExecutions: 0,
+        failedExecutions: 0,
+        averageExecutionTime: 0,
+        nodeStats: {},
+        errorStats: {},
+      },
+      
+      // Paramètres système
+      systemSettings: {
+        maxExecutionTime: 300000, // 5 minutes
+        maxRetries: 3,
+        rateLimits: {},
+        notifications: {
+          onError: true,
+          onSuccess: false,
+          webhookUrl: '',
+          email: '',
+        },
+      },
+      
+      // Actions de base
+      setNodes: (nodes) => set({ nodes }),
+      setEdges: (edges) => set({ edges }),
+      setSelectedNode: (node) => set({ selectedNode: node }),
+      
+      addNode: (node) => set((state) => ({ 
+        nodes: [...state.nodes, node],
+        nodeStats: {
+          ...state.nodeStats,
+          [node.data.type]: (state.nodeStats[node.data.type] || 0) + 1
+        }
+      })),
+      
+      updateNode: (id, data) => set((state) => ({
+        nodes: state.nodes.map(node => 
+          node.id === id ? { ...node, data: { ...node.data, ...data } } : node
+        )
+      })),
+      
+      deleteNode: (id) => set((state) => ({
+        nodes: state.nodes.filter(node => node.id !== id),
+        edges: state.edges.filter(edge => edge.source !== id && edge.target !== id)
+      })),
+      
+      duplicateNode: (id) => {
+        const node = get().nodes.find(n => n.id === id);
+        if (node) {
+          const newNode = {
+            ...node,
+            id: `${node.id}_copy_${Date.now()}`,
+            position: {
+              x: node.position.x + 50,
+              y: node.position.y + 50,
+            },
+          };
+          set((state) => ({ nodes: [...state.nodes, newNode] }));
+        }
+      },
+      
+      // Gestion des credentials
+      updateCredentials: (service, credentials) => set((state) => ({
+        credentials: {
+          ...state.credentials,
+          [service]: { ...state.credentials[service], ...credentials }
+        }
+      })),
+      
+      // Webhooks
+      generateWebhookUrl: (workflowId) => {
+        const webhookId = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const url = `https://app.workflow-editor.com/webhook/${webhookId}`;
+        set((state) => ({
+          webhookEndpoints: {
+            ...state.webhookEndpoints,
+            [webhookId]: { workflowId, url, created: new Date().toISOString() }
+          }
+        }));
+        return url;
+      },
+      
+      // Scheduling
+      scheduleWorkflow: (workflowId, cronExpression) => {
+        const jobId = `job_${Date.now()}`;
+        set((state) => ({
+          scheduledJobs: {
+            ...state.scheduledJobs,
+            [jobId]: {
+              workflowId,
+              cronExpression,
+              enabled: true,
+              lastRun: null,
+              nextRun: null, // Calculate from cron
+            }
+          }
+        }));
+        return jobId;
+      },
+      
+      // Version control
+      createVersion: (workflowId, message) => {
+        const workflow = get().workflows[workflowId];
+        if (workflow) {
+          const versionId = `v_${Date.now()}`;
+          set((state) => ({
+            workflowVersions: {
+              ...state.workflowVersions,
+              [workflowId]: [
+                ...(state.workflowVersions[workflowId] || []),
+                {
+                  id: versionId,
+                  message,
+                  nodes: workflow.nodes,
+                  edges: workflow.edges,
+                  timestamp: new Date().toISOString(),
+                }
+              ]
+            }
+          }));
+        }
+      },
+      
+      // Import/Export avancé
+      importFromZapier: (zapierData) => {
+        // Convertir le format Zapier vers notre format
+        console.log('Importing from Zapier:', zapierData);
+      },
+      
+      importFromMake: (makeData) => {
+        // Convertir le format Make vers notre format
+        console.log('Importing from Make:', makeData);
+      },
+      
+      // Logs et monitoring
+      addLog: (log) => set((state) => ({
+        executionLogs: [...state.executionLogs, {
+          ...log,
+          timestamp: new Date().toISOString(),
+          id: `log_${Date.now()}`
+        }].slice(-1000) // Garder les 1000 derniers logs
+      })),
+      
+      searchLogs: (query) => {
+        const logs = get().executionLogs;
+        return logs.filter(log => 
+          JSON.stringify(log).toLowerCase().includes(query.toLowerCase())
+        );
+      },
+      
+      // Collaboration
+      addCollaborator: (email, permissions) => set((state) => ({
+        collaborators: [...state.collaborators, {
+          email,
+          permissions,
+          addedAt: new Date().toISOString()
+        }]
+      })),
+      
+      // Actions existantes améliorées...
+      setExecutionResult: (nodeId, result) => set((state) => ({
+        executionResults: { ...state.executionResults, [nodeId]: result }
+      })),
+      
+      setExecutionError: (nodeId, error) => set((state) => ({
+        executionErrors: { ...state.executionErrors, [nodeId]: error },
+        errorStats: {
+          ...state.errorStats,
+          [error.code || 'unknown']: (state.errorStats[error.code || 'unknown'] || 0) + 1
+        }
+      })),
+      
+      clearExecution: () => set({
+        executionResults: {},
+        executionErrors: {},
+        currentExecutingNode: null,
+      }),
+      
+      // Workflow management complet
+      saveWorkflow: (name = null) => {
+        const { nodes, edges, currentWorkflowId } = get();
+        const workflowId = currentWorkflowId || `workflow_${Date.now()}`;
+        const workflow = {
+          id: workflowId,
+          name: name || `Workflow ${new Date().toLocaleDateString()}`,
+          nodes,
+          edges,
+          version: '3.0',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          tags: [],
+          description: '',
+          settings: {
+            errorHandling: 'stop',
+            timeout: 300000,
+            retryOnFail: true,
+          }
+        };
+        
+        set((state) => ({
+          workflows: { ...state.workflows, [workflowId]: workflow },
+          currentWorkflowId: workflowId
+        }));
+        
+        // Créer une version automatiquement
+        get().createVersion(workflowId, 'Auto-save');
+        
+        return workflowId;
+      },
+      
+      // Test unitaire de workflow
+      testWorkflow: async (testData) => {
+        const { nodes, edges } = get();
+        console.log('Testing workflow with data:', testData);
+        // Implémenter les tests
+        return { success: true, results: [] };
+      },
+      
+      // Toutes les autres actions...
+      setIsExecuting: (isExecuting) => set({ isExecuting }),
+      setCurrentExecutingNode: (nodeId) => set({ currentExecutingNode: nodeId }),
+      toggleDarkMode: () => set((state) => ({ darkMode: !state.darkMode })),
+      toggleDebugMode: () => set((state) => ({ debugMode: !state.debugMode })),
+      toggleStepByStep: () => set((state) => ({ stepByStep: !state.stepByStep })),
+    }),
+    {
+      name: 'workflow-storage-v3',
+      partialize: (state) => ({
+        workflows: state.workflows,
+        globalVariables: state.globalVariables,
+        environments: state.environments,
+        credentials: state.credentials,
+        darkMode: state.darkMode,
+        executionHistory: state.executionHistory.slice(0, 50),
+        executionStats: state.executionStats,
+        webhookEndpoints: state.webhookEndpoints,
+        scheduledJobs: state.scheduledJobs,
+        workflowVersions: state.workflowVersions,
+      })
+    }
+  )
+);
+
+// Types de nœuds complets (comme n8n)
+const nodeTypes = {
+  // Triggers
+  trigger: {
+    name: 'Déclencheur HTTP',
+    type: 'trigger',
+    icon: '🌐',
+    color: 'bg-blue-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+  },
+  webhook: {
+    name: 'Webhook',
+    type: 'webhook',
+    icon: '🔗',
+    color: 'bg-green-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+  },
+  schedule: {
+    name: 'Schedule / Cron',
+    type: 'schedule',
+    icon: '⏰',
+    color: 'bg-indigo-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+  },
+  rssFeed: {
+    name: 'RSS Feed',
+    type: 'rssFeed',
+    icon: '📰',
+    color: 'bg-orange-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+  },
+  
+  // Communication
+  email: {
+    name: 'Email (SMTP)',
+    type: 'email',
+    icon: '📧',
+    color: 'bg-red-500',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  gmail: {
+    name: 'Gmail',
+    type: 'gmail',
+    icon: '📮',
+    color: 'bg-red-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  slack: {
+    name: 'Slack',
+    type: 'slack',
+    icon: '💬',
+    color: 'bg-purple-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  discord: {
+    name: 'Discord',
+    type: 'discord',
+    icon: '🎮',
+    color: 'bg-indigo-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  telegram: {
+    name: 'Telegram',
+    type: 'telegram',
+    icon: '✈️',
+    color: 'bg-blue-400',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  teams: {
+    name: 'Microsoft Teams',
+    type: 'teams',
+    icon: '👥',
+    color: 'bg-blue-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  twilio: {
+    name: 'Twilio SMS',
+    type: 'twilio',
+    icon: '💬',
+    color: 'bg-red-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  whatsapp: {
+    name: 'WhatsApp',
+    type: 'whatsapp',
+    icon: '💚',
+    color: 'bg-green-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Databases
+  mysql: {
+    name: 'MySQL',
+    type: 'mysql',
+    icon: '🐬',
+    color: 'bg-blue-800',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+  },
+  postgres: {
+    name: 'PostgreSQL',
+    type: 'postgres',
+    icon: '🐘',
+    color: 'bg-blue-900',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+  },
+  mongodb: {
+    name: 'MongoDB',
+    type: 'mongodb',
+    icon: '🍃',
+    color: 'bg-green-700',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+  },
+  redis: {
+    name: 'Redis',
+    type: 'redis',
+    icon: '🔴',
+    color: 'bg-red-800',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Google Services
+  googleSheets: {
+    name: 'Google Sheets',
+    type: 'googleSheets',
+    icon: '📊',
+    color: 'bg-green-500',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+  },
+  googleDrive: {
+    name: 'Google Drive',
+    type: 'googleDrive',
+    icon: '📁',
+    color: 'bg-blue-500',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+  },
+  googleCalendar: {
+    name: 'Google Calendar',
+    type: 'googleCalendar',
+    icon: '📅',
+    color: 'bg-blue-600',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+  },
+  googleMaps: {
+    name: 'Google Maps',
+    type: 'googleMaps',
+    icon: '🗺️',
+    color: 'bg-green-600',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Cloud Services
+  aws: {
+    name: 'AWS',
+    type: 'aws',
+    icon: '☁️',
+    color: 'bg-orange-600',
+    category: 'cloud',
+    inputs: 1,
+    outputs: 1,
+  },
+  s3: {
+    name: 'AWS S3',
+    type: 's3',
+    icon: '🪣',
+    color: 'bg-orange-700',
+    category: 'cloud',
+    inputs: 1,
+    outputs: 1,
+  },
+  lambda: {
+    name: 'AWS Lambda',
+    type: 'lambda',
+    icon: '⚡',
+    color: 'bg-orange-500',
+    category: 'cloud',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Development Tools
+  github: {
+    name: 'GitHub',
+    type: 'github',
+    icon: '🐙',
+    color: 'bg-gray-800',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+  },
+  gitlab: {
+    name: 'GitLab',
+    type: 'gitlab',
+    icon: '🦊',
+    color: 'bg-orange-800',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+  },
+  bitbucket: {
+    name: 'Bitbucket',
+    type: 'bitbucket',
+    icon: '🪣',
+    color: 'bg-blue-800',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+  },
+  jira: {
+    name: 'Jira',
+    type: 'jira',
+    icon: '🎯',
+    color: 'bg-blue-700',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // E-commerce
+  stripe: {
+    name: 'Stripe',
+    type: 'stripe',
+    icon: '💳',
+    color: 'bg-purple-700',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+  },
+  paypal: {
+    name: 'PayPal',
+    type: 'paypal',
+    icon: '💰',
+    color: 'bg-blue-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+  },
+  shopify: {
+    name: 'Shopify',
+    type: 'shopify',
+    icon: '🛍️',
+    color: 'bg-green-800',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+  },
+  woocommerce: {
+    name: 'WooCommerce',
+    type: 'woocommerce',
+    icon: '🛒',
+    color: 'bg-purple-800',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // AI & Analytics
+  openai: {
+    name: 'OpenAI / ChatGPT',
+    type: 'openai',
+    icon: '🤖',
+    color: 'bg-gray-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+  },
+  anthropic: {
+    name: 'Claude AI',
+    type: 'anthropic',
+    icon: '🧠',
+    color: 'bg-amber-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Productivity
+  notion: {
+    name: 'Notion',
+    type: 'notion',
+    icon: '📝',
+    color: 'bg-gray-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+  },
+  airtable: {
+    name: 'Airtable',
+    type: 'airtable',
+    icon: '📋',
+    color: 'bg-blue-500',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+  },
+  trello: {
+    name: 'Trello',
+    type: 'trello',
+    icon: '📌',
+    color: 'bg-blue-700',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+  },
+  asana: {
+    name: 'Asana',
+    type: 'asana',
+    icon: '🎯',
+    color: 'bg-red-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // File Operations
+  ftp: {
+    name: 'FTP / SFTP',
+    type: 'ftp',
+    icon: '📂',
+    color: 'bg-gray-700',
+    category: 'files',
+    inputs: 1,
+    outputs: 1,
+  },
+  csv: {
+    name: 'CSV',
+    type: 'csv',
+    icon: '📊',
+    color: 'bg-green-600',
+    category: 'files',
+    inputs: 1,
+    outputs: 1,
+  },
+  xml: {
+    name: 'XML',
+    type: 'xml',
+    icon: '📄',
+    color: 'bg-orange-600',
+    category: 'files',
+    inputs: 1,
+    outputs: 1,
+  },
+  pdf: {
+    name: 'PDF',
+    type: 'pdf',
+    icon: '📑',
+    color: 'bg-red-700',
+    category: 'files',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Marketing
+  mailchimp: {
+    name: 'Mailchimp',
+    type: 'mailchimp',
+    icon: '🐵',
+    color: 'bg-yellow-600',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+  },
+  hubspot: {
+    name: 'HubSpot',
+    type: 'hubspot',
+    icon: '🔶',
+    color: 'bg-orange-700',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Existing Core Nodes
+  httpRequest: {
+    name: 'Requête HTTP',
+    type: 'httpRequest',
+    icon: '📡',
+    color: 'bg-purple-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+  },
+  transform: {
+    name: 'Transformer',
+    type: 'transform',
+    icon: '🔄',
+    color: 'bg-yellow-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+  },
+  condition: {
+    name: 'Condition',
+    type: 'condition',
+    icon: '❓',
+    color: 'bg-red-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 2,
+  },
+  code: {
+    name: 'Code JavaScript',
+    type: 'code',
+    icon: '💻',
+    color: 'bg-pink-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+  },
+  python: {
+    name: 'Code Python',
+    type: 'python',
+    icon: '🐍',
+    color: 'bg-green-700',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Flow Control
+  merge: {
+    name: 'Fusion',
+    type: 'merge',
+    icon: '🔀',
+    color: 'bg-teal-500',
+    category: 'flow',
+    inputs: 2,
+    outputs: 1,
+  },
+  split: {
+    name: 'Diviser',
+    type: 'split',
+    icon: '🔁',
+    color: 'bg-teal-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+  },
+  loop: {
+    name: 'Boucle',
+    type: 'loop',
+    icon: '🔁',
+    color: 'bg-orange-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+  },
+  switch: {
+    name: 'Switch',
+    type: 'switch',
+    icon: '🎛️',
+    color: 'bg-red-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 4,
+  },
+  delay: {
+    name: 'Délai',
+    type: 'delay',
+    icon: '⏱️',
+    color: 'bg-gray-500',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Data Processing
+  aggregate: {
+    name: 'Agrégation',
+    type: 'aggregate',
+    icon: '📈',
+    color: 'bg-blue-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+  },
+  filter: {
+    name: 'Filtrer',
+    type: 'filter',
+    icon: '🔍',
+    color: 'bg-purple-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+  },
+  sort: {
+    name: 'Trier',
+    type: 'sort',
+    icon: '↕️',
+    color: 'bg-indigo-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+  },
+  
+  // Utilities
+  errorHandler: {
+    name: 'Gestion d\'erreur',
+    type: 'errorHandler',
+    icon: '⚠️',
+    color: 'bg-yellow-600',
+    category: 'utility',
+    inputs: 2,
+    outputs: 1,
+  },
+  subworkflow: {
+    name: 'Sous-workflow',
+    type: 'subworkflow',
+    icon: '🔗',
+    color: 'bg-purple-700',
+    category: 'utility',
+    inputs: 1,
+    outputs: 1,
+  },
+  cache: {
+    name: 'Cache',
+    type: 'cache',
+    icon: '💾',
+    color: 'bg-gray-600',
+    category: 'utility',
+    inputs: 1,
+    outputs: 1,
+  },
+  rateLimit: {
+    name: 'Rate Limiter',
+    type: 'rateLimit',
+    icon: '🚦',
+    color: 'bg-yellow-700',
+    category: 'utility',
+    inputs: 1,
+    outputs: 1,
+  },
+};
+
+// Catégories de nœuds
+const nodeCategories = {
+  trigger: { name: '⚡ Déclencheurs', icon: '⚡' },
+  core: { name: '🔧 Core', icon: '🔧' },
+  communication: { name: '💬 Communication', icon: '💬' },
+  database: { name: '🗄️ Base de données', icon: '🗄️' },
+  google: { name: '🔷 Google', icon: '🔷' },
+  cloud: { name: '☁️ Cloud', icon: '☁️' },
+  development: { name: '👨‍💻 Développement', icon: '👨‍💻' },
+  ecommerce: { name: '🛒 E-commerce', icon: '🛒' },
+  ai: { name: '🤖 Intelligence Artificielle', icon: '🤖' },
+  productivity: { name: '📊 Productivité', icon: '📊' },
+  files: { name: '📁 Fichiers', icon: '📁' },
+  marketing: { name: '📢 Marketing', icon: '📢' },
+  flow: { name: '🔀 Contrôle de flux', icon: '🔀' },
+  data: { name: '📊 Traitement de données', icon: '📊' },
+  utility: { name: '🛠️ Utilitaires', icon: '🛠️' },
+};
+
+// Moteur d'exécution ultra-complet
+class WorkflowExecutor {
+  constructor(nodes, edges, options = {}) {
+    this.nodes = nodes;
+    this.edges = edges;
+    this.context = {
+      global: options.globalVariables || {},
+      env: options.environment || {},
+      nodes: {},
+      cache: new Map(),
+      rateLimiters: new Map(),
+    };
+    this.credentials = options.credentials || {};
+    this.debugMode = options.debugMode || false;
+    this.stepByStep = options.stepByStep || false;
+    this.onStep = options.onStep || (() => {});
+    this.onLog = options.onLog || (() => {});
+    this.retryConfig = {
+      maxRetries: options.maxRetries || 3,
+      retryDelay: options.retryDelay || 1000,
+    };
+    this.executionTimeout = options.executionTimeout || 300000; // 5 minutes
+    this.startTime = Date.now();
+  }
+  
+  // Logger avancé
+  log(level, message, data = {}) {
+    const logEntry = {
+      level,
+      message,
+      data,
+      timestamp: new Date().toISOString(),
+      executionTime: Date.now() - this.startTime,
+    };
+    
+    if (this.debugMode) {
+      console.log(`[${level.toUpperCase()}]`, message, data);
+    }
+    
+    this.onLog(logEntry);
+  }
+  
+  // Vérification du timeout
+  checkTimeout() {
+    if (Date.now() - this.startTime > this.executionTimeout) {
+      throw new Error('Execution timeout exceeded');
+    }
+  }
+  
+  // Rate limiting
+  async checkRateLimit(nodeId, limit = 10, window = 60000) {
+    const key = `${nodeId}_${Math.floor(Date.now() / window)}`;
+    const current = this.context.rateLimiters.get(key) || 0;
+    
+    if (current >= limit) {
+      throw new Error(`Rate limit exceeded for node ${nodeId}`);
+    }
+    
+    this.context.rateLimiters.set(key, current + 1);
+  }
+  
+  // Cache management
+  getCacheKey(nodeId, inputData) {
+    return `${nodeId}_${JSON.stringify(inputData)}`;
+  }
+  
+  getFromCache(nodeId, inputData) {
+    const key = this.getCacheKey(nodeId, inputData);
+    return this.context.cache.get(key);
+  }
+  
+  setCache(nodeId, inputData, result, ttl = 60000) {
+    const key = this.getCacheKey(nodeId, inputData);
+    this.context.cache.set(key, {
+      result,
+      expires: Date.now() + ttl,
+    });
+  }
+  
+  // Expression parser amélioré (JSONPath + custom syntax)
+  parseExpression(expression, context) {
+    if (typeof expression !== 'string') return expression;
+    
+    // Support for JSONPath
+    if (expression.startsWith('$.')) {
+      return this.evaluateJSONPath(expression, context);
+    }
+    
+    // Support for template syntax {{}}
+    return expression.replace(/\{\{(.+?)\}\}/g, (match, path) => {
+      try {
+        const parts = path.trim().split('.');
+        let value = context;
+        
+        for (const part of parts) {
+          if (part.startsWith('$')) {
+            if (part === '$json') {
+              value = value.lastResult || {};
+            } else if (part === '$global') {
+              value = context.global || {};
+            } else if (part === '$env') {
+              value = context.env || {};
+            } else if (part.startsWith('$node[')) {
+              const nodeName = part.match(/\$node\["(.+?)"\]/)?.[1];
+              value = context.nodes?.[nodeName]?.data || {};
+            }
+          } else {
+            value = value?.[part];
+          }
+        }
+        
+        return value !== undefined ? JSON.stringify(value) : match;
+      } catch (error) {
+        this.log('error', 'Expression parsing error', { expression, error: error.message });
+        return match;
+      }
+    });
+  }
+  
+  // Exécution de nœud spécifique avec tous les types
+  async executeNode(node, inputData = {}) {
+    const { type, config = {} } = node.data;
+    
+    this.checkTimeout();
+    this.log('info', `Executing node ${node.id} (${type})`, { config, inputData });
+    
+    // Check cache
+    if (config.enableCache) {
+      const cached = this.getFromCache(node.id, inputData);
+      if (cached && cached.expires > Date.now()) {
+        this.log('info', `Using cached result for node ${node.id}`);
+        return cached.result;
+      }
+    }
+    
+    // Rate limiting
+    if (config.rateLimit) {
+      await this.checkRateLimit(node.id, config.rateLimit.limit, config.rateLimit.window);
+    }
+    
+    await this.waitForStep();
+    
+    try {
+      let result;
+      
+      switch (type) {
+        // Google Services
+        case 'googleSheets':
+          result = await this.executeGoogleSheets(config, inputData);
+          break;
+        
+        case 'googleDrive':
+          result = await this.executeGoogleDrive(config, inputData);
+          break;
+        
+        case 'googleCalendar':
+          result = await this.executeGoogleCalendar(config, inputData);
+          break;
+        
+        // AI Services
+        case 'openai':
+          result = await this.executeOpenAI(config, inputData);
+          break;
+        
+        case 'anthropic':
+          result = await this.executeAnthropic(config, inputData);
+          break;
+        
+        // Cloud Services
+        case 's3':
+          result = await this.executeS3(config, inputData);
+          break;
+        
+        case 'lambda':
+          result = await this.executeLambda(config, inputData);
+          break;
+        
+        // Communication
+        case 'telegram':
+          result = await this.executeTelegram(config, inputData);
+          break;
+        
+        case 'whatsapp':
+          result = await this.executeWhatsApp(config, inputData);
+          break;
+        
+        case 'twilio':
+          result = await this.executeTwilio(config, inputData);
+          break;
+        
+        // E-commerce
+        case 'stripe':
+          result = await this.executeStripe(config, inputData);
+          break;
+        
+        case 'shopify':
+          result = await this.executeShopify(config, inputData);
+          break;
+        
+        // Development
+        case 'github':
+          result = await this.executeGitHub(config, inputData);
+          break;
+        
+        case 'jira':
+          result = await this.executeJira(config, inputData);
+          break;
+        
+        // Productivity
+        case 'notion':
+          result = await this.executeNotion(config, inputData);
+          break;
+        
+        case 'airtable':
+          result = await this.executeAirtable(config, inputData);
+          break;
+        
+        // Core nodes
+        case 'schedule':
+          result = await this.executeSchedule(config, inputData);
+          break;
+        
+        case 'subworkflow':
+          result = await this.executeSubworkflow(config, inputData);
+          break;
+        
+        case 'python':
+          result = await this.executePython(config, inputData);
+          break;
+        
+        case 'filter':
+          result = await this.executeFilter(config, inputData);
+          break;
+        
+        case 'sort':
+          result = await this.executeSort(config, inputData);
+          break;
+        
+        // Default execution for existing nodes
+        default:
+          result = await this.executeDefaultNode(node, inputData);
+      }
+      
+      // Cache result if enabled
+      if (config.enableCache) {
+        this.setCache(node.id, inputData, result, config.cacheTTL);
+      }
+      
+      return result;
+      
+    } catch (error) {
+      this.log('error', `Error executing node ${node.id}`, { error: error.message });
+      throw error;
+    }
+  }
+  
+  // Google Sheets execution
+  async executeGoogleSheets(config, inputData) {
+    const operation = config.operation || 'read';
+    
+    this.log('info', 'Executing Google Sheets operation', { operation });
+    
+    // Simulation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    switch (operation) {
+      case 'read':
+        return {
+          status: 'success',
+          data: [
+            { A: 'Name', B: 'Email', C: 'Score' },
+            { A: 'John Doe', B: 'john@example.com', C: 95 },
+            { A: 'Jane Smith', B: 'jane@example.com', C: 87 },
+          ]
+        };
+      
+      case 'append':
+        return {
+          status: 'success',
+          data: {
+            rows: 1,
+            range: config.range || 'A1:C1',
+            spreadsheetId: config.spreadsheetId
+          }
+        };
+      
+      case 'update':
+        return {
+          status: 'success',
+          data: {
+            updatedCells: 3,
+            range: config.range
+          }
+        };
+      
+      default:
+        throw new Error(`Unknown operation: ${operation}`);
+    }
+  }
+  
+  // OpenAI execution
+  async executeOpenAI(config, inputData) {
+    const model = config.model || 'gpt-3.5-turbo';
+    const prompt = this.parseExpression(config.prompt || '', this.context);
+    
+    this.log('info', 'Executing OpenAI request', { model, prompt });
+    
+    // Simulation
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    return {
+      status: 'success',
+      data: {
+        model,
+        response: `AI Response to: ${prompt}`,
+        usage: {
+          prompt_tokens: 50,
+          completion_tokens: 100,
+          total_tokens: 150
+        }
+      }
+    };
+  }
+  
+  // Stripe execution
+  async executeStripe(config, inputData) {
+    const action = config.action || 'charge';
+    
+    this.log('info', 'Executing Stripe action', { action });
+    
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    
+    switch (action) {
+      case 'charge':
+        return {
+          status: 'success',
+          data: {
+            id: 'ch_' + Math.random().toString(36).substr(2, 9),
+            amount: config.amount || 1000,
+            currency: config.currency || 'usd',
+            status: 'succeeded'
+          }
+        };
+      
+      case 'customer':
+        return {
+          status: 'success',
+          data: {
+            id: 'cus_' + Math.random().toString(36).substr(2, 9),
+            email: inputData.email || 'customer@example.com',
+            created: new Date().toISOString()
+          }
+        };
+      
+      case 'subscription':
+        return {
+          status: 'success',
+          data: {
+            id: 'sub_' + Math.random().toString(36).substr(2, 9),
+            status: 'active',
+            current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        };
+      
+      default:
+        throw new Error(`Unknown Stripe action: ${action}`);
+    }
+  }
+  
+  // GitHub execution
+  async executeGitHub(config, inputData) {
+    const action = config.action || 'createIssue';
+    
+    this.log('info', 'Executing GitHub action', { action });
+    
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    switch (action) {
+      case 'createIssue':
+        return {
+          status: 'success',
+          data: {
+            number: Math.floor(Math.random() * 1000),
+            title: config.title || 'New Issue',
+            state: 'open',
+            url: `https://github.com/${config.owner}/${config.repo}/issues/123`
+          }
+        };
+      
+      case 'createPR':
+        return {
+          status: 'success',
+          data: {
+            number: Math.floor(Math.random() * 1000),
+            title: config.title || 'New PR',
+            state: 'open',
+            mergeable: true
+          }
+        };
+      
+      case 'getFile':
+        return {
+          status: 'success',
+          data: {
+            path: config.path,
+            content: 'File content here...',
+            sha: Math.random().toString(36).substr(2, 9)
+          }
+        };
+      
+      default:
+        throw new Error(`Unknown GitHub action: ${action}`);
+    }
+  }
+  
+  // Sub-workflow execution
+  async executeSubworkflow(config, inputData) {
+    const workflowId = config.workflowId;
+    
+    if (!workflowId) {
+      throw new Error('No workflow ID specified for sub-workflow');
+    }
+    
+    this.log('info', 'Executing sub-workflow', { workflowId });
+    
+    // In a real implementation, this would load and execute another workflow
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return {
+      status: 'success',
+      data: {
+        workflowId,
+        executionId: `exec_${Date.now()}`,
+        result: inputData // Pass through for now
+      }
+    };
+  }
+  
+  // Python code execution
+  async executePython(config, inputData) {
+    const code = config.code || 'result = {"message": "Hello from Python"}';
+    
+    this.log('info', 'Executing Python code');
+    
+    // In a real implementation, this would run in a sandboxed Python environment
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      status: 'success',
+      data: {
+        result: { message: 'Python execution simulated', input: inputData },
+        stdout: 'Python output...',
+        stderr: ''
+      }
+    };
+  }
+  
+  // Filter execution
+  async executeFilter(config, inputData) {
+    const items = Array.isArray(inputData) ? inputData : [inputData];
+    const condition = config.condition || 'true';
+    
+    try {
+      const func = new Function('item', '$index', `return ${condition}`);
+      const filtered = items.filter((item, index) => func(item, index));
+      
+      return {
+        status: 'success',
+        data: filtered
+      };
+    } catch (error) {
+      throw new Error(`Filter error: ${error.message}`);
+    }
+  }
+  
+  // Sort execution
+  async executeSort(config, inputData) {
+    const items = Array.isArray(inputData) ? inputData : [inputData];
+    const field = config.field || 'id';
+    const order = config.order || 'asc';
+    
+    const sorted = [...items].sort((a, b) => {
+      const aVal = a[field];
+      const bVal = b[field];
+      
+      if (order === 'asc') {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+    
+    return {
+      status: 'success',
+      data: sorted
+    };
+  }
+  
+  // Default node execution (existing nodes)
+  async executeDefaultNode(node, inputData) {
+    const { type, config = {} } = node.data;
+    
+    switch (type) {
+      case 'trigger':
+      case 'webhook':
+        return { 
+          status: 'success',
+          data: { 
+            trigger: 'manual',
+            timestamp: new Date().toISOString(),
+            environment: this.context.env.name || 'dev',
+            headers: config.headers || {},
+            ...config.mockData 
+          }
+        };
+      
+      case 'httpRequest':
+        return await this.executeWithRetry(async () => {
+          const url = this.parseExpression(config.url, this.context);
+          const method = config.method || 'GET';
+          const headers = config.headers ? JSON.parse(this.parseExpression(config.headers, this.context)) : {};
+          const body = config.body ? JSON.parse(this.parseExpression(config.body, this.context)) : undefined;
+          
+          // Add auth headers if available
+          if (this.context.env.apiKey) {
+            headers['Authorization'] = `Bearer ${this.context.env.apiKey}`;
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          return {
+            status: 'success',
+            data: {
+              url,
+              method,
+              statusCode: 200,
+              headers: { 'content-type': 'application/json' },
+              body: { 
+                message: 'HTTP request simulation', 
+                requestData: body,
+                timestamp: new Date().toISOString()
+              }
+            }
+          };
+        }, node.id);
+      
+      case 'email':
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return {
+          status: 'success',
+          data: {
+            to: this.parseExpression(config.to, this.context),
+            subject: this.parseExpression(config.subject, this.context),
+            body: this.parseExpression(config.body, this.context),
+            messageId: `msg_${Date.now()}`,
+            sent: true
+          }
+        };
+      
+      case 'slack':
+        await new Promise(resolve => setTimeout(resolve, 800));
+        return {
+          status: 'success',
+          data: {
+            channel: config.channel || '#general',
+            message: this.parseExpression(config.message || 'Slack message', this.context),
+            ts: Date.now().toString(),
+            sent: true
+          }
+        };
+      
+      case 'mysql':
+      case 'postgres':
+      case 'mongodb':
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return {
+          status: 'success',
+          data: {
+            query: this.parseExpression(config.query || config.collection, this.context),
+            results: [
+              { id: 1, name: 'Record 1', created: new Date().toISOString() },
+              { id: 2, name: 'Record 2', created: new Date().toISOString() },
+            ],
+            rowCount: 2
+          }
+        };
+      
+      case 'transform':
+        try {
+          const code = config.code || 'return items;';
+          const func = new Function('items', '$json', '$global', '$env', code);
+          const result = func(inputData, inputData, this.context.global, this.context.env);
+          
+          return {
+            status: 'success',
+            data: result
+          };
+        } catch (error) {
+          throw new Error(`Transform error: ${error.message}`);
+        }
+      
+      case 'code':
+        try {
+          const code = config.code || 'return { result: "Hello World" };';
+          const func = new Function('$input', '$json', '$global', '$env', 'console', code);
+          
+          // Create a custom console that logs to our system
+          const customConsole = {
+            log: (...args) => this.log('info', 'Console log', { message: args.join(' ') }),
+            error: (...args) => this.log('error', 'Console error', { message: args.join(' ') }),
+            warn: (...args) => this.log('warn', 'Console warn', { message: args.join(' ') }),
+          };
+          
+          const result = func(inputData, inputData, this.context.global, this.context.env, customConsole);
+          
+          return {
+            status: 'success',
+            data: result
+          };
+        } catch (error) {
+          throw new Error(`Code execution error: ${error.message}`);
+        }
+      
+      case 'condition':
+        try {
+          const condition = this.parseExpression(config.condition || 'true', this.context);
+          const func = new Function('$json', '$global', '$env', `return ${condition}`);
+          const result = func(inputData, this.context.global, this.context.env);
+          
+          return {
+            status: 'success',
+            data: inputData,
+            branch: result ? 'true' : 'false'
+          };
+        } catch (error) {
+          throw new Error(`Condition error: ${error.message}`);
+        }
+      
+      case 'loop':
+        const items = Array.isArray(inputData) ? inputData : [inputData];
+        const maxIterations = parseInt(config.maxIterations) || 100;
+        const iterations = Math.min(items.length, maxIterations);
+        
+        // Check exit condition if specified
+        if (config.exitCondition) {
+          // Implement exit condition logic
+        }
+        
+        return {
+          status: 'success',
+          data: items.slice(0, iterations),
+          iterations,
+          branch: 'loop'
+        };
+      
+      case 'switch':
+        const switchValue = this.parseExpression(config.switchOn || '$json.type', this.context);
+        const cases = config.cases || {};
+        let matchedCase = 'default';
+        
+        for (const [caseValue, caseName] of Object.entries(cases)) {
+          if (switchValue == caseValue) {
+            matchedCase = caseName;
+            break;
+          }
+        }
+        
+        return {
+          status: 'success',
+          data: inputData,
+          branch: matchedCase
+        };
+      
+      case 'aggregate':
+        const aggregationType = config.type || 'sum';
+        const field = config.field || 'value';
+        const items = Array.isArray(inputData) ? inputData : [inputData];
+        
+        let result;
+        switch (aggregationType) {
+          case 'sum':
+            result = items.reduce((acc, item) => acc + (parseFloat(item[field]) || 0), 0);
+            break;
+          case 'average':
+            const sum = items.reduce((acc, item) => acc + (parseFloat(item[field]) || 0), 0);
+            result = items.length > 0 ? sum / items.length : 0;
+            break;
+          case 'count':
+            result = items.length;
+            break;
+          case 'min':
+            result = Math.min(...items.map(item => parseFloat(item[field]) || 0));
+            break;
+          case 'max':
+            result = Math.max(...items.map(item => parseFloat(item[field]) || 0));
+            break;
+          case 'groupBy':
+            const groupField = config.groupByField || 'category';
+            result = items.reduce((acc, item) => {
+              const key = item[groupField] || 'undefined';
+              if (!acc[key]) acc[key] = [];
+              acc[key].push(item);
+              return acc;
+            }, {});
+            break;
+          default:
+            result = items;
+        }
+        
+        return {
+          status: 'success',
+          data: {
+            type: aggregationType,
+            field,
+            result,
+            itemCount: items.length
+          }
+        };
+      
+      case 'delay':
+        const delay = parseInt(config.delay) || 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return {
+          status: 'success',
+          data: inputData
+        };
+      
+      case 'merge':
+        return {
+          status: 'success',
+          data: Array.isArray(inputData) ? inputData.flat() : inputData
+        };
+      
+      case 'split':
+        const splitItems = Array.isArray(inputData) ? inputData : [inputData];
+        const splitSize = parseInt(config.batchSize) || Math.ceil(splitItems.length / 2);
+        
+        return {
+          status: 'success',
+          data: splitItems,
+          batches: [
+            splitItems.slice(0, splitSize),
+            splitItems.slice(splitSize)
+          ]
+        };
+      
+      case 'errorHandler':
+        return {
+          status: 'success',
+          data: {
+            handled: true,
+            error: inputData.error || null,
+            fallback: config.fallbackValue || {},
+            action: config.action || 'log'
+          }
+        };
+      
+      case 'cache':
+        const cacheKey = config.key || 'default';
+        const ttl = parseInt(config.ttl) || 3600000; // 1 hour default
+        
+        if (config.operation === 'get') {
+          const cached = this.context.cache.get(cacheKey);
+          if (cached && cached.expires > Date.now()) {
+            return {
+              status: 'success',
+              data: cached.data,
+              fromCache: true
+            };
+          }
+        }
+        
+        // Set cache
+        this.context.cache.set(cacheKey, {
+          data: inputData,
+          expires: Date.now() + ttl
+        });
+        
+        return {
+          status: 'success',
+          data: inputData,
+          cached: true
+        };
+      
+      case 'rateLimit':
+        const limit = parseInt(config.limit) || 10;
+        const window = parseInt(config.window) || 60000;
+        
+        await this.checkRateLimit(node.id, limit, window);
+        
+        return {
+          status: 'success',
+          data: inputData
+        };
+      
+      default:
+        return {
+          status: 'success',
+          data: inputData
+        };
+    }
+  }
+  
+  // Helper: Wait for step-by-step execution
+  async waitForStep() {
+    if (this.stepByStep) {
+      return new Promise(resolve => {
+        this.onStep(resolve);
+      });
+    }
+  }
+  
+  // Helper: Execute with retry
+  async executeWithRetry(fn, nodeId) {
+    let lastError;
+    
+    for (let i = 0; i <= this.retryConfig.maxRetries; i++) {
+      try {
+        return await fn();
+      } catch (error) {
+        lastError = error;
+        if (i < this.retryConfig.maxRetries) {
+          const delay = this.retryConfig.retryDelay * Math.pow(2, i); // Exponential backoff
+          this.log('warn', `Retry ${i + 1}/${this.retryConfig.maxRetries} for node ${nodeId}`, { delay });
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    throw lastError;
+  }
+  
+  // Get next nodes with branch support
+  getNextNodes(nodeId, branch = null) {
+    const outgoingEdges = this.edges.filter(edge => {
+      if (edge.source !== nodeId) return false;
+      if (branch && edge.sourceHandle && edge.sourceHandle !== branch) return false;
+      return true;
+    });
+    
+    return outgoingEdges.map(edge => {
+      const node = this.nodes.find(n => n.id === edge.target);
+      return { node, edge };
+    });
+  }
+  
+  // Get start nodes
+  getStartNodes() {
+    const nodesWithInputs = new Set(this.edges.map(edge => edge.target));
+    return this.nodes.filter(node => !nodesWithInputs.has(node.id));
+  }
+  
+  // Main execution loop
+  async execute(onNodeStart, onNodeComplete, onNodeError) {
+    const startTime = Date.now();
+    const startNodes = this.getStartNodes();
+    const executionQueue = [...startNodes];
+    const executed = new Set();
+    const errors = [];
+    
+    this.log('info', 'Starting workflow execution', { 
+      totalNodes: this.nodes.length,
+      startNodes: startNodes.map(n => n.id) 
+    });
+    
+    while (executionQueue.length > 0) {
+      const node = executionQueue.shift();
+      
+      if (!node || executed.has(node.id)) continue;
+      
+      try {
+        onNodeStart(node.id);
+        
+        // Get input data from incoming nodes
+        const incomingEdges = this.edges.filter(edge => edge.target === node.id);
+        let inputData = {};
+        
+        if (incomingEdges.length > 0) {
+          const inputResults = incomingEdges.map(edge => 
+            this.context.nodes?.[edge.source]?.data || {}
+          );
+          inputData = inputResults.length === 1 ? inputResults[0] : inputResults;
+        }
+        
+        // Execute node
+        const result = await this.executeNode(node, inputData);
+        
+        // Store result in context
+        this.context.lastResult = result.data;
+        if (!this.context.nodes) this.context.nodes = {};
+        this.context.nodes[node.id] = result;
+        
+        onNodeComplete(node.id, result);
+        executed.add(node.id);
+        
+        // Handle branching
+        let nextNodes = [];
+        
+        if (result.branch) {
+          nextNodes = this.getNextNodes(node.id, result.branch);
+        } else {
+          nextNodes = this.getNextNodes(node.id);
+        }
+        
+        // Add next nodes to queue
+        executionQueue.push(...nextNodes.map(({ node }) => node).filter(n => n));
+        
+      } catch (error) {
+        errors.push({ nodeId: node.id, error });
+        onNodeError(node.id, error);
+        executed.add(node.id);
+        
+        this.log('error', `Node execution failed: ${node.id}`, { error: error.message });
+        
+        // Look for error handlers
+        const errorHandlers = this.getNextNodes(node.id, 'error');
+        if (errorHandlers.length > 0) {
+          errorHandlers.forEach(({ node: errorHandler }) => {
+            executionQueue.push(errorHandler);
+          });
+        }
+      }
+    }
+    
+    const duration = Date.now() - startTime;
+    
+    this.log('info', 'Workflow execution completed', {
+      duration,
+      nodesExecuted: executed.size,
+      errors: errors.length
+    });
+    
+    return {
+      status: errors.length === 0 ? 'success' : 'error',
+      duration,
+      nodesExecuted: executed.size,
+      errors,
+      results: this.context.nodes
+    };
+  }
+}
+
+// Helper functions for JSONPath evaluation
+function evaluateJSONPath(path, data) {
+  // Simplified JSONPath implementation
+  // In production, use a proper JSONPath library
+  try {
+    const parts = path.substring(2).split('.');
+    let result = data;
+    for (const part of parts) {
+      if (part.includes('[') && part.includes(']')) {
+        const [arrayName, indexStr] = part.split('[');
+        const index = parseInt(indexStr.replace(']', ''));
+        result = result[arrayName][index];
+      } else {
+        result = result[part];
+      }
+    }
+    return result;
+  } catch (error) {
+    return undefined;
+  }
+}
+
+// Composant de nœud ultra-moderne
+const CustomNode = ({ data, id }) => {
+  const { 
+    setSelectedNode, 
+    executionResults, 
+    executionErrors, 
+    currentExecutingNode,
+    darkMode 
+  } = useWorkflowStore();
+  
+  const nodeType = nodeTypes[data.type] || nodeTypes.trigger;
+  
+  const hasResult = executionResults[id];
+  const hasError = executionErrors[id];
+  const isExecuting = currentExecutingNode === id;
+  
+  const bgColor = darkMode ? nodeType.color.replace('bg-', 'bg-opacity-80 bg-') : nodeType.color;
+  
+  return (
+    <div 
+      className={`
+        ${bgColor} text-white rounded-lg shadow-lg p-4 min-w-[200px] cursor-pointer 
+        hover:shadow-xl transition-all relative transform hover:scale-105
+        ${isExecuting ? 'animate-pulse ring-4 ring-white' : ''}
+        ${hasError ? 'ring-4 ring-red-500' : ''}
+        ${hasResult ? 'ring-2 ring-green-500' : ''}
+      `}
+      onClick={() => setSelectedNode({ id, data })}
+    >
+      {/* Badge de catégorie */}
+      <div className="absolute -top-2 -left-2 bg-black bg-opacity-50 text-xs px-2 py-1 rounded-full">
+        {nodeCategories[nodeType.category]?.icon || '🔧'}
+      </div>
+      
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-2xl">{nodeType.icon}</span>
+        <span className="text-xs opacity-75">#{id.slice(-4)}</span>
+      </div>
+      <h3 className="font-semibold text-sm">{data.label || nodeType.name}</h3>
+      
+      {/* Affichage de configuration rapide */}
+      {data.config?.url && (
+        <p className="text-xs opacity-75 mt-1 truncate" title={data.config.url}>
+          {data.config.url}
+        </p>
+      )}
+      {data.config?.operation && (
+        <p className="text-xs opacity-75 mt-1">
+          Op: {data.config.operation}
+        </p>
+      )}
+      
+      {/* État d'exécution */}
+      {isExecuting && (
+        <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs px-2 py-1 rounded-full animate-bounce">
+          <div className="flex items-center">
+            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-900 mr-1"></div>
+            En cours
+          </div>
+        </div>
+      )}
+      
+      {hasResult && !isExecuting && (
+        <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full animate-fadeIn">
+          ✓
+        </div>
+      )}
+      
+      {hasError && !isExecuting && (
+        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-shake">
+          ✗
+        </div>
+      )}
+      
+      {/* Handles de connexion améliorés avec tooltips */}
+      {nodeType.inputs > 0 && (
+        <>
+          <div 
+            className="absolute -left-2 top-1/2 w-4 h-4 bg-white rounded-full border-2 border-gray-700 hover:scale-125 transition-transform handle-input" 
+            title="Entrée principale"
+          />
+          {nodeType.inputs > 1 && (
+            <div 
+              className="absolute -left-2 top-1/3 w-4 h-4 bg-white rounded-full border-2 border-gray-700 hover:scale-125 transition-transform handle-input" 
+              title="Entrée secondaire"
+            />
+          )}
+        </>
+      )}
+      
+      {nodeType.outputs > 0 && (
+        <>
+          <div 
+            className="absolute -right-2 top-1/2 w-4 h-4 bg-white rounded-full border-2 border-gray-700 hover:scale-125 transition-transform handle-output"
+            title="Sortie principale"
+          />
+          {nodeType.outputs > 1 && (
+            <>
+              <div 
+                className="absolute -right-2 top-3/4 w-4 h-4 bg-white rounded-full border-2 border-gray-700 hover:scale-125 transition-transform handle-output"
+                data-handle="false"
+                title="Sortie false/erreur"
+              />
+              {nodeType.outputs > 2 && (
+                <>
+                  <div 
+                    className="absolute -right-2 top-1/4 w-4 h-4 bg-white rounded-full border-2 border-gray-700 hover:scale-125 transition-transform handle-output"
+                    data-handle="case1"
+                    title="Cas 1"
+                  />
+                  {nodeType.outputs > 3 && (
+                    <div 
+                      className="absolute -right-2 bottom-1/4 w-4 h-4 bg-white rounded-full border-2 border-gray-700 hover:scale-125 transition-transform handle-output"
+                      data-handle="case2"
+                      title="Cas 2"
+                    />
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+// Panel de configuration avancé avec auto-complétion
+const NodeConfigPanel = () => {
+  const { 
+    selectedNode, 
+    updateNode, 
+    executionResults, 
+    executionErrors,
+    globalVariables,
+    credentials,
+    updateCredentials,
+    generateWebhookUrl,
+    darkMode 
+  } = useWorkflowStore();
+  
+  const [config, setConfig] = useState(selectedNode?.data?.config || {});
+  const [activeTab, setActiveTab] = useState('config');
+  const [showExpressionBuilder, setShowExpressionBuilder] = useState(false);
+  const [testData, setTestData] = useState('{}');
+  
+  useEffect(() => {
+    setConfig(selectedNode?.data?.config || {});
+  }, [selectedNode]);
+  
+  if (!selectedNode) return null;
+  
+  const handleSave = () => {
+    updateNode(selectedNode.id, { config });
+  };
+  
+  const nodeType = nodeTypes[selectedNode.data.type];
+  const nodeResult = executionResults[selectedNode.id];
+  const nodeError = executionErrors[selectedNode.id];
+  
+  const tabs = [
+    { id: 'config', name: '⚙️ Configuration', icon: '⚙️' },
+    { id: 'credentials', name: '🔐 Identifiants', icon: '🔐' },
+    { id: 'test', name: '🧪 Test', icon: '🧪' },
+    { id: 'results', name: '📊 Résultats', icon: '📊' },
+    { id: 'help', name: '❓ Aide', icon: '❓' },
+  ];
+  
+  // Expression builder helper
+  const insertExpression = (expression) => {
+    const activeElement = document.activeElement;
+    if (activeElement && activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA') {
+      const start = activeElement.selectionStart;
+      const end = activeElement.selectionEnd;
+      const text = activeElement.value;
+      const newText = text.substring(0, start) + expression + text.substring(end);
+      activeElement.value = newText;
+      activeElement.focus();
+      activeElement.setSelectionRange(start + expression.length, start + expression.length);
+    }
+  };
+  
+  return (
+    <div className={`absolute right-0 top-0 h-full w-[480px] ${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} shadow-xl overflow-hidden flex flex-col`}>
+      {/* Header avec tabs */}
+      <div className={`${darkMode ? 'bg-gray-900' : 'bg-gray-100'} p-4`}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold flex items-center">
+            <span className="mr-2">{nodeType.icon}</span>
+            {selectedNode.data.label || nodeType.name}
+          </h2>
+          <button
+            onClick={() => useWorkflowStore.getState().duplicateNode(selectedNode.id)}
+            className="text-sm px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+          >
+            📋 Dupliquer
+          </button>
+        </div>
+        
+        <div className="flex space-x-1 overflow-x-auto">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-3 py-1 rounded text-sm transition-colors whitespace-nowrap ${
+                activeTab === tab.id 
+                  ? darkMode ? 'bg-blue-600 text-white' : 'bg-blue-500 text-white'
+                  : darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
+              }`}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Expression builder */}
+      {showExpressionBuilder && (
+        <div className={`p-4 ${darkMode ? 'bg-gray-700' : 'bg-yellow-50'} border-b`}>
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-sm">Expression Builder</h3>
+            <button
+              onClick={() => setShowExpressionBuilder(false)}
+              className="text-sm"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <button
+              onClick={() => insertExpression('{{$json}}')}
+              className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              $json
+            </button>
+            <button
+              onClick={() => insertExpression('{{$global.}}')}
+              className="p-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              $global
+            </button>
+            <button
+              onClick={() => insertExpression('{{$env.}}')}
+              className="p-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+            >
+              $env
+            </button>
+            <button
+              onClick={() => insertExpression('{{$node[""].data}}')}
+              className="p-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+            >
+              $node
+            </button>
+            <button
+              onClick={() => insertExpression('{{new Date().toISOString()}}')}
+              className="p-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Date ISO
+            </button>
+            <button
+              onClick={() => insertExpression('{{Math.random()}}')}
+              className="p-2 bg-pink-500 text-white rounded hover:bg-pink-600"
+            >
+              Random
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Contenu des tabs */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {activeTab === 'config' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Nom du nœud</label>
+              <input
+                type="text"
+                className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600' : ''}`}
+                value={selectedNode.data.label || ''}
+                onChange={(e) => updateNode(selectedNode.id, { label: e.target.value })}
+                placeholder={nodeType.name}
+              />
+            </div>
+            
+            {/* Expression builder toggle */}
+            <button
+              onClick={() => setShowExpressionBuilder(!showExpressionBuilder)}
+              className="text-sm text-blue-500 hover:text-blue-600"
+            >
+              {showExpressionBuilder ? '➖' : '➕'} Expression Builder
+            </button>
+            
+            {/* Node-specific configuration */}
+            {renderNodeSpecificConfig(selectedNode.data.type, config, setConfig, darkMode, credentials)}
+            
+            {/* Common settings */}
+            <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-4 rounded-lg space-y-3`}>
+              <h4 className="font-semibold text-sm mb-2">Options avancées</h4>
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={config.continueOnFail || false}
+                  onChange={(e) => setConfig({ ...config, continueOnFail: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm">Continuer en cas d'erreur</span>
+              </label>
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={config.enableCache || false}
+                  onChange={(e) => setConfig({ ...config, enableCache: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm">Activer le cache</span>
+              </label>
+              
+              {config.enableCache && (
+                <div>
+                  <label className="block text-sm mb-1">TTL du cache (ms)</label>
+                  <input
+                    type="number"
+                    className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-600 border-gray-500' : ''}`}
+                    value={config.cacheTTL || 60000}
+                    onChange={(e) => setConfig({ ...config, cacheTTL: parseInt(e.target.value) })}
+                  />
+                </div>
+              )}
+              
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={config.rateLimit?.enabled || false}
+                  onChange={(e) => setConfig({ 
+                    ...config, 
+                    rateLimit: { ...config.rateLimit, enabled: e.target.checked }
+                  })}
+                  className="rounded"
+                />
+                <span className="text-sm">Rate limiting</span>
+              </label>
+              
+              {config.rateLimit?.enabled && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-sm mb-1">Limite</label>
+                    <input
+                      type="number"
+                      className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-600 border-gray-500' : ''}`}
+                      value={config.rateLimit?.limit || 10}
+                      onChange={(e) => setConfig({ 
+                        ...config, 
+                        rateLimit: { ...config.rateLimit, limit: parseInt(e.target.value) }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Fenêtre (ms)</label>
+                    <input
+                      type="number"
+                      className={`w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-600 border-gray-500' : ''}`}
+                      value={config.rateLimit?.window || 60000}
+                      onChange={(e) => setConfig({ 
+                        ...config, 
+                        rateLimit: { ...config.rateLimit, window: parseInt(e.target.value) }
+                      })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Variables disponibles */}
+            <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-100'} p-3 rounded text-xs`}>
+              <h4 className="font-semibold mb-2">Variables disponibles:</h4>
+              <div className="space-y-1 font-mono">
+                <div>{{`{{$json}}`}} - Données du nœud précédent</div>
+                <div>{{`{{$json.field}}`}} - Champ spécifique</div>
+                <div>{{`{{$global.variable}}`}} - Variable globale</div>
+                <div>{{`{{$env.apiUrl}}`}} - Variable d'environnement</div>
+                <div>{{`{{$node["nodeName"].data}}`}} - Données d'un nœud</div>
+                <div>{{`{{new Date().toISOString()}}`}} - Date actuelle</div>
+                <div>$.path.to.data - JSONPath</div>
+              </div>
+            </div>
+            
+            <button
+              onClick={handleSave}
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
+            >
+              💾 Sauvegarder
+            </button>
+          </div>
+        )}
+        
+        {activeTab === 'credentials' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold mb-4">Configuration des identifiants</h3>
+            {renderCredentialsConfig(selectedNode.data.type, credentials, updateCredentials, darkMode)}
+          </div>
+        )}
+        
+        {activeTab === 'test' && (
+          <div className="space-y-4">
+            <h3 className="font-semibold mb-4">Tester le nœud</h3>
+            <div>
+              <label className="block text-sm font-medium mb-1">Données de test (JSON)</label>
+              <textarea
+                className={`w-full px-3 py-2 border rounded-md font-mono text-sm h-32 ${
+                  darkMode ? 'bg-gray-700 border-gray-600' : ''
+                }`}
+                value={testData}
+                onChange={(e) => setTestData(e.target.value)}
+                placeholder='{"test": "data"}'
+              />
+            </div>
+            <button
+              onClick={async () => {
+                try {
+                  const data = JSON.parse(testData);
+                  // Execute test
+                  console.log('Testing node with data:', data);
+                } catch (error) {
+                  alert('Invalid JSON');
+                }
+              }}
+              className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600"
+            >
+              🧪 Exécuter le test
+            </button>
+          </div>
+        )}
+        
+        {activeTab === 'results' && (
+          <div>
+            {nodeError ? (
+              <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+                <strong>❌ Erreur:</strong>
+                <pre className="mt-2 text-xs whitespace-pre-wrap">{nodeError.message}</pre>
+                {nodeError.stack && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-xs">Stack trace</summary>
+                    <pre className="mt-1 text-xs">{nodeError.stack}</pre>
+                  </details>
+                )}
+              </div>
+            ) : nodeResult ? (
+              <div className="bg-green-100 text-green-700 p-3 rounded mb-4">
+                <strong>✅ Succès</strong>
+                <pre className="mt-2 text-xs overflow-x-auto bg-white p-2 rounded">
+                  {JSON.stringify(nodeResult, null, 2)}
+                </pre>
+              </div>
+            ) : (
+              <p className="text-gray-500">Aucun résultat d'exécution</p>
+            )}
+          </div>
+        )}
+        
+        {activeTab === 'help' && (
+          <div className="space-y-4 text-sm">
+            <div>
+              <h3 className="font-semibold mb-2">📖 Description</h3>
+              <p>{getNodeHelp(selectedNode.data.type).description}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">💡 Exemples d'utilisation</h3>
+              <ul className="list-disc list-inside space-y-1">
+                {getNodeHelp(selectedNode.data.type).examples.map((example, i) => (
+                  <li key={i}>{example}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">🎯 Conseils</h3>
+              <ul className="list-disc list-inside space-y-1">
+                {getNodeHelp(selectedNode.data.type).tips.map((tip, i) => (
+                  <li key={i}>{tip}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">🔗 Documentation</h3>
+              <a
+                href={`https://docs.workflow-editor.com/nodes/${selectedNode.data.type}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:text-blue-600"
+              >
+                Voir la documentation complète →
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Render node-specific configuration (extended)
+function renderNodeSpecificConfig(type, config, setConfig, darkMode, credentials) {
+  const inputClass = `w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600' : ''}`;
+  const textareaClass = `${inputClass} font-mono text-sm`;
+  
+  switch (type) {
+    // Google Services
+    case 'googleSheets':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Opération</label>
+            <select
+              className={inputClass}
+              value={config.operation || 'read'}
+              onChange={(e) => setConfig({ ...config, operation: e.target.value })}
+            >
+              <option value="read">Lire</option>
+              <option value="append">Ajouter</option>
+              <option value="update">Mettre à jour</option>
+              <option value="clear">Effacer</option>
+              <option value="batchGet">Lecture multiple</option>
+              <option value="batchUpdate">Mise à jour multiple</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">ID de la feuille</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.spreadsheetId || ''}
+              onChange={(e) => setConfig({ ...config, spreadsheetId: e.target.value })}
+              placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Plage</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.range || ''}
+              onChange={(e) => setConfig({ ...config, range: e.target.value })}
+              placeholder="Sheet1!A1:E10"
+            />
+          </div>
+          {config.operation === 'append' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Valeurs (JSON)</label>
+              <textarea
+                className={`${textareaClass} h-32`}
+                value={config.values || ''}
+                onChange={(e) => setConfig({ ...config, values: e.target.value })}
+                placeholder='[["Name", "Email"], ["John", "john@example.com"]]'
+              />
+            </div>
+          )}
+        </>
+      );
+    
+    case 'openai':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Modèle</label>
+            <select
+              className={inputClass}
+              value={config.model || 'gpt-3.5-turbo'}
+              onChange={(e) => setConfig({ ...config, model: e.target.value })}
+            >
+              <option value="gpt-4">GPT-4</option>
+              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+              <option value="gpt-3.5-turbo-16k">GPT-3.5 Turbo 16K</option>
+              <option value="dall-e-3">DALL-E 3</option>
+              <option value="whisper-1">Whisper</option>
+            </select>
+          </div>
+          {config.model?.includes('dall-e') ? (
+            <div>
+              <label className="block text-sm font-medium mb-1">Prompt d'image</label>
+              <textarea
+                className={`${textareaClass} h-24`}
+                value={config.prompt || ''}
+                onChange={(e) => setConfig({ ...config, prompt: e.target.value })}
+                placeholder="Un chat astronaute sur Mars"
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Prompt système</label>
+                <textarea
+                  className={`${textareaClass} h-24`}
+                  value={config.systemPrompt || ''}
+                  onChange={(e) => setConfig({ ...config, systemPrompt: e.target.value })}
+                  placeholder="Tu es un assistant utile..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Message utilisateur</label>
+                <textarea
+                  className={`${textareaClass} h-24`}
+                  value={config.prompt || ''}
+                  onChange={(e) => setConfig({ ...config, prompt: e.target.value })}
+                  placeholder="{{$json.question}}"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Température</label>
+                  <input
+                    type="number"
+                    className={inputClass}
+                    value={config.temperature || 0.7}
+                    onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) })}
+                    min="0"
+                    max="2"
+                    step="0.1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Max tokens</label>
+                  <input
+                    type="number"
+                    className={inputClass}
+                    value={config.maxTokens || 1000}
+                    onChange={(e) => setConfig({ ...config, maxTokens: parseInt(e.target.value) })}
+                    min="1"
+                    max="4000"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      );
+    
+    case 'stripe':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Action</label>
+            <select
+              className={inputClass}
+              value={config.action || 'charge'}
+              onChange={(e) => setConfig({ ...config, action: e.target.value })}
+            >
+              <option value="charge">Créer un paiement</option>
+              <option value="customer">Créer/Gérer client</option>
+              <option value="subscription">Gérer abonnement</option>
+              <option value="invoice">Créer facture</option>
+              <option value="refund">Remboursement</option>
+              <option value="webhook">Webhook</option>
+            </select>
+          </div>
+          {config.action === 'charge' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Montant (centimes)</label>
+                <input
+                  type="number"
+                  className={inputClass}
+                  value={config.amount || 1000}
+                  onChange={(e) => setConfig({ ...config, amount: parseInt(e.target.value) })}
+                  placeholder="1000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Devise</label>
+                <select
+                  className={inputClass}
+                  value={config.currency || 'usd'}
+                  onChange={(e) => setConfig({ ...config, currency: e.target.value })}
+                >
+                  <option value="usd">USD</option>
+                  <option value="eur">EUR</option>
+                  <option value="gbp">GBP</option>
+                  <option value="jpy">JPY</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.description || ''}
+                  onChange={(e) => setConfig({ ...config, description: e.target.value })}
+                  placeholder="Paiement pour {{$json.product}}"
+                />
+              </div>
+            </>
+          )}
+        </>
+      );
+    
+    case 'github':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Action</label>
+            <select
+              className={inputClass}
+              value={config.action || 'getRepo'}
+              onChange={(e) => setConfig({ ...config, action: e.target.value })}
+            >
+              <optgroup label="Repositories">
+                <option value="getRepo">Obtenir repo</option>
+                <option value="listRepos">Lister repos</option>
+                <option value="createRepo">Créer repo</option>
+              </optgroup>
+              <optgroup label="Issues">
+                <option value="createIssue">Créer issue</option>
+                <option value="updateIssue">Mettre à jour issue</option>
+                <option value="listIssues">Lister issues</option>
+              </optgroup>
+              <optgroup label="Pull Requests">
+                <option value="createPR">Créer PR</option>
+                <option value="mergePR">Merger PR</option>
+                <option value="listPRs">Lister PRs</option>
+              </optgroup>
+              <optgroup label="Files">
+                <option value="getFile">Lire fichier</option>
+                <option value="createFile">Créer fichier</option>
+                <option value="updateFile">Mettre à jour fichier</option>
+              </optgroup>
+              <optgroup label="Actions">
+                <option value="triggerWorkflow">Déclencher workflow</option>
+                <option value="getArtifacts">Obtenir artifacts</option>
+              </optgroup>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Propriétaire</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.owner || ''}
+              onChange={(e) => setConfig({ ...config, owner: e.target.value })}
+              placeholder="octocat"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Repository</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.repo || ''}
+              onChange={(e) => setConfig({ ...config, repo: e.target.value })}
+              placeholder="hello-world"
+            />
+          </div>
+          {(config.action === 'createIssue' || config.action === 'updateIssue') && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Titre</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.title || ''}
+                  onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                  placeholder="Bug: {{$json.error}}"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description</label>
+                <textarea
+                  className={`${textareaClass} h-24`}
+                  value={config.body || ''}
+                  onChange={(e) => setConfig({ ...config, body: e.target.value })}
+                  placeholder="Description détaillée..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Labels (séparés par des virgules)</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.labels || ''}
+                  onChange={(e) => setConfig({ ...config, labels: e.target.value })}
+                  placeholder="bug, urgent, {{$json.category}}"
+                />
+              </div>
+            </>
+          )}
+        </>
+      );
+    
+    case 'telegram':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Action</label>
+            <select
+              className={inputClass}
+              value={config.action || 'sendMessage'}
+              onChange={(e) => setConfig({ ...config, action: e.target.value })}
+            >
+              <option value="sendMessage">Envoyer message</option>
+              <option value="sendPhoto">Envoyer photo</option>
+              <option value="sendDocument">Envoyer document</option>
+              <option value="sendLocation">Envoyer localisation</option>
+              <option value="editMessage">Éditer message</option>
+              <option value="deleteMessage">Supprimer message</option>
+              <option value="getUpdates">Obtenir mises à jour</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Chat ID</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.chatId || ''}
+              onChange={(e) => setConfig({ ...config, chatId: e.target.value })}
+              placeholder="{{$json.chat_id}} ou @username"
+            />
+          </div>
+          {config.action === 'sendMessage' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Message</label>
+                <textarea
+                  className={`${textareaClass} h-24`}
+                  value={config.text || ''}
+                  onChange={(e) => setConfig({ ...config, text: e.target.value })}
+                  placeholder="Hello {{$json.username}}! 👋"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Format</label>
+                <select
+                  className={inputClass}
+                  value={config.parseMode || 'Markdown'}
+                  onChange={(e) => setConfig({ ...config, parseMode: e.target.value })}
+                >
+                  <option value="Markdown">Markdown</option>
+                  <option value="HTML">HTML</option>
+                  <option value="">Texte brut</option>
+                </select>
+              </div>
+              <label className="flex items-center space-x-2 mt-2">
+                <input
+                  type="checkbox"
+                  checked={config.disableNotification || false}
+                  onChange={(e) => setConfig({ ...config, disableNotification: e.target.checked })}
+                />
+                <span className="text-sm">Envoyer silencieusement</span>
+              </label>
+            </>
+          )}
+        </>
+      );
+    
+    case 'mysql':
+    case 'postgres':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Opération</label>
+            <select
+              className={inputClass}
+              value={config.operation || 'select'}
+              onChange={(e) => setConfig({ ...config, operation: e.target.value })}
+            >
+              <option value="select">SELECT</option>
+              <option value="insert">INSERT</option>
+              <option value="update">UPDATE</option>
+              <option value="delete">DELETE</option>
+              <option value="custom">Requête personnalisée</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Table</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.table || ''}
+              onChange={(e) => setConfig({ ...config, table: e.target.value })}
+              placeholder="users"
+            />
+          </div>
+          {config.operation === 'select' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Colonnes (vide = toutes)</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.columns || ''}
+                  onChange={(e) => setConfig({ ...config, columns: e.target.value })}
+                  placeholder="id, name, email"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">WHERE (optionnel)</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.where || ''}
+                  onChange={(e) => setConfig({ ...config, where: e.target.value })}
+                  placeholder="status = 'active' AND created > '{{$json.date}}'"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">ORDER BY (optionnel)</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.orderBy || ''}
+                  onChange={(e) => setConfig({ ...config, orderBy: e.target.value })}
+                  placeholder="created_at DESC"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">LIMIT</label>
+                <input
+                  type="number"
+                  className={inputClass}
+                  value={config.limit || ''}
+                  onChange={(e) => setConfig({ ...config, limit: e.target.value })}
+                  placeholder="100"
+                />
+              </div>
+            </>
+          )}
+          {config.operation === 'insert' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Données (JSON)</label>
+              <textarea
+                className={`${textareaClass} h-32`}
+                value={config.data || ''}
+                onChange={(e) => setConfig({ ...config, data: e.target.value })}
+                placeholder='{"name": "{{$json.name}}", "email": "{{$json.email}}"}'
+              />
+            </div>
+          )}
+          {config.operation === 'custom' && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Requête SQL</label>
+              <textarea
+                className={`${textareaClass} h-32`}
+                value={config.query || ''}
+                onChange={(e) => setConfig({ ...config, query: e.target.value })}
+                placeholder="SELECT * FROM users WHERE email = '{{$json.email}}'"
+              />
+            </div>
+          )}
+        </>
+      );
+    
+    case 's3':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Opération</label>
+            <select
+              className={inputClass}
+              value={config.operation || 'upload'}
+              onChange={(e) => setConfig({ ...config, operation: e.target.value })}
+            >
+              <option value="upload">Upload</option>
+              <option value="download">Download</option>
+              <option value="delete">Delete</option>
+              <option value="list">List</option>
+              <option value="copy">Copy</option>
+              <option value="getUrl">Get Signed URL</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Bucket</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.bucket || ''}
+              onChange={(e) => setConfig({ ...config, bucket: e.target.value })}
+              placeholder="my-bucket"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Key (chemin du fichier)</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.key || ''}
+              onChange={(e) => setConfig({ ...config, key: e.target.value })}
+              placeholder="folder/{{$json.filename}}"
+            />
+          </div>
+          {config.operation === 'upload' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">ACL</label>
+                <select
+                  className={inputClass}
+                  value={config.acl || 'private'}
+                  onChange={(e) => setConfig({ ...config, acl: e.target.value })}
+                >
+                  <option value="private">Private</option>
+                  <option value="public-read">Public Read</option>
+                  <option value="public-read-write">Public Read/Write</option>
+                  <option value="bucket-owner-full-control">Bucket Owner Full Control</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Content Type</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.contentType || ''}
+                  onChange={(e) => setConfig({ ...config, contentType: e.target.value })}
+                  placeholder="image/jpeg"
+                />
+              </div>
+            </>
+          )}
+        </>
+      );
+    
+    case 'notion':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Ressource</label>
+            <select
+              className={inputClass}
+              value={config.resource || 'page'}
+              onChange={(e) => setConfig({ ...config, resource: e.target.value })}
+            >
+              <option value="page">Page</option>
+              <option value="database">Database</option>
+              <option value="block">Block</option>
+              <option value="user">User</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Opération</label>
+            <select
+              className={inputClass}
+              value={config.operation || 'get'}
+              onChange={(e) => setConfig({ ...config, operation: e.target.value })}
+            >
+              <option value="get">Obtenir</option>
+              <option value="create">Créer</option>
+              <option value="update">Mettre à jour</option>
+              <option value="append">Ajouter du contenu</option>
+              <option value="query">Rechercher</option>
+              <option value="archive">Archiver</option>
+            </select>
+          </div>
+          {config.resource === 'database' && config.operation === 'query' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Database ID</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  value={config.databaseId || ''}
+                  onChange={(e) => setConfig({ ...config, databaseId: e.target.value })}
+                  placeholder="32-character-id"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Filtre (JSON)</label>
+                <textarea
+                  className={`${textareaClass} h-24`}
+                  value={config.filter || ''}
+                  onChange={(e) => setConfig({ ...config, filter: e.target.value })}
+                  placeholder='{"property": "Status", "select": {"equals": "Done"}}'
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Tri (JSON)</label>
+                <textarea
+                  className={`${textareaClass} h-20`}
+                  value={config.sort || ''}
+                  onChange={(e) => setConfig({ ...config, sort: e.target.value })}
+                  placeholder='[{"property": "Created", "direction": "descending"}]'
+                />
+              </div>
+            </>
+          )}
+        </>
+      );
+    
+    case 'webhook':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Méthodes HTTP acceptées</label>
+            <div className="space-y-2">
+              {['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map(method => (
+                <label key={method} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={config.methods?.[method] !== false}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      methods: { ...config.methods, [method]: e.target.checked }
+                    })}
+                  />
+                  <span className="text-sm">{method}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">URL du webhook</label>
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                className={`${inputClass} flex-1`}
+                value={config.webhookUrl || ''}
+                readOnly
+                placeholder="URL générée automatiquement"
+              />
+              <button
+                onClick={() => {
+                  const url = useWorkflowStore.getState().generateWebhookUrl('current');
+                  setConfig({ ...config, webhookUrl: url });
+                }}
+                className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Générer
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Réponse (JSON)</label>
+            <textarea
+              className={`${textareaClass} h-24`}
+              value={config.response || ''}
+              onChange={(e) => setConfig({ ...config, response: e.target.value })}
+              placeholder='{"success": true, "message": "Webhook received"}'
+            />
+          </div>
+        </>
+      );
+    
+    case 'schedule':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Expression Cron</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={config.cron || ''}
+              onChange={(e) => setConfig({ ...config, cron: e.target.value })}
+              placeholder="0 9 * * 1-5"
+            />
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            <div>Exemples:</div>
+            <div>• "0 * * * *" - Toutes les heures</div>
+            <div>• "0 9 * * 1-5" - 9h du lundi au vendredi</div>
+            <div>• "*/15 * * * *" - Toutes les 15 minutes</div>
+            <div>• "0 0 1 * *" - Premier jour du mois à minuit</div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1 mt-3">Fuseau horaire</label>
+            <select
+              className={inputClass}
+              value={config.timezone || 'UTC'}
+              onChange={(e) => setConfig({ ...config, timezone: e.target.value })}
+            >
+              <option value="UTC">UTC</option>
+              <option value="Europe/Paris">Europe/Paris</option>
+              <option value="America/New_York">America/New_York</option>
+              <option value="Asia/Tokyo">Asia/Tokyo</option>
+              <option value="Australia/Sydney">Australia/Sydney</option>
+            </select>
+          </div>
+          <label className="flex items-center space-x-2 mt-3">
+            <input
+              type="checkbox"
+              checked={config.enabled !== false}
+              onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
+            />
+            <span className="text-sm">Activer le schedule</span>
+          </label>
+        </>
+      );
+    
+    case 'subworkflow':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Workflow à exécuter</label>
+            <select
+              className={inputClass}
+              value={config.workflowId || ''}
+              onChange={(e) => setConfig({ ...config, workflowId: e.target.value })}
+            >
+              <option value="">-- Sélectionner un workflow --</option>
+              {Object.values(useWorkflowStore.getState().workflows).map(workflow => (
+                <option key={workflow.id} value={workflow.id}>
+                  {workflow.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Données d'entrée</label>
+            <textarea
+              className={`${textareaClass} h-24`}
+              value={config.inputData || ''}
+              onChange={(e) => setConfig({ ...config, inputData: e.target.value })}
+              placeholder="{{$json}}"
+            />
+          </div>
+          <label className="flex items-center space-x-2 mt-2">
+            <input
+              type="checkbox"
+              checked={config.waitForCompletion !== false}
+              onChange={(e) => setConfig({ ...config, waitForCompletion: e.target.checked })}
+            />
+            <span className="text-sm">Attendre la fin de l'exécution</span>
+          </label>
+        </>
+      );
+    
+    // Default cases
+    default:
+      return renderDefaultNodeConfig(type, config, setConfig, darkMode);
+  }
+}
+
+// Default node configuration (existing nodes)
+function renderDefaultNodeConfig(type, config, setConfig, darkMode) {
+  const inputClass = `w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600' : ''}`;
+  const textareaClass = `${inputClass} font-mono text-sm`;
+  
+  // Return specific configurations based on type
+  // ... (previous default configurations)
+  
+  return null;
+}
+
+// Credentials configuration
+function renderCredentialsConfig(type, credentials, updateCredentials, darkMode) {
+  const inputClass = `w-full px-3 py-2 border rounded-md ${darkMode ? 'bg-gray-700 border-gray-600' : ''}`;
+  
+  const credentialTypes = {
+    googleSheets: 'google',
+    googleDrive: 'google',
+    googleCalendar: 'google',
+    openai: 'openai',
+    stripe: 'stripe',
+    github: 'github',
+    s3: 'aws',
+    lambda: 'aws',
+  };
+  
+  const credType = credentialTypes[type];
+  if (!credType) {
+    return <p className="text-gray-500">Aucune authentification requise pour ce nœud.</p>;
+  }
+  
+  switch (credType) {
+    case 'google':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Client ID</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={credentials.google?.clientId || ''}
+              onChange={(e) => updateCredentials('google', { clientId: e.target.value })}
+              placeholder="xxxxx.apps.googleusercontent.com"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Client Secret</label>
+            <input
+              type="password"
+              className={inputClass}
+              value={credentials.google?.clientSecret || ''}
+              onChange={(e) => updateCredentials('google', { clientSecret: e.target.value })}
+              placeholder="GOCSPX-xxxxx"
+            />
+          </div>
+          <button className="w-full mt-2 bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+            🔐 Connecter avec Google OAuth
+          </button>
+        </>
+      );
+    
+    case 'openai':
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-1">API Key</label>
+          <input
+            type="password"
+            className={inputClass}
+            value={credentials.openai?.apiKey || ''}
+            onChange={(e) => updateCredentials('openai', { apiKey: e.target.value })}
+            placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Obtenez votre clé API sur platform.openai.com
+          </p>
+        </div>
+      );
+    
+    case 'stripe':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Secret Key</label>
+            <input
+              type="password"
+              className={inputClass}
+              value={credentials.stripe?.apiKey || ''}
+              onChange={(e) => updateCredentials('stripe', { apiKey: e.target.value })}
+              placeholder="sk_live_xxxxxxxxxxxxxxxxxxxxxxxx"
+            />
+          </div>
+          <label className="flex items-center space-x-2 mt-2">
+            <input
+              type="checkbox"
+              checked={credentials.stripe?.testMode || false}
+              onChange={(e) => updateCredentials('stripe', { testMode: e.target.checked })}
+            />
+            <span className="text-sm">Mode test</span>
+          </label>
+        </>
+      );
+    
+    case 'github':
+      return (
+        <div>
+          <label className="block text-sm font-medium mb-1">Personal Access Token</label>
+          <input
+            type="password"
+            className={inputClass}
+            value={credentials.github?.token || ''}
+            onChange={(e) => updateCredentials('github', { token: e.target.value })}
+            placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Créez un token sur github.com/settings/tokens
+          </p>
+        </div>
+      );
+    
+    case 'aws':
+      return (
+        <>
+          <div>
+            <label className="block text-sm font-medium mb-1">Access Key ID</label>
+            <input
+              type="text"
+              className={inputClass}
+              value={credentials.aws?.accessKeyId || ''}
+              onChange={(e) => updateCredentials('aws', { accessKeyId: e.target.value })}
+              placeholder="AKIAIOSFODNN7EXAMPLE"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Secret Access Key</label>
+            <input
+              type="password"
+              className={inputClass}
+              value={credentials.aws?.secretAccessKey || ''}
+              onChange={(e) => updateCredentials('aws', { secretAccessKey: e.target.value })}
+              placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Region</label>
+            <select
+              className={inputClass}
+              value={credentials.aws?.region || 'us-east-1'}
+              onChange={(e) => updateCredentials('aws', { region: e.target.value })}
+            >
+              <option value="us-east-1">US East (N. Virginia)</option>
+              <option value="us-west-2">US West (Oregon)</option>
+              <option value="eu-west-1">EU (Ireland)</option>
+              <option value="eu-central-1">EU (Frankfurt)</option>
+              <option value="ap-southeast-1">Asia Pacific (Singapore)</option>
+            </select>
+          </div>
+        </>
+      );
+    
+    default:
+      return null;
+  }
+}
+
+// Help content for nodes
+function getNodeHelp(type) {
+  const helps = {
+    googleSheets: {
+      description: "Intégration complète avec Google Sheets pour lire, écrire et manipuler des feuilles de calcul.",
+      examples: [
+        "Importer des données depuis un formulaire",
+        "Exporter des résultats vers une feuille de calcul",
+        "Synchroniser des données entre systèmes",
+        "Créer des rapports automatiques"
+      ],
+      tips: [
+        "Utilisez l'API v4 pour de meilleures performances",
+        "Les plages peuvent être dynamiques avec {{$json.range}}",
+        "Activez le cache pour les lectures fréquentes",
+        "Utilisez batchUpdate pour plusieurs modifications"
+      ]
+    },
+    openai: {
+      description: "Utilisez les modèles GPT d'OpenAI pour générer du texte, analyser des données, créer des images avec DALL-E, et plus.",
+      examples: [
+        "Générer des descriptions de produits",
+        "Analyser le sentiment d'avis clients",
+        "Créer des images pour les réseaux sociaux",
+        "Résumer des documents longs",
+        "Traduire du contenu automatiquement"
+      ],
+      tips: [
+        "Ajustez la température pour contrôler la créativité",
+        "Utilisez des prompts structurés pour de meilleurs résultats",
+        "Attention aux limites de tokens selon le modèle",
+        "Combinez avec d'autres nœuds pour des workflows AI puissants"
+      ]
+    },
+    stripe: {
+      description: "Gestion complète des paiements, abonnements, clients et factures avec Stripe.",
+      examples: [
+        "Automatiser la facturation récurrente",
+        "Gérer les échecs de paiement",
+        "Synchroniser les clients avec votre CRM",
+        "Créer des rapports financiers",
+        "Gérer les remboursements automatiquement"
+      ],
+      tips: [
+        "Utilisez les webhooks pour une synchronisation temps réel",
+        "Testez toujours en mode test avant la production",
+        "Implementez la gestion d'erreur pour les paiements",
+        "Stockez les IDs Stripe dans votre base de données"
+      ]
+    },
+    github: {
+      description: "Automatisez vos workflows de développement avec l'API GitHub complète.",
+      examples: [
+        "Créer des issues depuis des formulaires",
+        "Automatiser les revues de code",
+        "Synchroniser la documentation",
+        "Gérer les releases automatiquement",
+        "Intégrer avec votre CI/CD"
+      ],
+      tips: [
+        "Utilisez les webhooks pour réagir aux événements",
+        "Les GitHub Actions peuvent déclencher vos workflows",
+        "Respectez les limites de taux de l'API",
+        "Utilisez GraphQL pour des requêtes complexes"
+      ]
+    },
+    slack: {
+      description: "Envoyez des messages, créez des canaux, et interagissez avec votre équipe Slack.",
+      examples: [
+        "Notifications d'alertes système",
+        "Rapports quotidiens automatiques",
+        "Intégration avec le support client",
+        "Notifications de déploiement",
+        "Sondages et collecte de feedback"
+      ],
+      tips: [
+        "Utilisez les blocks pour des messages riches",
+        "Les threads permettent d'organiser les conversations",
+        "Attention aux limites de taux par workspace",
+        "Les boutons interactifs nécessitent un endpoint"
+      ]
+    },
+    webhook: {
+      description: "Déclenchez vos workflows via des requêtes HTTP externes.",
+      examples: [
+        "Recevoir des données de formulaires",
+        "Intégrer avec des services tiers",
+        "Créer des APIs personnalisées",
+        "Webhooks de paiement",
+        "Notifications en temps réel"
+      ],
+      tips: [
+        "Sécurisez avec des signatures HMAC",
+        "Validez toujours les données entrantes",
+        "Utilisez HTTPS en production",
+        "Implémentez des retry en cas d'échec"
+      ]
+    },
+    mysql: {
+      description: "Opérations complètes sur bases de données MySQL avec requêtes paramétrées.",
+      examples: [
+        "Import/Export de données",
+        "Synchronisation bi-directionnelle",
+        "Rapports et analytics",
+        "Migrations de données",
+        "Sauvegardes automatiques"
+      ],
+      tips: [
+        "Utilisez des transactions pour la cohérence",
+        "Paramétrez les requêtes contre les injections SQL",
+        "Optimisez avec des index appropriés",
+        "Pooling de connexions pour la performance"
+      ]
+    },
+    s3: {
+      description: "Stockage d'objets scalable avec AWS S3 pour fichiers et médias.",
+      examples: [
+        "Backup automatique de fichiers",
+        "Hébergement d'assets statiques",
+        "Archivage de documents",
+        "Distribution de contenu",
+        "Stockage de logs"
+      ],
+      tips: [
+        "Utilisez les classes de stockage appropriées",
+        "Configurez les lifecycle policies",
+        "Les presigned URLs pour l'accès temporaire",
+        "Activez le versioning pour l'historique"
+      ]
+    },
+    telegram: {
+      description: "Bot Telegram complet pour messagerie, notifications et interactions.",
+      examples: [
+        "Bot de support client",
+        "Notifications personnalisées",
+        "Collecte de données via bot",
+        "Alertes de monitoring",
+        "Distribution de contenu"
+      ],
+      tips: [
+        "Les inline keyboards pour l'interactivité",
+        "Gérez les commandes avec /start, /help",
+        "Utilisez les groupes pour la diffusion",
+        "Rate limits: 30 messages/seconde"
+      ]
+    },
+    schedule: {
+      description: "Exécutez vos workflows automatiquement selon un planning défini.",
+      examples: [
+        "Rapports quotidiens à 9h",
+        "Sauvegardes nocturnes",
+        "Synchronisation horaire",
+        "Nettoyage hebdomadaire",
+        "Alertes mensuelles"
+      ],
+      tips: [
+        "Testez vos expressions cron sur crontab.guru",
+        "Considérez les fuseaux horaires",
+        "Évitez les heures de pointe",
+        "Monitorer les exécutions manquées"
+      ]
+    },
+    notion: {
+      description: "Intégration complète avec Notion pour gérer pages, bases de données et contenu.",
+      examples: [
+        "Créer des tâches depuis des emails",
+        "Synchroniser avec d'autres outils",
+        "Générer des rapports de projet",
+        "Archiver automatiquement du contenu"
+      ],
+      tips: [
+        "L'API a des limites de taux strictes",
+        "Les relations entre bases sont supportées",
+        "Utilisez les filtres pour optimiser les requêtes",
+        "Les blocs ont une structure hiérarchique"
+      ]
+    },
+    discord: {
+      description: "Bot Discord pour automatiser les interactions avec votre serveur.",
+      examples: [
+        "Bot de modération automatique",
+        "Notifications de stream/événements",
+        "Gestion des rôles automatique",
+        "Statistiques de serveur",
+        "Intégration avec des jeux"
+      ],
+      tips: [
+        "Les embeds pour des messages riches",
+        "Slash commands pour l'interactivité",
+        "Webhooks pour les messages simples",
+        "Respectez les limites de l'API Discord"
+      ]
+    },
+    subworkflow: {
+      description: "Exécutez d'autres workflows comme des sous-routines réutilisables.",
+      examples: [
+        "Workflows de validation communes",
+        "Processus d'authentification partagés",
+        "Routines de nettoyage de données",
+        "Templates de notifications",
+        "Logique métier réutilisable"
+      ],
+      tips: [
+        "Évitez les boucles infinies entre workflows",
+        "Passez des paramètres structurés",
+        "Gérez les erreurs du sous-workflow",
+        "Documentez les entrées/sorties attendues"
+      ]
+    },
+    // Ajouter plus d'aides selon les besoins
+    default: {
+      description: "Nœud de workflow standard.",
+      examples: ["Utilisation basique"],
+      tips: ["Configurez selon vos besoins"]
+    }
+  };
+  
+  return helps[type] || helps.default;
+}
+
+// Sidebar ultra-complète avec marketplace
+const NodeSidebar = () => {
+  const { 
+    saveWorkflow, 
+    exportWorkflow,
+    importWorkflow,
+    isExecuting,
+    workflows,
+    workflowTemplates,
+    loadWorkflow,
+    darkMode 
+  } = useWorkflowStore();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showWorkflows, setShowWorkflows] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
+  const [activeView, setActiveView] = useState('nodes'); // nodes, workflows, templates, marketplace
+  
+  const filteredNodes = Object.entries(nodeTypes).filter(([key, node]) => {
+    if (selectedCategory !== 'all' && node.category !== selectedCategory) return false;
+    if (searchTerm && !node.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
+  
+  const onDragStart = (event, nodeType) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+  
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      importWorkflow(file);
+    }
+  };
+  
+  return (
+    <div className={`absolute left-0 top-0 h-full w-80 ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} shadow-lg overflow-hidden flex flex-col`}>
+      {/* Header avec tabs */}
+      <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} border-b`}>
+        <div className="flex">
+          {[
+            { id: 'nodes', name: '🔧 Nœuds', icon: '🔧' },
+            { id: 'workflows', name: '📁 Workflows', icon: '📁' },
+            { id: 'templates', name: '📋 Templates', icon: '📋' },
+            { id: 'marketplace', name: '🛒 Marketplace', icon: '🛒' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveView(tab.id)}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                activeView === tab.id
+                  ? darkMode 
+                    ? 'bg-blue-600 text-white border-b-2 border-blue-400' 
+                    : 'bg-blue-50 text-blue-600 border-b-2 border-blue-500'
+                  : darkMode
+                    ? 'text-gray-300 hover:bg-gray-700'
+                    : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {tab.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      {/* Vue Nœuds */}
+      {activeView === 'nodes' && (
+        <>
+          {/* Actions rapides */}
+          <div className={`p-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-b space-y-2`}>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => saveWorkflow()}
+                disabled={isExecuting}
+                className="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600 disabled:opacity-50 text-sm flex items-center justify-center"
+              >
+                💾 Sauvegarder
+              </button>
+              <button
+                onClick={exportWorkflow}
+                disabled={isExecuting}
+                className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 disabled:opacity-50 text-sm flex items-center justify-center"
+              >
+                📤 Exporter
+              </button>
+            </div>
+            <label className="block">
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleFileUpload}
+                disabled={isExecuting}
+                className="hidden"
+              />
+              <div className="w-full bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600 cursor-pointer text-center text-sm">
+                📁 Importer un workflow
+              </div>
+            </label>
+          </div>
+          
+          {/* Recherche et filtres */}
+          <div className={`p-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} border-b space-y-3`}>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Rechercher un nœud..."
+                className={`w-full pl-10 pr-3 py-2 rounded border text-sm ${
+                  darkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-gray-50 border-gray-300'
+                }`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
+            </div>
+            
+            <select
+              className={`w-full px-3 py-2 rounded border text-sm ${
+                darkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-gray-50 border-gray-300'
+              }`}
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="all">🌐 Toutes les catégories</option>
+              {Object.entries(nodeCategories).map(([key, cat]) => (
+                <option key={key} value={key}>
+                  {cat.icon} {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          {/* Liste des nœuds */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {selectedCategory === 'all' ? (
+              // Vue par catégories
+              Object.entries(nodeCategories).map(([catKey, category]) => {
+                const categoryNodes = filteredNodes.filter(([_, node]) => node.category === catKey);
+                if (categoryNodes.length === 0) return null;
+                
+                return (
+                  <div key={catKey} className="mb-6">
+                    <h3 className={`font-semibold text-sm mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {category.icon} {category.name}
+                    </h3>
+                    <div className="space-y-2">
+                      {categoryNodes.map(([key, node]) => (
+                        <div
+                          key={key}
+                          className={`${node.color} text-white p-3 rounded-lg cursor-move hover:opacity-90 transition-all hover:scale-105 transform shadow-sm`}
+                          onDragStart={(event) => onDragStart(event, key)}
+                          draggable
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <span className="text-xl mr-2">{node.icon}</span>
+                              <span className="font-medium text-sm">{node.name}</span>
+                            </div>
+                            <span className="text-xs opacity-75">
+                              {node.inputs}→{node.outputs}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              // Vue filtrée
+              <div className="space-y-2">
+                {filteredNodes.map(([key, node]) => (
+                  <div
+                    key={key}
+                    className={`${node.color} text-white p-3 rounded-lg cursor-move hover:opacity-90 transition-all hover:scale-105 transform shadow-sm`}
+                    onDragStart={(event) => onDragStart(event, key)}
+                    draggable
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        <span className="text-xl mr-2">{node.icon}</span>
+                        <span className="font-medium text-sm">{node.name}</span>
+                      </div>
+                      <span className="text-xs opacity-75">
+                        {node.inputs}→{node.outputs}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+      
+      {/* Vue Workflows */}
+      {activeView === 'workflows' && (
+        <div className="flex-1 overflow-y-auto p-4">
+          <h3 className="font-semibold mb-4">Mes Workflows ({Object.keys(workflows).length})</h3>
+          <div className="space-y-2">
+            {Object.values(workflows).map(workflow => (
+              <div
+                key={workflow.id}
+                className={`p-4 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                  darkMode 
+                    ? 'bg-gray-800 hover:bg-gray-700' 
+                    : 'bg-white hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold">{workflow.name}</h4>
+                    <p className="text-xs opacity-75 mt-1">
+                      {workflow.nodes?.length || 0} nœuds • 
+                      Modifié {new Date(workflow.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => loadWorkflow(workflow.id)}
+                      className="text-blue-500 hover:text-blue-600 text-sm"
+                    >
+                      📂
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Supprimer ce workflow ?')) {
+                          // Delete workflow
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-600 text-sm"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+                {workflow.description && (
+                  <p className="text-sm opacity-75 mt-2">{workflow.description}</p>
+                )}
+                {workflow.tags && workflow.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {workflow.tags.map(tag => (
+                      <span
+                        key={tag}
+                        className={`text-xs px-2 py-1 rounded ${
+                          darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                        }`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Vue Templates */}
+      {activeView === 'templates' && (
+        <div className="flex-1 overflow-y-auto p-4">
+          <h3 className="font-semibold mb-4">Templates prédéfinis</h3>
+          <div className="space-y-3">
+            {Object.entries(workflowTemplates).map(([key, template]) => (
+              <div
+                key={key}
+                className={`p-4 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+                  darkMode 
+                    ? 'bg-gray-800 hover:bg-gray-700' 
+                    : 'bg-white hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold">{template.name}</h4>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    darkMode ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {template.category}
+                  </span>
+                </div>
+                <p className="text-sm opacity-75 mb-3">{template.description}</p>
+                <button
+                  onClick={() => {
+                    // Load template
+                    console.log('Loading template:', key);
+                  }}
+                  className="w-full bg-blue-500 text-white py-2 rounded text-sm hover:bg-blue-600"
+                >
+                  Utiliser ce template
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      
+      {/* Vue Marketplace */}
+      {activeView === 'marketplace' && (
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="mb-4">
+            <h3 className="font-semibold mb-2">🛒 Marketplace Communautaire</h3>
+            <p className="text-sm opacity-75">
+              Découvrez et partagez des workflows avec la communauté
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            {/* Exemples de workflows marketplace */}
+            {[
+              {
+                name: "CRM Automation Suite",
+                author: "John Doe",
+                rating: 4.8,
+                downloads: 1234,
+                description: "Automatisation complète pour Salesforce + HubSpot",
+                price: "Gratuit"
+              },
+              {
+                name: "E-commerce Analytics",
+                author: "Jane Smith",
+                rating: 4.9,
+                downloads: 892,
+                description: "Dashboard temps réel Shopify + Google Analytics",
+                price: "Premium"
+              },
+              {
+                name: "Social Media Manager",
+                author: "Marketing Pro",
+                rating: 4.7,
+                downloads: 2341,
+                description: "Publication multi-plateformes avec IA",
+                price: "Gratuit"
+              }
+            ].map((item, index) => (
+              <div
+                key={index}
+                className={`p-4 rounded-lg transition-all hover:shadow-md ${
+                  darkMode 
+                    ? 'bg-gray-800 hover:bg-gray-700' 
+                    : 'bg-white hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h4 className="font-semibold">{item.name}</h4>
+                    <p className="text-xs opacity-75">par {item.author}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded ${
+                    item.price === 'Gratuit'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-purple-500 text-white'
+                  }`}>
+                    {item.price}
+                  </span>
+                </div>
+                <p className="text-sm opacity-75 mb-2">{item.description}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3 text-xs">
+                    <span>⭐ {item.rating}</span>
+                    <span>⬇️ {item.downloads}</span>
+                  </div>
+                  <button className="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                    Installer →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-6 text-center">
+            <button className="text-blue-500 hover:text-blue-600 text-sm">
+              Voir plus sur le marketplace →
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Footer avec infos */}
+      <div className={`p-4 ${darkMode ? 'bg-gray-800' : 'bg-gray-200'} text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} border-t`}>
+        <div className="mb-2 font-semibold">💡 Conseil du jour</div>
+        <p className="leading-relaxed">
+          Utilisez Ctrl+Clic pour sélectionner plusieurs nœuds et les déplacer ensemble.
+        </p>
+        <div className="mt-3 space-y-1">
+          <p>📖 <a href="#" className="text-blue-500 hover:underline">Documentation</a></p>
+          <p>🎓 <a href="#" className="text-blue-500 hover:underline">Tutoriels vidéo</a></p>
+          <p>💬 <a href="#" className="text-blue-500 hover:underline">Communauté Discord</a></p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Dashboard de monitoring avancé
+const MonitoringDashboard = ({ onClose }) => {
+  const { 
+    executionHistory, 
+    executionStats, 
+    executionLogs,
+    searchLogs,
+    darkMode 
+  } = useWorkflowStore();
+  
+  const [activeTab, setActiveTab] = useState('overview');
+  const [logSearch, setLogSearch] = useState('');
+  const [logFilter, setLogFilter] = useState('all');
+  const [dateRange, setDateRange] = useState('today');
+  
+  const filteredLogs = useMemo(() => {
+    let logs = executionLogs;
+    
+    if (logSearch) {
+      logs = searchLogs(logSearch);
+    }
+    
+    if (logFilter !== 'all') {
+      logs = logs.filter(log => log.level === logFilter);
+    }
+    
+    return logs;
+  }, [executionLogs, logSearch, logFilter, searchLogs]);
+  
+  // Calcul des statistiques par période
+  const getStatsByPeriod = () => {
+    const now = new Date();
+    const ranges = {
+      today: now.setHours(0, 0, 0, 0),
+      week: now.setDate(now.getDate() - 7),
+      month: now.setMonth(now.getMonth() - 1)
+    };
+    
+    const cutoff = ranges[dateRange] || ranges.today;
+    
+    return executionHistory.filter(exec => 
+      new Date(exec.timestamp).getTime() > cutoff
+    );
+  };
+  
+  const periodStats = getStatsByPeriod();
+  
+  return (
+    <div className={`fixed inset-0 ${darkMode ? 'bg-gray-900 bg-opacity-95' : 'bg-white bg-opacity-95'} z-50 overflow-hidden`}>
+      <div className={`absolute inset-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-2xl flex flex-col`}>
+        {/* Header */}
+        <div className={`p-6 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b flex items-center justify-between`}>
+          <div>
+            <h2 className="text-2xl font-bold">📊 Centre de Monitoring</h2>
+            <p className="text-sm opacity-75 mt-1">Analysez les performances de vos workflows</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-2xl hover:opacity-75 transition-opacity"
+          >
+            ✕
+          </button>
+        </div>
+        
+        {/* Tabs */}
+        <div className={`flex border-b ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+          {[
+            { id: 'overview', name: 'Vue d\'ensemble', icon: '📈' },
+            { id: 'history', name: 'Historique', icon: '📜' },
+            { id: 'logs', name: 'Logs', icon: '📝' },
+            { id: 'analytics', name: 'Analytics', icon: '📊' },
+            { id: 'alerts', name: 'Alertes', icon: '🚨' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
+                activeTab === tab.id
+                  ? darkMode 
+                    ? 'bg-gray-700 text-white border-b-2 border-blue-500' 
+                    : 'bg-white text-blue-600 border-b-2 border-blue-500'
+                  : darkMode
+                    ? 'text-gray-400 hover:bg-gray-700'
+                    : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {tab.icon} {tab.name}
+            </button>
+          ))}
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeTab === 'overview' && (
+            <div>
+              {/* Période selector */}
+              <div className="mb-6 flex justify-end">
+                <select
+                  className={`px-4 py-2 rounded border text-sm ${
+                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
+                  }`}
+                  value={dateRange}
+                  onChange={(e) => setDateRange(e.target.value)}
+                >
+                  <option value="today">Aujourd'hui</option>
+                  <option value="week">7 derniers jours</option>
+                  <option value="month">30 derniers jours</option>
+                  <option value="all">Tout</option>
+                </select>
+              </div>
+              
+              {/* Statistiques principales */}
+              <div className="grid grid-cols-4 gap-6 mb-8">
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-blue-50'} p-6 rounded-lg`}>
+                  <div className="text-3xl font-bold text-blue-500">
+                    {periodStats.length}
+                  </div>
+                  <div className="text-sm opacity-75 mt-1">Exécutions</div>
+                  <div className="text-xs opacity-50 mt-2">
+                    {executionStats.totalExecutions} au total
+                  </div>
+                </div>
+                
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-green-50'} p-6 rounded-lg`}>
+                  <div className="text-3xl font-bold text-green-500">
+                    {periodStats.filter(e => e.status === 'success').length}
+                  </div>
+                  <div className="text-sm opacity-75 mt-1">Succès</div>
+                  <div className="text-xs opacity-50 mt-2">
+                    {executionStats.totalExecutions > 0 
+                      ? Math.round((executionStats.successfulExecutions / executionStats.totalExecutions) * 100)
+                      : 0}% taux de réussite
+                  </div>
+                </div>
+                
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-red-50'} p-6 rounded-lg`}>
+                  <div className="text-3xl font-bold text-red-500">
+                    {periodStats.filter(e => e.status === 'error').length}
+                  </div>
+                  <div className="text-sm opacity-75 mt-1">Échecs</div>
+                  <div className="text-xs opacity-50 mt-2">
+                    {Object.keys(executionStats.errorStats || {}).length} types d'erreurs
+                  </div>
+                </div>
+                
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-purple-50'} p-6 rounded-lg`}>
+                  <div className="text-3xl font-bold text-purple-500">
+                    {Math.round(executionStats.averageExecutionTime)}ms
+                  </div>
+                  <div className="text-sm opacity-75 mt-1">Temps moyen</div>
+                  <div className="text-xs opacity-50 mt-2">
+                    Par exécution
+                  </div>
+                </div>
+              </div>
+              
+              {/* Graphiques (placeholder) */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
+                  <h3 className="font-semibold mb-4">📈 Tendance des exécutions</h3>
+                  <div className="h-48 flex items-center justify-center text-gray-500">
+                    [Graphique en ligne des exécutions]
+                  </div>
+                </div>
+                
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
+                  <h3 className="font-semibold mb-4">🥧 Répartition par statut</h3>
+                  <div className="h-48 flex items-center justify-center text-gray-500">
+                    [Graphique camembert succès/échecs]
+                  </div>
+                </div>
+              </div>
+              
+              {/* Top workflows */}
+              <div className={`mt-6 ${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
+                <h3 className="font-semibold mb-4">🏆 Workflows les plus actifs</h3>
+                <div className="space-y-2">
+                  {/* Simuler des données */}
+                  {[
+                    { name: "Sync CRM", executions: 142, success: 98 },
+                    { name: "Email automation", executions: 89, success: 95 },
+                    { name: "Data backup", executions: 56, success: 100 }
+                  ].map((workflow, i) => (
+                    <div key={i} className="flex items-center justify-between py-2">
+                      <div>
+                        <div className="font-medium">{workflow.name}</div>
+                        <div className="text-xs opacity-75">
+                          {workflow.executions} exécutions
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-sm font-medium ${
+                          workflow.success >= 95 ? 'text-green-500' : 'text-yellow-500'
+                        }`}>
+                          {workflow.success}% succès
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeTab === 'history' && (
+            <div className="space-y-3">
+              {executionHistory.slice(0, 50).map((execution, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg flex items-center justify-between ${
+                    darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <span className={`text-2xl mr-3 ${
+                      execution.status === 'success' ? 'text-green-500' : 'text-red-500'
+                    }`}>
+                      {execution.status === 'success' ? '✅' : '❌'}
+                    </span>
+                    <div>
+                      <div className="font-semibold">
+                        Workflow #{execution.workflowId?.slice(-6) || 'Manuel'}
+                      </div>
+                      <div className="text-sm opacity-75">
+                        {new Date(execution.timestamp).toLocaleString()}
+                      </div>
+                      {execution.errors?.length > 0 && (
+                        <div className="text-xs text-red-500 mt-1">
+                          {execution.errors.length} erreur(s)
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-semibold">{execution.duration}ms</div>
+                    <div className="text-sm opacity-75">
+                      {execution.nodesExecuted} nœuds
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {activeTab === 'logs' && (
+            <div>
+              {/* Filtres de logs */}
+              <div className="mb-4 flex space-x-4">
+                <input
+                  type="text"
+                  placeholder="Rechercher dans les logs..."
+                  className={`flex-1 px-4 py-2 rounded border ${
+                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
+                  }`}
+                  value={logSearch}
+                  onChange={(e) => setLogSearch(e.target.value)}
+                />
+                <select
+                  className={`px-4 py-2 rounded border ${
+                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-300'
+                  }`}
+                  value={logFilter}
+                  onChange={(e) => setLogFilter(e.target.value)}
+                >
+                  <option value="all">Tous les niveaux</option>
+                  <option value="info">Info</option>
+                  <option value="warn">Warning</option>
+                  <option value="error">Error</option>
+                </select>
+              </div>
+              
+              {/* Liste des logs */}
+              <div className="space-y-2 font-mono text-sm">
+                {filteredLogs.slice(0, 100).map((log, index) => (
+                  <div
+                    key={log.id || index}
+                    className={`p-3 rounded ${
+                      darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-start">
+                      <span className={`mr-2 ${
+                        log.level === 'error' ? 'text-red-500' :
+                        log.level === 'warn' ? 'text-yellow-500' :
+                        'text-blue-500'
+                      }`}>
+                        [{log.level.toUpperCase()}]
+                      </span>
+                      <div className="flex-1">
+                        <div>{log.message}</div>
+                        {log.data && Object.keys(log.data).length > 0 && (
+                          <pre className="text-xs opacity-75 mt-1">
+                            {JSON.stringify(log.data, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                      <span className="text-xs opacity-50 ml-4">
+                        {new Date(log.timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {activeTab === 'analytics' && (
+            <div>
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
+                  <h3 className="font-semibold mb-4">📊 Performance par heure</h3>
+                  <div className="h-48 flex items-center justify-center text-gray-500">
+                    [Heatmap des exécutions par heure]
+                  </div>
+                </div>
+                
+                <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
+                  <h3 className="font-semibold mb-4">⚡ Temps d'exécution par nœud</h3>
+                  <div className="h-48 flex items-center justify-center text-gray-500">
+                    [Graphique barres horizontales]
+                  </div>
+                </div>
+              </div>
+              
+              {/* Métriques détaillées */}
+              <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
+                <h3 className="font-semibold mb-4">📈 Métriques détaillées</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {executionStats.totalExecutions || 0}
+                    </div>
+                    <div className="text-sm opacity-75">Exécutions totales</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {Object.keys(useWorkflowStore.getState().workflows).length}
+                    </div>
+                    <div className="text-sm opacity-75">Workflows actifs</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">
+                      {Object.keys(nodeTypes).length}
+                    </div>
+                    <div className="text-sm opacity-75">Types de nœuds</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {activeTab === 'alerts' && (
+            <div>
+              <div className="mb-6">
+                <h3 className="font-semibold mb-4">🚨 Configuration des alertes</h3>
+                <div className="space-y-4">
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      defaultChecked
+                      className="rounded"
+                    />
+                    <span>Alerter en cas d'échec de workflow</span>
+                  </label>
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                    />
+                    <span>Alerter si le temps d'exécution dépasse 5 minutes</span>
+                  </label>
+                  <label className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      className="rounded"
+                    />
+                    <span>Rapport quotidien des performances</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg`}>
+                <h3 className="font-semibold mb-4">📧 Destinations des alertes</h3>
+                <div className="space-y-3">
+                  <input
+                    type="email"
+                    placeholder="Email pour les alertes"
+                    className={`w-full px-4 py-2 rounded border ${
+                      darkMode ? 'bg-gray-600 border-gray-500' : 'bg-white border-gray-300'
+                    }`}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Webhook Slack/Discord"
+                    className={`w-full px-4 py-2 rounded border ${
+                      darkMode ? 'bg-gray-600 border-gray-500' : 'bg-white border-gray-300'
+                    }`}
+                  />
+                  <button className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
+                    Sauvegarder la configuration
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Panel de collaboration
+const CollaborationPanel = ({ onClose }) => {
+  const { collaborators, addCollaborator, darkMode } = useWorkflowStore();
+  const [email, setEmail] = useState('');
+  const [permissions, setPermissions] = useState('viewer');
+  
+  return (
+    <div className={`absolute inset-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-2xl p-6 overflow-auto z-50 max-w-2xl mx-auto`}>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">👥 Collaboration</h2>
+        <button onClick={onClose} className="text-2xl hover:opacity-75">✕</button>
+      </div>
+      
+      {/* Ajouter un collaborateur */}
+      <div className="mb-6">
+        <h3 className="font-semibold mb-3">Inviter un collaborateur</h3>
+        <div className="flex space-x-2">
+          <input
+            type="email"
+            placeholder="email@example.com"
+            className={`flex-1 px-3 py-2 border rounded ${
+              darkMode ? 'bg-gray-700 border-gray-600' : ''
+            }`}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <select
+            className={`px-3 py-2 border rounded ${
+              darkMode ? 'bg-gray-700 border-gray-600' : ''
+            }`}
+            value={permissions}
+            onChange={(e) => setPermissions(e.target.value)}
+          >
+            <option value="viewer">Lecture seule</option>
+            <option value="editor">Éditeur</option>
+            <option value="admin">Administrateur</option>
+          </select>
+          <button
+            onClick={() => {
+              if (email) {
+                addCollaborator(email, permissions);
+                setEmail('');
+              }
+            }}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Inviter
+          </button>
+        </div>
+      </div>
+      
+      {/* Liste des collaborateurs */}
+      <div>
+        <h3 className="font-semibold mb-3">Collaborateurs actuels</h3>
+        <div className="space-y-2">
+          {collaborators.map((collab, index) => (
+            <div
+              key={index}
+              className={`p-3 rounded flex items-center justify-between ${
+                darkMode ? 'bg-gray-700' : 'bg-gray-100'
+              }`}
+            >
+              <div>
+                <div className="font-medium">{collab.email}</div>
+                <div className="text-sm opacity-75">
+                  {collab.permissions === 'admin' ? '👑' : collab.permissions === 'editor' ? '✏️' : '👁️'} {collab.permissions}
+                </div>
+              </div>
+              <button className="text-red-500 hover:text-red-700">
+                🗑️
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Activité en temps réel */}
+      <div className="mt-6">
+        <h3 className="font-semibold mb-3">🟢 En ligne maintenant</h3>
+        <div className="flex -space-x-2">
+          {['JD', 'AS', 'MK'].map((initials, i) => (
+            <div
+              key={i}
+              className="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center border-2 border-white text-sm font-semibold"
+              title={`User ${i + 1}`}
+            >
+              {initials}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Panel de variables globales
+const GlobalVariablesPanel = ({ onClose }) => {
+  const { globalVariables, setGlobalVariable, deleteGlobalVariable, darkMode } = useWorkflowStore();
+  const [newKey, setNewKey] = useState('');
+  const [newValue, setNewValue] = useState('');
+  const [editingKey, setEditingKey] = useState(null);
+  
+  const handleAdd = () => {
+    if (newKey && newValue) {
+      try {
+        const parsedValue = JSON.parse(newValue);
+        setGlobalVariable(newKey, parsedValue);
+        setNewKey('');
+        setNewValue('');
+      } catch {
+        setGlobalVariable(newKey, newValue);
+        setNewKey('');
+        setNewValue('');
+      }
+    }
+  };
+  
+  return (
+    <div className={`fixed inset-0 ${darkMode ? 'bg-gray-900 bg-opacity-95' : 'bg-white bg-opacity-95'} z-50 overflow-hidden`}>
+      <div className={`absolute inset-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-2xl max-w-3xl mx-auto flex flex-col`}>
+        {/* Header */}
+        <div className={`p-6 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b flex items-center justify-between`}>
+          <div>
+            <h2 className="text-2xl font-bold">🌍 Variables Globales</h2>
+            <p className="text-sm opacity-75 mt-1">Définissez des variables réutilisables dans tous vos workflows</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-2xl hover:opacity-75 transition-opacity"
+          >
+            ✕
+          </button>
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Ajouter une variable */}
+          <div className={`mb-6 p-4 ${darkMode ? 'bg-gray-700' : 'bg-blue-50'} rounded-lg`}>
+            <h3 className="font-semibold mb-3">Nouvelle variable</h3>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Nom de la variable (ex: apiEndpoint)"
+                className={`w-full px-3 py-2 border rounded ${
+                  darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white'
+                }`}
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value.replace(/[^a-zA-Z0-9_]/g, ''))}
+              />
+              <textarea
+                placeholder="Valeur (JSON ou texte simple)"
+                className={`w-full px-3 py-2 border rounded h-24 font-mono text-sm ${
+                  darkMode ? 'bg-gray-800 border-gray-600' : 'bg-white'
+                }`}
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+              />
+              <button
+                onClick={handleAdd}
+                disabled={!newKey || !newValue}
+                className="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+              >
+                ➕ Ajouter la variable
+              </button>
+            </div>
+          </div>
+          
+          {/* Liste des variables */}
+          <div className="space-y-3">
+            {Object.entries(globalVariables).length === 0 ? (
+              <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                Aucune variable globale définie
+              </div>
+            ) : (
+              Object.entries(globalVariables).map(([key, value]) => (
+                <div
+                  key={key}
+                  className={`p-4 rounded-lg ${
+                    darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="font-semibold text-lg mb-1">
+                        <span className="text-blue-500">${`{$global.`}</span>
+                        {editingKey === key ? (
+                          <input
+                            type="text"
+                            value={key}
+                            className={`inline px-1 border rounded ${
+                              darkMode ? 'bg-gray-600 border-gray-500' : 'bg-white'
+                            }`}
+                            onBlur={() => setEditingKey(null)}
+                            autoFocus
+                          />
+                        ) : (
+                          <span 
+                            className="cursor-pointer hover:underline"
+                            onClick={() => setEditingKey(key)}
+                          >
+                            {key}
+                          </span>
+                        )}
+                        <span className="text-blue-500">{`}`}</span>
+                      </div>
+                      <pre className={`text-sm mt-2 p-3 rounded overflow-x-auto ${
+                        darkMode ? 'bg-gray-800' : 'bg-gray-50'
+                      }`}>
+                        {typeof value === 'object' 
+                          ? JSON.stringify(value, null, 2) 
+                          : String(value)}
+                      </pre>
+                    </div>
+                    <div className="ml-4 flex space-x-2">
+                      <button
+                        onClick={() => {
+                          const newValue = prompt('Nouvelle valeur:', 
+                            typeof value === 'object' ? JSON.stringify(value) : value
+                          );
+                          if (newValue !== null) {
+                            try {
+                              const parsed = JSON.parse(newValue);
+                              setGlobalVariable(key, parsed);
+                            } catch {
+                              setGlobalVariable(key, newValue);
+                            }
+                          }
+                        }}
+                        className="text-blue-500 hover:text-blue-700"
+                        title="Éditer"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Supprimer la variable "${key}" ?`)) {
+                            deleteGlobalVariable(key);
+                          }
+                        }}
+                        className="text-red-500 hover:text-red-700"
+                        title="Supprimer"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-xs opacity-75">
+                    Type: {Array.isArray(value) ? 'array' : typeof value}
+                    {typeof value === 'object' && !Array.isArray(value) && ` (${Object.keys(value).length} propriétés)`}
+                    {Array.isArray(value) && ` (${value.length} éléments)`}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          
+          {/* Exemples d'utilisation */}
+          <div className={`mt-8 p-4 ${darkMode ? 'bg-gray-700' : 'bg-yellow-50'} rounded-lg`}>
+            <h3 className="font-semibold mb-2">💡 Comment utiliser les variables globales</h3>
+            <div className="space-y-2 text-sm">
+              <p>• Dans les champs de configuration : <code className="bg-gray-200 px-1 rounded">{{`{{$global.apiEndpoint}}`}}</code></p>
+              <p>• Dans le code JavaScript : <code className="bg-gray-200 px-1 rounded">$global.apiKey</code></p>
+              <p>• Avec des propriétés imbriquées : <code className="bg-gray-200 px-1 rounded">{{`{{$global.config.timeout}}`}}</code></p>
+              <p>• Dans les conditions : <code className="bg-gray-200 px-1 rounded">$global.environment === 'prod'</code></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Barre d'exécution professionnelle
+const ExecutionBar = () => {
+  const { 
+    nodes, 
+    edges, 
+    isExecuting, 
+    setIsExecuting, 
+    setExecutionResult, 
+    setExecutionError,
+    setCurrentExecutingNode,
+    clearExecution,
+    addExecutionToHistory,
+    validateWorkflow,
+    globalVariables,
+    environments,
+    currentEnvironment,
+    setCurrentEnvironment,
+    debugMode,
+    toggleDebugMode,
+    stepByStep,
+    toggleStepByStep,
+    darkMode,
+    toggleDarkMode,
+    addLog,
+    credentials,
+    testWorkflow,
+    scheduleWorkflow,
+    currentWorkflowId
+  } = useWorkflowStore();
+  
+  const [showMonitoring, setShowMonitoring] = useState(false);
+  const [showVariables, setShowVariables] = useState(false);
+  const [showCollaboration, setShowCollaboration] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [stepResolver, setStepResolver] = useState(null);
+  
+  const executeWorkflow = async () => {
+    // Validation
+    const errors = validateWorkflow();
+    if (errors.length > 0) {
+      setValidationErrors(errors);
+      return;
+    }
+    
+    clearExecution();
+    setIsExecuting(true);
+    setValidationErrors([]);
+    
+    const startTime = Date.now();
+    
+    const executor = new WorkflowExecutor(nodes, edges, {
+      globalVariables,
+      environment: environments[currentEnvironment],
+      credentials,
+      debugMode,
+      stepByStep,
+      onStep: (resolve) => setStepResolver(() => resolve),
+      onLog: (log) => addLog(log),
+      maxRetries: 3,
+      executionTimeout: 300000
+    });
+    
+    try {
+      const result = await executor.execute(
+        (nodeId) => setCurrentExecutingNode(nodeId),
+        (nodeId, result) => {
+          setExecutionResult(nodeId, result);
+          setCurrentExecutingNode(null);
+        },
+        (nodeId, error) => {
+          setExecutionError(nodeId, error);
+          setCurrentExecutingNode(null);
+        }
+      );
+      
+      // Ajouter à l'historique
+      addExecutionToHistory({
+        workflowId: currentWorkflowId,
+        timestamp: new Date().toISOString(),
+        duration: Date.now() - startTime,
+        status: result.status,
+        nodesExecuted: result.nodesExecuted,
+        errors: result.errors,
+        environment: currentEnvironment
+      });
+      
+      // Notification de succès/échec
+      if (result.status === 'success') {
+        addLog({
+          level: 'info',
+          message: 'Workflow exécuté avec succès',
+          data: { duration: result.duration, nodes: result.nodesExecuted }
+        });
+      } else {
+        addLog({
+          level: 'error',
+          message: 'Erreurs lors de l\'exécution du workflow',
+          data: { errors: result.errors }
+        });
+      }
+      
+    } catch (error) {
+      console.error('Erreur d\'exécution:', error);
+      addLog({
+        level: 'error',
+        message: 'Erreur critique d\'exécution',
+        data: { error: error.message }
+      });
+    } finally {
+      setIsExecuting(false);
+      setCurrentExecutingNode(null);
+      setStepResolver(null);
+    }
+  };
+  
+  const handleNextStep = () => {
+    if (stepResolver) {
+      stepResolver();
+      setStepResolver(null);
+    }
+  };
+  
+  const handleTest = async () => {
+    const testResult = await testWorkflow({
+      nodes: ['node1', 'node2'],
+      data: { test: true }
+    });
+    console.log('Test result:', testResult);
+  };
+  
+  const handleSchedule = () => {
+    setShowScheduler(true);
+  };
+  
+  return (
+    <>
+      <Panel position="top-center" className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-lg`}>
+        <div className="p-4">
+          {/* Ligne principale */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold">Workflow Editor Pro</h1>
+              
+              {/* Environnement */}
+              <select
+                className={`px-3 py-1 rounded text-sm ${
+                  currentEnvironment === 'prod' 
+                    ? 'bg-red-500 text-white' 
+                    : currentEnvironment === 'staging'
+                    ? 'bg-yellow-500 text-white'
+                    : 'bg-green-500 text-white'
+                }`}
+                value={currentEnvironment}
+                onChange={(e) => setCurrentEnvironment(e.target.value)}
+              >
+                <option value="dev">🔧 Dev</option>
+                <option value="staging">🚧 Staging</option>
+                <option value="prod">🚀 Production</option>
+              </select>
+            </div>
+            
+            {/* Actions principales */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={executeWorkflow}
+                disabled={isExecuting || nodes.length === 0}
+                className="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                {isExecuting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Exécution...
+                  </>
+                ) : (
+                  <>▶️ Exécuter</>
+                )}
+              </button>
+              
+              {stepByStep && stepResolver && (
+                <button
+                  onClick={handleNextStep}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 animate-pulse"
+                >
+                  ⏭️ Suivant
+                </button>
+              )}
+              
+              <button
+                onClick={handleTest}
+                disabled={isExecuting || nodes.length === 0}
+                className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 disabled:opacity-50"
+              >
+                🧪 Test
+              </button>
+              
+              <button
+                onClick={handleSchedule}
+                disabled={nodes.length === 0}
+                className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 disabled:opacity-50"
+              >
+                ⏰ Planifier
+              </button>
+              
+              <button
+                onClick={clearExecution}
+                disabled={isExecuting}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50"
+              >
+                🔄 Reset
+              </button>
+            </div>
+          </div>
+          
+          {/* Ligne d'options */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              {/* Options d'exécution */}
+              <button
+                onClick={toggleDebugMode}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  debugMode 
+                    ? 'bg-orange-500 text-white' 
+                    : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'
+                }`}
+              >
+                🐛 Debug
+              </button>
+              
+              <button
+                onClick={toggleStepByStep}
+                className={`px-3 py-1 rounded text-sm transition-colors ${
+                  stepByStep 
+                    ? 'bg-purple-500 text-white' 
+                    : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'
+                }`}
+              >
+                👣 Pas à pas
+              </button>
+              
+              <div className="h-6 w-px bg-gray-300 mx-2" />
+              
+              {/* Outils */}
+              <button
+                onClick={() => setShowMonitoring(true)}
+                className={`px-3 py-1 rounded text-sm ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'} hover:bg-opacity-80`}
+              >
+                📊 Monitoring
+              </button>
+              
+              <button
+                onClick={() => setShowVariables(true)}
+                className={`px-3 py-1 rounded text-sm ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'} hover:bg-opacity-80`}
+              >
+                🌍 Variables
+              </button>
+              
+              <button
+                onClick={() => setShowCollaboration(true)}
+                className={`px-3 py-1 rounded text-sm ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'} hover:bg-opacity-80`}
+              >
+                👥 Collaborer
+              </button>
+            </div>
+            
+            {/* Options d'interface */}
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={toggleDarkMode}
+                className={`px-3 py-1 rounded text-sm ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'} hover:bg-opacity-80`}
+              >
+                {darkMode ? '☀️' : '🌙'}
+              </button>
+              
+              <button
+                className={`px-3 py-1 rounded text-sm ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'} hover:bg-opacity-80`}
+              >
+                ⚙️ Paramètres
+              </button>
+              
+              <button
+                className={`px-3 py-1 rounded text-sm ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200'} hover:bg-opacity-80`}
+              >
+                ❓ Aide
+              </button>
+            </div>
+          </div>
+          
+          {/* Erreurs de validation */}
+          {validationErrors.length > 0 && (
+            <div className="mt-4 bg-red-100 text-red-700 p-3 rounded">
+              <strong>⚠️ Erreurs de validation:</strong>
+              <ul className="list-disc list-inside mt-1">
+                {validationErrors.map((error, i) => (
+                  <li key={i} className="text-sm">{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </Panel>
+      
+      {/* Modales */}
+      {showMonitoring && <MonitoringDashboard onClose={() => setShowMonitoring(false)} />}
+      {showVariables && <GlobalVariablesPanel onClose={() => setShowVariables(false)} />}
+      {showCollaboration && <CollaborationPanel onClose={() => setShowCollaboration(false)} />}
+      
+      {/* Scheduler Modal */}
+      {showScheduler && (
+        <div className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center`}>
+          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg p-6 max-w-md w-full`}>
+            <h3 className="text-xl font-bold mb-4">⏰ Planifier l'exécution</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Expression Cron</label>
+                <input
+                  type="text"
+                  className={`w-full px-3 py-2 border rounded ${
+                    darkMode ? 'bg-gray-700 border-gray-600' : ''
+                  }`}
+                  placeholder="0 9 * * 1-5"
+                />
+              </div>
+              <div className="text-xs text-gray-500">
+                Exemples: "0 * * * *" (toutes les heures), "0 9 * * 1-5" (9h en semaine)
+              </div>
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setShowScheduler(false)}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => {
+                    scheduleWorkflow(currentWorkflowId, '0 9 * * 1-5');
+                    setShowScheduler(false);
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Planifier
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+// Composant principal avec toutes les fonctionnalités
+const WorkflowEditor = () => {
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const reactFlowWrapper = useRef(null);
+  const { project } = useReactFlow();
+  const { setSelectedNode, darkMode } = useWorkflowStore();
+  
+  let id = 0;
+  const getId = () => `node_${++id}_${Date.now()}`;
+  
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge({ 
+      ...params, 
+      animated: true,
+      style: { stroke: darkMode ? '#fff' : '#000' },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: darkMode ? '#fff' : '#000',
+      },
+    }, eds)),
+    [setEdges, darkMode]
+  );
+  
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+  
+  const onDrop = useCallback(
+    (event) => {
+      event.preventDefault();
+      
+      const type = event.dataTransfer.getData('application/reactflow');
+      
+      if (typeof type === 'undefined' || !type) {
+        return;
+      }
+      
+      const position = project({
+        x: event.clientX - reactFlowWrapper.current.getBoundingClientRect().left - 100,
+        y: event.clientY - reactFlowWrapper.current.getBoundingClientRect().top - 30,
+      });
+      
+      const newNode = {
+        id: getId(),
+        type: 'custom',
+        position,
+        data: { 
+          label: nodeTypes[type].name,
+          type: type,
+          config: {}
+        },
+      };
+      
+      setNodes((nds) => nds.concat(newNode));
+      
+      // Log l'ajout du nœud
+      useWorkflowStore.getState().addLog({
+        level: 'info',
+        message: `Nœud ajouté: ${nodeTypes[type].name}`,
+        data: { nodeId: newNode.id, type }
+      });
+    },
+    [project, setNodes]
+  );
+  
+  // Synchroniser avec le store
+  useEffect(() => {
+    useWorkflowStore.getState().setNodes(nodes);
+  }, [nodes]);
+  
+  useEffect(() => {
+    useWorkflowStore.getState().setEdges(edges);
+  }, [edges]);
+  
+  // Raccourcis clavier
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ctrl/Cmd + S : Sauvegarder
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        useWorkflowStore.getState().saveWorkflow();
+      }
+      // Delete : Supprimer le nœud sélectionné
+      if (e.key === 'Delete') {
+        const selectedNode = useWorkflowStore.getState().selectedNode;
+        if (selectedNode) {
+          useWorkflowStore.getState().deleteNode(selectedNode.id);
+        }
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+  
+  const nodeTypesMap = {
+    custom: CustomNode,
+  };
+  
+  const proOptions = {
+    hideAttribution: true,
+  };
+  
+  const connectionLineStyle = {
+    stroke: darkMode ? '#fff' : '#000',
+    strokeWidth: 2,
+  };
+  
+  return (
+    <div className={`h-screen w-screen relative ${darkMode ? 'bg-gray-900' : ''}`} ref={reactFlowWrapper}>
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
+          .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+          .animate-shake { animation: shake 0.3s ease-out; }
+          
+          /* Custom scrollbar */
+          ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
+          ::-webkit-scrollbar-track {
+            background: ${darkMode ? '#1f2937' : '#f3f4f6'};
+          }
+          ::-webkit-scrollbar-thumb {
+            background: ${darkMode ? '#4b5563' : '#d1d5db'};
+            border-radius: 4px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: ${darkMode ? '#6b7280' : '#9ca3af'};
+          }
+          
+          /* React Flow overrides */
+          .react-flow__handle {
+            width: 16px;
+            height: 16px;
+          }
+          .react-flow__handle.handle-input {
+            left: -8px;
+          }
+          .react-flow__handle.handle-output {
+            right: -8px;
+          }
+          .react-flow__edge-path {
+            stroke-width: 2;
+          }
+          .react-flow__edge.animated path {
+            stroke-dasharray: 5;
+            animation: dashdraw 0.5s linear infinite;
+          }
+          @keyframes dashdraw {
+            to {
+              stroke-dashoffset: -10;
+            }
+          }
+        `}
+      </style>
+      
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onDrop={onDrop}
+        onDragOver={onDragOver}
+        nodeTypes={nodeTypesMap}
+        connectionLineStyle={connectionLineStyle}
+        connectionMode={ConnectionMode.Loose}
+        fitView
+        className={darkMode ? 'bg-gray-900' : 'bg-gray-50'}
+        proOptions={proOptions}
+        deleteKeyCode="Delete"
+        multiSelectionKeyCode="Shift"
+        zoomOnScroll={true}
+        zoomOnPinch={true}
+        panOnScroll={false}
+        panOnDrag={true}
+        preventScrolling={true}
+      >
+        <Controls 
+          className={darkMode ? 'bg-gray-800 border-gray-700' : ''} 
+          showZoom={true}
+          showFitView={true}
+          showInteractive={true}
+        />
+        <MiniMap 
+          className={darkMode ? 'bg-gray-800' : ''}
+          maskColor={darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)'}
+          nodeColor={(node) => {
+            const nodeType = nodeTypes[node.data.type];
+            return nodeType?.color.replace('bg-', '#').replace('500', '400') || '#gray';
+          }}
+        />
+        <Background 
+          variant="dots" 
+          gap={16} 
+          size={1}
+          color={darkMode ? '#374151' : '#e5e7eb'}
+        />
+        <ExecutionBar />
+      </ReactFlow>
+      
+      <NodeSidebar />
+      <NodeConfigPanel />
+      
+      {/* Status bar */}
+      <div className={`absolute bottom-0 left-80 right-0 h-8 ${darkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-200 text-gray-700'} flex items-center px-4 text-xs`}>
+        <div className="flex items-center space-x-4">
+          <span>Nœuds: {nodes.length}</span>
+          <span>Connexions: {edges.length}</span>
+          <span>Environnement: {useWorkflowStore.getState().currentEnvironment}</span>
+          <span className="flex items-center">
+            <span className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>
+            Connecté
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// App principale avec tous les providers
+export default function App() {
+  const { darkMode } = useWorkflowStore();
+  
+  useEffect(() => {
+    // Appliquer le mode sombre au body
+    if (darkMode) {
+      document.body.classList.add('dark');
+      document.body.style.backgroundColor = '#111827';
+    } else {
+      document.body.classList.remove('dark');
+      document.body.style.backgroundColor = '#ffffff';
+    }
+  }, [darkMode]);
+  
+  return (
+    <div className={darkMode ? 'dark' : ''}>
+      <ReactFlowProvider>
+        <WorkflowEditor />
+      </ReactFlowProvider>
+    </div>
+  );
+}
