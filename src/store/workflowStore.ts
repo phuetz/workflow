@@ -332,7 +332,7 @@ export const useWorkflowStore = create(
   // Undo/Redo functionality
   undoHistory: [],
   redoHistory: [],
-  
+
   undo: () => {
     const state = get();
     if (state.undoHistory.length === 0) return;
@@ -347,7 +347,7 @@ export const useWorkflowStore = create(
       redoHistory: [...state.redoHistory, currentState]
     });
   },
-  
+
   redo: () => {
     const state = get();
     if (state.redoHistory.length === 0) return;
@@ -362,7 +362,9 @@ export const useWorkflowStore = create(
       redoHistory: state.redoHistory.slice(0, -1)
     });
   },
-  
+
+  clearHistory: () => set({ undoHistory: [], redoHistory: [] }),
+
   addToHistory: (nodes, edges) => {
     const state = get();
     set({
