@@ -35,7 +35,7 @@ import MultiSelectManager from './components/MultiSelectManager';
 import DebugPanel from './components/DebugPanel';
 import CollaborationPanel from './components/CollaborationPanel';
 import PerformanceMonitor from './components/PerformanceMonitor';
-import AutoSaveManager from './components/AutoSaveManager';
+import { AutoSaveManager } from './components/AutoSaveManager';
 import NodeGroupManager from './components/NodeGroupManager';
 import StickyNotes from './components/StickyNotes';
 import Dashboard from './components/Dashboard';
