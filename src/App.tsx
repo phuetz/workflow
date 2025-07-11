@@ -40,6 +40,11 @@ import NodeGroupManager from './components/NodeGroupManager';
 import StickyNotes from './components/StickyNotes';
 import Dashboard from './components/Dashboard';
 import WorkflowTemplates from './components/WorkflowTemplates';
+import AIWorkflowGenerator from './components/AIWorkflowGenerator';
+import AFLOWOptimizer from './components/AFLOWOptimizer';
+import PluginHotReload from './components/PluginHotReload';
+import VoiceAssistant from './components/VoiceAssistant';
+import AdvancedOnboarding from './components/AdvancedOnboarding';
 
 // Composant principal de l'éditeur
 function WorkflowEditor() {
@@ -547,6 +552,11 @@ function WorkflowEditor() {
       <DebugPanel />
       <CollaborationPanel />
       <PerformanceMonitor />
+      <AIWorkflowGenerator />
+      <AFLOWOptimizer />
+      <PluginHotReload />
+      <VoiceAssistant />
+      <AdvancedOnboarding />
       
       <Sidebar />
       <NodeConfigPanel />
