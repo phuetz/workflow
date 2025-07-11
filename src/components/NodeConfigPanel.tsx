@@ -172,7 +172,7 @@ export default function NodeConfigPanel() {
               />
             </div>
             <div className="text-sm text-gray-500">
-              Use expressions like: $json.field > value, $json.status === "active"
+              Use expressions like: $json.field &gt; value, $json.status === "active"
             </div>
           </div>
         );
