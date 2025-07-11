@@ -30,24 +30,24 @@ import ScheduleManager from './components/ScheduleManager';
 import MonitoringDashboard from './components/MonitoringDashboard';
 import ExecutionViewer from './components/ExecutionViewer';
 import WorkflowValidator from './components/WorkflowValidator';
-import UndoRedoManager from './components/UndoRedoManager';
-import MultiSelectManager from './components/MultiSelectManager';
-import DebugPanel from './components/DebugPanel';
-import CollaborationPanel from './components/CollaborationPanel';
-import PerformanceMonitor from './components/PerformanceMonitor';
+import { UndoRedoManager } from './components/UndoRedoManager';
+import { MultiSelectManager } from './components/MultiSelectManager';
+import { DebugPanel } from './components/DebugPanel';
+import { CollaborationPanel } from './components/CollaborationPanel';
+import { PerformanceMonitor } from './components/PerformanceMonitor';
 import { AutoSaveManager } from './components/AutoSaveManager';
-import NodeGroupManager from './components/NodeGroupManager';
-import StickyNotes from './components/StickyNotes';
+import { NodeGroupManager } from './components/NodeGroupManager';
+import StickyNotes from './components/StickyNotes'; 
 import Dashboard from './components/Dashboard';
 import WorkflowTemplates from './components/WorkflowTemplates';
-import AIWorkflowGenerator from './components/AIWorkflowGenerator';
-import AFLOWOptimizer from './components/AFLOWOptimizer';
-import PluginHotReload from './components/PluginHotReload';
-import VoiceAssistant from './components/VoiceAssistant';
-import AdvancedOnboarding from './components/AdvancedOnboarding';
-import AICodeGenerator from './components/AICodeGenerator';
-import SmartAutoComplete from './components/SmartAutoComplete';
-import UniversalAPIConnector from './components/UniversalAPIConnector';
+import AIWorkflowGenerator from './components/AIWorkflowGenerator'; 
+import AFLOWOptimizer from './components/AFLOWOptimizer'; 
+import PluginHotReload from './components/PluginHotReload'; 
+import VoiceAssistant from './components/VoiceAssistant'; 
+import AdvancedOnboarding from './components/AdvancedOnboarding'; 
+import AICodeGenerator from './components/AICodeGenerator'; 
+import SmartAutoComplete from './components/SmartAutoComplete'; 
+import UniversalAPIConnector from './components/UniversalAPIConnector'; 
 import GraphQLQueryBuilder from './components/GraphQLQueryBuilder';
 
 // Composant principal de l'éditeur
@@ -553,9 +553,9 @@ function WorkflowEditor() {
       <NodeGroupManager />
       <StickyNotes />
       <AutoSaveManager />
-      <DebugPanel />
-      <CollaborationPanel />
-      <PerformanceMonitor />
+      <DebugPanel isOpen={false} onClose={() => {}} />
+      <CollaborationPanel isOpen={false} onClose={() => {}} />
+      <PerformanceMonitor isOpen={false} onClose={() => {}} />
       <AIWorkflowGenerator />
       <AFLOWOptimizer />
       <PluginHotReload />

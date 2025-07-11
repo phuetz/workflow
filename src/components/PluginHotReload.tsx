@@ -96,7 +96,7 @@ export default function PluginHotReload() {
         }
       });
 
-      // Show success notification
+      // Show toast notification
       showNotification(`Plugin "${plugin.name}" chargé avec succès !`, 'success');
       
     } catch (error) {
@@ -220,17 +220,17 @@ export default function PluginHotReload() {
   };
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info') => {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white font-medium ${
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg text-white font-medium ${
       type === 'success' ? 'bg-green-500' :
       type === 'error' ? 'bg-red-500' : 'bg-blue-500'
     }`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
+    toast.textContent = message;
+    document.body.appendChild(toast);
     
     setTimeout(() => {
-      notification.style.opacity = '0';
-      setTimeout(() => document.body.removeChild(notification), 300);
+      toast.style.opacity = '0';
+      setTimeout(() => document.body.removeChild(toast), 300);
     }, 3000);
   };
 
@@ -362,7 +362,7 @@ export default function PluginHotReload() {
                         darkMode ? 'border-gray-600 bg-gray-700' : 'border-gray-200 bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center space-x-3">
                           <span className="text-2xl">{plugin.icon}</span>
                           <div>

@@ -14,7 +14,7 @@ export default function VoiceAssistant() {
     nodes, 
     edges, 
     executionHistory, 
-    isExecuting, 
+    isExecuting,
     addLog 
   } = useWorkflowStore();
   
@@ -24,8 +24,8 @@ export default function VoiceAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [recognition, setRecognition] = useState<any>(null);
 
+  // Initialize Speech Recognition
   useEffect(() => {
-    // Initialize Speech Recognition
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
       const recognitionInstance = new SpeechRecognition();
@@ -227,27 +227,15 @@ export default function VoiceAssistant() {
       {/* Voice Assistant Panel */}
       {isOpen && (
         <div className={`fixed top-20 left-4 z-30 w-80 ${
-          darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-        } border rounded-lg shadow-xl overflow-hidden`}>
-          
+          darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
+        } border rounded-lg overflow-hidden flex flex-col z-10`}>
           {/* Header */}
-          <div className={`p-4 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} border-b`}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold flex items-center space-x-2">
-                <MessageCircle size={16} />
-                <span>Assistant Vocal</span>
-              </h3>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ×
-              </button>
-            </div>
+          <div className={`p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b flex-shrink-0`}>
+            <h2 className="text-lg font-semibold mb-4 truncate">Assistant Vocal</h2>
           </div>
-
+          
+          {/* Status */}
           <div className="p-4">
-            {/* Status */}
             <div className="text-center mb-4">
               {isListening && (
                 <div className="flex items-center justify-center space-x-2 text-blue-500">
@@ -329,6 +317,16 @@ export default function VoiceAssistant() {
                 🤖 Test assistant
               </button>
             </div>
+          </div>
+
+          {/* Footer */}
+          <div className={`p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-t flex-shrink-0`}>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 text-sm flex items-center justify-center"
+            >
+              Fermer l'assistant vocal
+            </button>
           </div>
         </div>
       )}
