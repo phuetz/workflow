@@ -45,6 +45,10 @@ import AFLOWOptimizer from './components/AFLOWOptimizer';
 import PluginHotReload from './components/PluginHotReload';
 import VoiceAssistant from './components/VoiceAssistant';
 import AdvancedOnboarding from './components/AdvancedOnboarding';
+import AICodeGenerator from './components/AICodeGenerator';
+import SmartAutoComplete from './components/SmartAutoComplete';
+import UniversalAPIConnector from './components/UniversalAPIConnector';
+import GraphQLQueryBuilder from './components/GraphQLQueryBuilder';
 
 // Composant principal de l'éditeur
 function WorkflowEditor() {
@@ -557,6 +561,9 @@ function WorkflowEditor() {
       <PluginHotReload />
       <VoiceAssistant />
       <AdvancedOnboarding />
+      <AICodeGenerator />
+      <UniversalAPIConnector />
+      <GraphQLQueryBuilder />
       
       <Sidebar />
       <NodeConfigPanel />
