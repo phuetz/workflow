@@ -371,6 +371,8 @@ export const useWorkflowStore = create(
     });
   },
 
+  clearHistory: () => set({ undoHistory: [], redoHistory: [] }),
+
   // Multi-selection functionality
   selectedNodes: [],
   

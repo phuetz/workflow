@@ -1,54 +1,28 @@
 import React from 'react';
 import { useWorkflowStore } from '../store/workflowStore';
-import { Group, Ungroup, Square, Move3D } from 'lucide-react';
+import { Group, Ungroup, Square } from 'lucide-react';
 
-interface NodeGroupManagerProps {
-  selectedNodes: string[];
-  onGroupNodes: (nodeIds: string[]) => void;
-  onUngroupNodes: (groupId: string) => void;
-}
-
-export const NodeGroupManager: React.FC<NodeGroupManagerProps> = ({
-  selectedNodes,
-  onGroupNodes,
-  onUngroupNodes
-}) => {
-  const { nodes, groups, updateGroup, deleteGroup } = useWorkflowStore();
+export const NodeGroupManager: React.FC = () => {
+  const {
+    selectedNodes,
+    nodeGroups,
+    groupSelectedNodes,
+    ungroupSelectedNodes
+  } = useWorkflowStore();
 
   const handleGroupNodes = () => {
     if (selectedNodes.length < 2) return;
-    
-    const groupId = `group_${Date.now()}`;
-    onGroupNodes(selectedNodes);
-    
-    // Calculate bounding box for selected nodes
-    const selectedNodeObjects = nodes.filter(node => selectedNodes.includes(node.id));
-    const minX = Math.min(...selectedNodeObjects.map(n => n.position.x));
-    const minY = Math.min(...selectedNodeObjects.map(n => n.position.y));
-    const maxX = Math.max(...selectedNodeObjects.map(n => n.position.x + 200));
-    const maxY = Math.max(...selectedNodeObjects.map(n => n.position.y + 100));
-    
-    const newGroup = {
-      id: groupId,
-      name: `Group ${groups.length + 1}`,
-      nodeIds: selectedNodes,
-      position: { x: minX - 10, y: minY - 10 },
-      size: { width: maxX - minX + 20, height: maxY - minY + 20 },
-      color: '#e0e7ff',
-      collapsed: false
-    };
-    
-    updateGroup(newGroup);
+    groupSelectedNodes();
   };
 
-  const handleUngroupNodes = (groupId: string) => {
-    onUngroupNodes(groupId);
-    deleteGroup(groupId);
+  const handleUngroupNodes = () => {
+    if (selectedNodes.length === 0) return;
+    ungroupSelectedNodes();
   };
 
   const canGroup = selectedNodes.length >= 2;
-  const selectedGroups = groups.filter(group => 
-    selectedNodes.some(nodeId => group.nodeIds.includes(nodeId))
+  const selectedGroups = nodeGroups.filter(group =>
+    selectedNodes.some(nodeId => group.nodes.includes(nodeId))
   );
 
   return (
@@ -67,9 +41,9 @@ export const NodeGroupManager: React.FC<NodeGroupManagerProps> = ({
         Group ({selectedNodes.length})
       </button>
 
-      {selectedGroups.length > 0 && (
-        <button
-          onClick={() => selectedGroups.forEach(group => handleUngroupNodes(group.id))}
+        {selectedGroups.length > 0 && (
+          <button
+            onClick={handleUngroupNodes}
           className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
           title="Ungroup selected groups"
         >
@@ -83,7 +57,7 @@ export const NodeGroupManager: React.FC<NodeGroupManagerProps> = ({
       <div className="flex items-center gap-1">
         <Square size={14} className="text-gray-400" />
         <span className="text-xs text-gray-500">
-          {groups.length} group{groups.length !== 1 ? 's' : ''}
+          {nodeGroups.length} group{nodeGroups.length !== 1 ? 's' : ''}
         </span>
       </div>
     </div>

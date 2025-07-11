@@ -16,7 +16,7 @@ interface MetricData {
 }
 
 export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, onClose }) => {
-  const { executions, systemHealth } = useWorkflowStore();
+  const { executionHistory, systemMetrics } = useWorkflowStore();
   const [metrics, setMetrics] = useState<MetricData[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'metrics' | 'logs'>('overview');
 
@@ -50,7 +50,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
     return 'text-red-600';
   };
 
-  const recentExecutions = executions.slice(-10);
+  const recentExecutions = executionHistory.slice(-10);
   const successRate = recentExecutions.length > 0 
     ? (recentExecutions.filter(e => e.status === 'completed').length / recentExecutions.length) * 100
     : 0;
