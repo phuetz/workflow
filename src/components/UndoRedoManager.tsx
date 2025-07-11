@@ -3,15 +3,18 @@ import { useWorkflowStore } from '../store/workflowStore';
 import { Undo, Redo, RotateCcw, History } from 'lucide-react';
 
 export const UndoRedoManager: React.FC = () => {
-  const { 
-    history, 
-    currentHistoryIndex, 
-    undo, 
-    redo, 
+  const {
+    undoHistory,
+    redoHistory,
+    undo,
+    redo,
     clearHistory,
-    canUndo,
-    canRedo
   } = useWorkflowStore();
+
+  const canUndo = undoHistory.length > 0;
+  const canRedo = redoHistory.length > 0;
+  const historyLength = undoHistory.length + 1 + redoHistory.length;
+  const currentHistoryIndex = undoHistory.length;
 
   const handleUndo = () => {
     if (canUndo) {
@@ -82,11 +85,11 @@ export const UndoRedoManager: React.FC = () => {
       <div className="flex items-center gap-2">
         <History size={14} className="text-gray-400" />
         <span className="text-xs text-gray-500">
-          {currentHistoryIndex + 1}/{history.length}
+          {currentHistoryIndex + 1}/{historyLength}
         </span>
       </div>
 
-      {history.length > 1 && (
+      {historyLength > 1 && (
         <button
           onClick={handleClearHistory}
           className="flex items-center gap-1 px-2 py-1 rounded-md text-xs text-red-600 hover:bg-red-50 transition-colors"
