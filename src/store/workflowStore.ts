@@ -85,6 +85,8 @@ export const useWorkflowStore = create(
       workflowVersions: {},
       webhookEndpoints: {},
       scheduledJobs: {},
+      nodeGroups: [],
+      stickyNotes: [],
       
       // Statistiques détaillées
       executionStats: {
