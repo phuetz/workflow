@@ -75,14 +75,21 @@ export default function Dashboard() {
           <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
           <div className="space-y-4">
             {executionHistory.slice(0, 5).map((execution, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={index}
+                className={`flex items-center justify-between p-3 rounded-lg ${
+                  darkMode ? 'bg-gray-700' : 'bg-gray-50'
+                }`}
+              >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-3 h-3 rounded-full ${
-                    execution.status === 'success' ? 'bg-green-500' : 'bg-red-500'
-                  }`}></div>
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      execution.status === 'success' ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  ></div>
                   <span className="font-medium">Workflow Execution</span>
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   {new Date(execution.timestamp).toLocaleString()}
                 </div>
               </div>
