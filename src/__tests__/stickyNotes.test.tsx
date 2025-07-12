@@ -22,4 +22,16 @@ describe('stickyNotes state', () => {
     );
     expect(html.includes('aria-label="Add sticky note"')).toBe(true);
   });
+
+  it('sticky notes are keyboard focusable', () => {
+    const html = renderToString(
+      <StickyNotes
+        notes={[{ id: '1', text: 'Hi', position: { x: 0, y: 0 }, color: '#fff740', rotation: 0 }]}
+        onAddNote={() => {}}
+        onDeleteNote={() => {}}
+        onUpdateNote={() => {}}
+      />
+    );
+    expect(html.includes('tabindex="0"')).toBe(true);
+  });
 });
