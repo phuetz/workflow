@@ -200,8 +200,10 @@ npm run test:coverage # Coverage des tests
 ### 💼 Business
 - **Salesforce** : CRM, leads, contacts
 - **HubSpot** : Marketing, sales pipeline
+- **Monday.com** : Project management
 - **Stripe** : Payments, subscriptions
 - **Shopify** : E-commerce, orders
+- **QuickBooks** : Accounting
 - **Zendesk** : Support tickets
 
 ### 🤖 AI & Analytics
