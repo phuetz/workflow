@@ -476,11 +476,42 @@ export const useWorkflowStore = create(
     stickyNotes: [...(state.stickyNotes || []), note]
   })),
   
-  updateStickyNote: (noteId, updates) => set((state) => ({
-    stickyNotes: (state.stickyNotes || []).map(note =>
-      note.id === noteId ? { ...note, ...updates } : note
-    )
-  })),
+  updateStickyNote: (noteId, updates) =>
+    set((state) => {
+      const noteWidth = 192;
+      const noteHeight = 128;
+      const delta = 10;
+
+      const isOverlapping = (x: number, y: number) => {
+        return (state.stickyNotes || []).some((n) => {
+          if (n.id === noteId) return false;
+          return (
+            x < n.position.x + noteWidth &&
+            x + noteWidth > n.position.x &&
+            y < n.position.y + noteHeight &&
+            y + noteHeight > n.position.y
+          );
+        });
+      };
+
+      const stickyNotes = (state.stickyNotes || []).map((note) => {
+        if (note.id !== noteId) return note;
+        let updated = { ...note, ...updates };
+        if (updates.position) {
+          let { x, y } = updates.position;
+          let attempts = 0;
+          while (isOverlapping(x, y) && attempts < 20) {
+            x += delta;
+            y += delta;
+            attempts++;
+          }
+          updated.position = { x, y };
+        }
+        return updated;
+      });
+
+      return { stickyNotes };
+    }),
   
   deleteStickyNote: (noteId) => set((state) => ({
     stickyNotes: (state.stickyNotes || []).filter(note => note.id !== noteId)
