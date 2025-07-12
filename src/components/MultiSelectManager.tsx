@@ -1,60 +1,59 @@
 import React from 'react';
 import { useWorkflowStore } from '../store/workflowStore';
-import { Copy, Trash2, Group, Move, Square } from 'lucide-react';
+import { Copy, Trash2, Group, Square } from 'lucide-react';
 
-interface MultiSelectManagerProps {
-  selectedNodes: string[];
-  onCopyNodes: (nodeIds: string[]) => void;
-  onDeleteNodes: (nodeIds: string[]) => void;
-  onGroupNodes: (nodeIds: string[]) => void;
-  onMoveNodes: (nodeIds: string[], offset: { x: number; y: number }) => void;
-}
-
-export const MultiSelectManager: React.FC<MultiSelectManagerProps> = ({
-  selectedNodes,
-  onCopyNodes,
-  onDeleteNodes,
-  onGroupNodes,
-  onMoveNodes
-}) => {
-  const { nodes, clearSelection, darkMode } = useWorkflowStore();
+export const MultiSelectManager: React.FC = () => {
+  const {
+    nodes,
+    selectedNodes,
+    setSelectedNodes,
+    setNodes,
+    darkMode,
+    copySelectedNodes,
+    deleteSelectedNodes,
+    groupSelectedNodes,
+  } = useWorkflowStore();
 
   const handleCopyNodes = () => {
     if (selectedNodes.length === 0) return;
-    onCopyNodes(selectedNodes);
+    copySelectedNodes();
   };
 
   const handleDeleteNodes = () => {
     if (selectedNodes.length === 0) return;
-    onDeleteNodes(selectedNodes);
+    deleteSelectedNodes();
   };
 
   const handleGroupNodes = () => {
     if (selectedNodes.length < 2) return;
-    onGroupNodes(selectedNodes);
+    groupSelectedNodes();
   };
 
   const handleMoveNodes = (direction: 'up' | 'down' | 'left' | 'right') => {
     if (selectedNodes.length === 0) return;
-    
+
     const offset = {
       up: { x: 0, y: -10 },
       down: { x: 0, y: 10 },
       left: { x: -10, y: 0 },
       right: { x: 10, y: 0 }
     }[direction];
-    
-    onMoveNodes(selectedNodes, offset);
+
+    setNodes(
+      nodes.map((n: any) =>
+        selectedNodes.some((sn: any) => sn.id === n.id)
+          ? { ...n, position: { x: n.position.x + offset.x, y: n.position.y + offset.y } }
+          : n
+      )
+    );
   };
 
   const handleSelectAll = () => {
-    const allNodeIds = nodes.map(node => node.id);
-    // This would need to be implemented in the parent component
-    console.log('Select all nodes:', allNodeIds);
+    setSelectedNodes(nodes);
   };
 
   const handleDeselectAll = () => {
-    clearSelection();
+    setSelectedNodes([]);
   };
 
   // Keyboard shortcuts
