@@ -24,7 +24,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
   - [ ] Credentials management (/api/v1/credentials)
   - [ ] Webhooks endpoints (/api/v1/webhooks)
   - [ ] Users & permissions (/api/v1/users)
-  - [ ] Health checks (/api/v1/health)
+  - [x] Health checks (/api/v1/health)
 
 - [ ] **Database Layer**
   - [ ] PostgreSQL schema design
