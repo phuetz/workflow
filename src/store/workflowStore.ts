@@ -471,6 +471,11 @@ export const useWorkflowStore = create(
     )
   })),
 
+  deleteNodeGroup: (groupId) =>
+    set((state) => ({
+      nodeGroups: (state.nodeGroups || []).filter(g => g.id !== groupId),
+    })),
+
   // Sticky notes
   addStickyNote: (note) => set((state) => ({
     stickyNotes: [...(state.stickyNotes || []), note]
