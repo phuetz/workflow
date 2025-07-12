@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { isContrastSufficient } from '../utils/colorContrast';
 import { Plus, X } from 'lucide-react';
 
 interface StickyNote {
@@ -49,6 +50,14 @@ export default function StickyNotes({
     });
   };
 
+  const getAccessibleColor = () => {
+    for (let i = 0; i < 10; i++) {
+      const candidate = COLORS[Math.floor(Math.random() * COLORS.length)];
+      if (isContrastSufficient('#000000', candidate)) return candidate;
+    }
+    return '#ffffff';
+  };
+
   const handleAddNote = () => {
     let x = Math.random() * maxX;
     let y = Math.random() * maxY;
@@ -62,7 +71,7 @@ export default function StickyNotes({
     const newNote = {
       text: 'New note',
       position: { x, y },
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      color: getAccessibleColor(),
       rotation: (Math.random() - 0.5) * 10
     };
 
