@@ -80,7 +80,11 @@ function WorkflowEditor() {
     importWorkflow,
     addToHistory,
     selectedNodes,
-    setSelectedNodes
+    setSelectedNodes,
+    stickyNotes,
+    addStickyNote,
+    updateStickyNote,
+    deleteStickyNote
   } = useWorkflowStore();
   
   const [realTimeData, setRealTimeData] = useState<any[]>([]);
@@ -551,7 +555,14 @@ function WorkflowEditor() {
       {/* Advanced Components */}
       <MultiSelectManager />
       <NodeGroupManager />
-      <StickyNotes />
+      <StickyNotes
+        notes={stickyNotes || []}
+        onAddNote={(note) =>
+          addStickyNote({ id: `note_${Date.now()}`, ...note })
+        }
+        onDeleteNote={deleteStickyNote}
+        onUpdateNote={updateStickyNote}
+      />
       <AutoSaveManager />
       <DebugPanel isOpen={false} onClose={() => {}} />
       <CollaborationPanel isOpen={false} onClose={() => {}} />

@@ -17,26 +17,52 @@ interface StickyNotesProps {
 }
 
 const COLORS = [
-  '#fff740', '#ff6b6b', '#4ecdc4', '#45b7d1', 
+  '#fff740', '#ff6b6b', '#4ecdc4', '#45b7d1',
   '#96ceb4', '#ffeaa7', '#dda0dd', '#98d8c8'
 ];
 
-export default function StickyNotes({ 
-  notes, 
-  onAddNote, 
-  onDeleteNote, 
-  onUpdateNote 
+export default function StickyNotes({
+  notes,
+  onAddNote,
+  onDeleteNote,
+  onUpdateNote
 }: StickyNotesProps) {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
+  const noteWidth = 192;
+  const noteHeight = 128;
+  const maxX = 300;
+  const maxY = 200;
+
+  const isOverlapping = (x: number, y: number) => {
+    return notes.some(n => {
+      return (
+        x < n.position.x + noteWidth &&
+        x + noteWidth > n.position.x &&
+        y < n.position.y + noteHeight &&
+        y + noteHeight > n.position.y
+      );
+    });
+  };
+
   const handleAddNote = () => {
+    let x = Math.random() * maxX;
+    let y = Math.random() * maxY;
+    let attempts = 0;
+    while (isOverlapping(x, y) && attempts < 20) {
+      x = Math.random() * maxX;
+      y = Math.random() * maxY;
+      attempts++;
+    }
+
     const newNote = {
       text: 'New note',
-      position: { x: Math.random() * 300, y: Math.random() * 200 },
+      position: { x, y },
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       rotation: (Math.random() - 0.5) * 10
     };
+
     onAddNote(newNote);
     setIsAddingNote(false);
   };
