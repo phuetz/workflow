@@ -105,6 +105,7 @@ export default function StickyNotes({
           className="sticky-note absolute w-48 h-32 p-3 shadow-lg cursor-pointer select-none"
           role="region"
           aria-label="Sticky note"
+          tabIndex={0}
           style={{
             backgroundColor: note.color,
             left: note.position.x,
@@ -113,6 +114,22 @@ export default function StickyNotes({
             fontFamily: 'Comic Sans MS, cursive'
           }}
           onClick={() => handleNoteClick(note.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleNoteClick(note.id);
+            } else if (e.key === 'Delete') {
+              onDeleteNote(note.id);
+            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+              e.preventDefault();
+              const delta = 10;
+              const updates: Partial<StickyNote> = { position: { ...note.position } } as any;
+              if (e.key === 'ArrowUp') updates.position!.y = Math.max(0, note.position.y - delta);
+              if (e.key === 'ArrowDown') updates.position!.y = note.position.y + delta;
+              if (e.key === 'ArrowLeft') updates.position!.x = Math.max(0, note.position.x - delta);
+              if (e.key === 'ArrowRight') updates.position!.x = note.position.x + delta;
+              onUpdateNote(note.id, updates);
+            }
+          }}
         >
           <button
             onClick={(e) => {

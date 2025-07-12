@@ -298,7 +298,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 
 ### Accessibility
  - [x] **ARIA labels** complets
-- [ ] **Keyboard navigation** améliorée
+ - [x] **Keyboard navigation** améliorée
 - [ ] **Screen reader** support
 - [ ] **Color contrast** validation
 - [ ] **Focus management**
