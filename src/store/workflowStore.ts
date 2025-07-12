@@ -103,7 +103,12 @@ export const useWorkflowStore = create(
       setEdges: (edges) => set({ edges }),
       setSelectedNode: (node) => set({ selectedNode: node }),
       
-      addNode: (node) => set((state) => ({ 
+      setSelectedNode: (node) => {
+        console.log("Setting selected node:", node);
+        set({ selectedNode: node });
+      },
+
+      addNode: (node) => set((state) => ({
         nodes: [...state.nodes, node],
         nodeStats: {
           ...state.nodeStats,

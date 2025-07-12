@@ -283,8 +283,10 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
     }
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Empêche la propagation de l'événement aux éléments parents
     setSelectedNode({ id, data });
+    console.log("Node selected:", id, data.label || data.type); // Ajout d'un log pour le débogage
   };
 
   // Calculer le nombre de handles
@@ -292,7 +294,14 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
   const outputCount = nodeType.outputs || 0;
 
   return (
-    <div onClick={handleClick} className="relative">
+    <div 
+      onClick={handleClick} 
+      className="relative cursor-pointer" 
+      role="button" 
+      tabIndex={0} 
+      aria-label={`Configure ${data.label || data.type} node`}
+      onKeyDown={(e) => e.key === 'Enter' && handleClick(e as any)}
+    >
       {/* Nœud principal */}
       <div className={`
         w-24 h-16 bg-white rounded-lg border-2 border-dashed ${getBorderColor()}
