@@ -17,7 +17,7 @@ export const MultiSelectManager: React.FC<MultiSelectManagerProps> = ({
   onGroupNodes,
   onMoveNodes
 }) => {
-  const { nodes, clearSelection } = useWorkflowStore();
+  const { nodes, clearSelection, darkMode } = useWorkflowStore();
 
   const handleCopyNodes = () => {
     if (selectedNodes.length === 0) return;
@@ -105,21 +105,27 @@ export const MultiSelectManager: React.FC<MultiSelectManagerProps> = ({
   }
 
   return (
-    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border p-3 z-50">
+    <div
+      className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 rounded-lg shadow-lg border p-3 z-50 ${
+        darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'
+      }`}
+    >
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <Square size={16} className="text-blue-500" />
-          <span className="text-sm font-medium text-gray-700">
+          <span className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-700'}`}>
             {selectedNodes.length} selected
           </span>
         </div>
 
-        <div className="w-px h-6 bg-gray-200" />
+        <div className={`w-px h-6 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`} />
 
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopyNodes}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              darkMode ? 'bg-blue-700 text-white hover:bg-blue-600' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            }`}
             title="Copy (Ctrl+C)"
           >
             <Copy size={16} />
@@ -128,7 +134,9 @@ export const MultiSelectManager: React.FC<MultiSelectManagerProps> = ({
 
           <button
             onClick={handleDeleteNodes}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              darkMode ? 'bg-red-700 text-white hover:bg-red-600' : 'bg-red-50 text-red-700 hover:bg-red-100'
+            }`}
             title="Delete (Del)"
           >
             <Trash2 size={16} />
@@ -138,7 +146,9 @@ export const MultiSelectManager: React.FC<MultiSelectManagerProps> = ({
           {selectedNodes.length >= 2 && (
             <button
               onClick={handleGroupNodes}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                darkMode ? 'bg-green-700 text-white hover:bg-green-600' : 'bg-green-50 text-green-700 hover:bg-green-100'
+              }`}
               title="Group (Ctrl+G)"
             >
               <Group size={16} />
@@ -148,7 +158,9 @@ export const MultiSelectManager: React.FC<MultiSelectManagerProps> = ({
 
           <button
             onClick={handleDeselectAll}
-            className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              darkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'
+            }`}
             title="Deselect (Esc)"
           >
             Cancel
