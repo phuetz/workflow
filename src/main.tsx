@@ -11,6 +11,6 @@ createRoot(document.getElementById('root')!).render(
 );
 
 // Only register service worker if supported and not in StackBlitz environment
-if ('serviceWorker' in navigator && !window.location.hostname.includes('stackblitz')) {
+if ('serviceWorker' in navigator && !window.location.hostname.includes('stackblitz') && !window.location.hostname.includes('webcontainer.io')) {
   registerServiceWorker();
 }
