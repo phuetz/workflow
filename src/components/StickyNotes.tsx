@@ -81,6 +81,7 @@ export default function StickyNotes({
       <button
         onClick={() => setIsAddingNote(!isAddingNote)}
         className="add-note-btn flex items-center gap-2 px-3 py-1.5 text-sm bg-yellow-400 hover:bg-yellow-500 rounded-lg transition-colors"
+        aria-label="Add sticky note"
       >
         <Plus size={16} />
         Add Note
@@ -91,6 +92,7 @@ export default function StickyNotes({
           <button
             onClick={handleAddNote}
             className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+            aria-label="Create sticky note"
           >
             Create Note
           </button>
@@ -101,6 +103,8 @@ export default function StickyNotes({
         <div
           key={note.id}
           className="sticky-note absolute w-48 h-32 p-3 shadow-lg cursor-pointer select-none"
+          role="region"
+          aria-label="Sticky note"
           style={{
             backgroundColor: note.color,
             left: note.position.x,
@@ -116,6 +120,7 @@ export default function StickyNotes({
               onDeleteNote(note.id);
             }}
             className="absolute top-1 right-1 text-gray-600 hover:text-red-600 transition-colors"
+            aria-label="Delete sticky note"
           >
             <X size={14} />
           </button>
@@ -133,6 +138,7 @@ export default function StickyNotes({
                 }
               }}
               className="w-full h-full bg-transparent border-none outline-none resize-none text-sm"
+              aria-label="Edit sticky note"
               style={{ fontFamily: 'inherit' }}
             />
           ) : (
