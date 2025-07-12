@@ -1,6 +1,6 @@
 # TODO - WorkflowBuilder Pro 📋
 
-*Dernière mise à jour : Décembre 2024*
+*Dernière mise à jour : Avril 2025*
 
 ## 🎯 Vue d'ensemble
 
@@ -297,7 +297,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 - [ ] **CDN** pour les librairies communes
 
 ### Accessibility
-- [ ] **ARIA labels** complets
+ - [x] **ARIA labels** complets
 - [ ] **Keyboard navigation** améliorée
 - [ ] **Screen reader** support
 - [ ] **Color contrast** validation
