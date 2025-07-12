@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { contrastRatio, isContrastSufficient } from '../utils/colorContrast';
+import { contrastRatio, isContrastSufficient, bestTextColor } from '../utils/colorContrast';
 
 describe('color contrast', () => {
   it('calculates correct ratio for black on white', () => {
@@ -13,5 +13,10 @@ describe('color contrast', () => {
 
   it('passes sufficient contrast', () => {
     expect(isContrastSufficient('#000000', '#ffffff')).toBe(true);
+  });
+
+  it('chooses readable text color', () => {
+    expect(bestTextColor('#000000')).toBe('#ffffff');
+    expect(bestTextColor('#ffffff')).toBe('#000000');
   });
 });

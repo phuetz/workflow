@@ -300,7 +300,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 - [x] **ARIA labels** complets
 - [x] **Keyboard navigation** améliorée
 - [x] **Screen reader** support
-- [ ] **Color contrast** validation
+- [x] **Color contrast** validation
 - [x] **Focus management**
 
 ---
