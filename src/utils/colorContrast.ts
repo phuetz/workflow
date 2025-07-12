@@ -38,3 +38,18 @@ export function isContrastSufficient(
 ): boolean {
   return contrastRatio(foreground, background) >= ratio;
 }
+
+export function bestTextColor(
+  background: string,
+  ratio: number = 4.5,
+): string {
+  const blackContrast = contrastRatio('#000000', background);
+  const whiteContrast = contrastRatio('#ffffff', background);
+
+  if (blackContrast >= ratio && whiteContrast >= ratio) {
+    return blackContrast >= whiteContrast ? '#000000' : '#ffffff';
+  }
+  if (blackContrast >= ratio) return '#000000';
+  if (whiteContrast >= ratio) return '#ffffff';
+  return blackContrast >= whiteContrast ? '#000000' : '#ffffff';
+}

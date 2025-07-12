@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { isContrastSufficient } from '../utils/colorContrast';
+import { isContrastSufficient, bestTextColor } from '../utils/colorContrast';
 import { Plus, X } from 'lucide-react';
 
 interface StickyNote {
@@ -123,6 +123,7 @@ export default function StickyNotes({
           tabIndex={0}
           style={{
             backgroundColor: note.color,
+            color: bestTextColor(note.color),
             left: note.position.x,
             top: note.position.y,
             transform: `rotate(${note.rotation}deg)`,
