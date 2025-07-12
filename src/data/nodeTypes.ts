@@ -508,6 +508,16 @@ export const nodeTypes: { [key: string]: NodeType } = {
     outputs: 1,
     description: 'HubSpot CRM integration'
   },
+  monday: {
+    type: 'monday',
+    label: 'Monday.com',
+    icon: 'CalendarClock',
+    color: 'bg-teal-500',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Monday.com project management'
+  },
   zendesk: {
     type: 'zendesk',
     label: 'Zendesk',
@@ -762,6 +772,18 @@ export const nodeTypes: { [key: string]: NodeType } = {
     outputs: 1,
     description: 'Mixpanel analytics'
   },
+
+  // Financial Services
+  quickbooks: {
+    type: 'quickbooks',
+    label: 'QuickBooks',
+    icon: 'Wallet',
+    color: 'bg-green-600',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'QuickBooks accounting'
+  },
   
   // Crypto & Finance
   coinbase: {
@@ -806,4 +828,5 @@ export const nodeCategories = {
   support: { name: '🎧 Customer Support', icon: '🎧' },
   analytics: { name: '📈 Analytics', icon: '📈' },
   crypto: { name: '₿ Cryptocurrency', icon: '₿' },
+  finance: { name: '💸 Finance', icon: '💸' },
 };

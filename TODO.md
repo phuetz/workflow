@@ -59,14 +59,14 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 
 - [ ] **Nœuds manquants (250+ à ajouter)**
   - [ ] **SaaS Platforms** (50 nœuds)
-    - [ ] Monday.com, Asana, ClickUp
+    - [x] Monday.com, Asana, ClickUp
     - [ ] Pipedrive, Salesforce (complet)
     - [ ] Jira, Confluence, Linear
     - [ ] Intercom, Freshdesk, Help Scout
     - [ ] Shopify, WooCommerce, Magento
 
   - [ ] **Financial Services** (25 nœuds)
-    - [ ] QuickBooks, Xero, FreshBooks
+    - [x] QuickBooks, Xero, FreshBooks
     - [ ] PayPal (complet), Square
     - [ ] Crypto exchanges (Binance, Coinbase Pro)
     - [ ] Banking APIs (Plaid, Yodlee)
