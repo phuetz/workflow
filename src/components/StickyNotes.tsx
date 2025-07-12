@@ -37,8 +37,9 @@ export default function StickyNotes({
   const maxX = 300;
   const maxY = 200;
 
-  const isOverlapping = (x: number, y: number) => {
+  const isOverlapping = (x: number, y: number, excludeId?: string) => {
     return notes.some(n => {
+      if (excludeId && n.id === excludeId) return false;
       return (
         x < n.position.x + noteWidth &&
         x + noteWidth > n.position.x &&

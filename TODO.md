@@ -277,7 +277,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 ### 🟢 Mineurs
 - [ ] **Tooltips** qui ne disparaissent pas parfois
 - [ ] **Dark mode** incomplet dans certains panels
-- [ ] **Sticky notes** qui se chevauchent
+- [x] **Sticky notes** qui se chevauchent
 
 ---
 
