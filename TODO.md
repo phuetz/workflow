@@ -297,11 +297,11 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 - [ ] **CDN** pour les librairies communes
 
 ### Accessibility
- - [x] **ARIA labels** complets
- - [x] **Keyboard navigation** améliorée
-- [ ] **Screen reader** support
+- [x] **ARIA labels** complets
+- [x] **Keyboard navigation** améliorée
+- [x] **Screen reader** support
 - [ ] **Color contrast** validation
-- [ ] **Focus management**
+- [x] **Focus management**
 
 ---
 

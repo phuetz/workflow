@@ -34,4 +34,17 @@ describe('stickyNotes state', () => {
     );
     expect(html.includes('tabindex="0"')).toBe(true);
   });
+
+  it('includes aria-live status region', () => {
+    const html = renderToString(
+      <StickyNotes
+        notes={[]}
+        onAddNote={() => {}}
+        onDeleteNote={() => {}}
+        onUpdateNote={() => {}}
+      />
+    );
+    expect(html.includes('aria-live="polite"')).toBe(true);
+    expect(html.includes('role="status"')).toBe(true);
+  });
 });
