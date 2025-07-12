@@ -10,4 +10,7 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>
 );
 
-registerServiceWorker();
+// Only register service worker if supported and not in StackBlitz environment
+if ('serviceWorker' in navigator && !window.location.hostname.includes('stackblitz')) {
+  registerServiceWorker();
+}
