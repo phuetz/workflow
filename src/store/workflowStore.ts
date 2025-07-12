@@ -101,8 +101,6 @@ export const useWorkflowStore = create(
       // Actions de base
       setNodes: (nodes) => set({ nodes }),
       setEdges: (edges) => set({ edges }),
-      setSelectedNode: (node) => set({ selectedNode: node }),
-      
       setSelectedNode: (node) => {
         console.log("Setting selected node:", node);
         set({ selectedNode: node });
