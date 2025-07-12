@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Plus, X } from 'lucide-react';
 
 interface StickyNote {
@@ -29,6 +29,8 @@ export default function StickyNotes({
 }: StickyNotesProps) {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [srMessage, setSrMessage] = useState('');
+  const addBtnRef = useRef<HTMLButtonElement>(null);
 
   const noteWidth = 192;
   const noteHeight = 128;
@@ -65,6 +67,8 @@ export default function StickyNotes({
 
     onAddNote(newNote);
     setIsAddingNote(false);
+    setSrMessage('Sticky note added');
+    addBtnRef.current?.focus();
   };
 
   const handleNoteClick = (noteId: string) => {
@@ -79,6 +83,7 @@ export default function StickyNotes({
   return (
     <div className="sticky-notes-container">
       <button
+        ref={addBtnRef}
         onClick={() => setIsAddingNote(!isAddingNote)}
         className="add-note-btn flex items-center gap-2 px-3 py-1.5 text-sm bg-yellow-400 hover:bg-yellow-500 rounded-lg transition-colors"
         aria-label="Add sticky note"
@@ -119,6 +124,8 @@ export default function StickyNotes({
               handleNoteClick(note.id);
             } else if (e.key === 'Delete') {
               onDeleteNote(note.id);
+              setSrMessage('Sticky note deleted');
+              addBtnRef.current?.focus();
             } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
               e.preventDefault();
               const delta = 10;
@@ -135,6 +142,8 @@ export default function StickyNotes({
             onClick={(e) => {
               e.stopPropagation();
               onDeleteNote(note.id);
+              setSrMessage('Sticky note deleted');
+              addBtnRef.current?.focus();
             }}
             className="absolute top-1 right-1 text-gray-600 hover:text-red-600 transition-colors"
             aria-label="Delete sticky note"
@@ -165,6 +174,7 @@ export default function StickyNotes({
           )}
         </div>
       ))}
+      <div role="status" aria-live="polite" className="sr-only">{srMessage}</div>
     </div>
   );
 }
