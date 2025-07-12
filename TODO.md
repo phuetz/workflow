@@ -288,7 +288,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 - [ ] **Lazy loading** des composants
 - [ ] **Memoization** des calculs coûteux
 - [ ] **Virtualization** pour grandes listes
-- [ ] **Service Worker** pour cache
+- [x] **Service Worker** pour cache
 
 ### Bundle Size
 - [ ] **Tree shaking** des dependencies
