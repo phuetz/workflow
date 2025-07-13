@@ -454,6 +454,16 @@ export const nodeTypes: { [key: string]: NodeType } = {
     outputs: 2,
     description: 'Loop through items'
   },
+  forEach: {
+    type: 'forEach',
+    label: 'For Each',
+    icon: 'List',
+    color: 'bg-orange-500',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+    description: 'Iterate over a list of items'
+  },
   delay: {
     type: 'delay',
     label: 'Délai',

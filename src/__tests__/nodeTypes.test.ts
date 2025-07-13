@@ -21,4 +21,8 @@ describe('nodeTypes', () => {
   it('includes ETL node', () => {
     expect(nodeTypes.etl.label).toBe('ETL Pipeline');
   });
+
+  it('includes forEach node', () => {
+    expect(nodeTypes.forEach.label).toBe('For Each');
+  });
 });
