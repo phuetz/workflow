@@ -17,4 +17,8 @@ describe('nodeTypes', () => {
   it('includes Pipedrive node', () => {
     expect(nodeTypes.pipedrive.label).toBe('Pipedrive');
   });
+
+  it('includes ETL node', () => {
+    expect(nodeTypes.etl.label).toBe('ETL Pipeline');
+  });
 });

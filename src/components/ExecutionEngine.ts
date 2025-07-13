@@ -83,11 +83,19 @@ export class WorkflowExecutor {
         case 'merge':
           result = await this.executeMerge(node, config, inputData);
           break;
-          
+
         case 'delay':
           result = await this.executeDelay(node, config, inputData);
           break;
-          
+
+        case 'loop':
+          result = await this.executeLoop(node, config, inputData);
+          break;
+
+        case 'etl':
+          result = await this.executeETL(node, config, inputData);
+          break;
+
         case 'googleSheets':
           result = await this.executeGoogleSheets(node, config, inputData);
           break;
@@ -449,6 +457,38 @@ export class WorkflowExecutor {
       key: `file-${Date.now()}.json`,
       size: Math.floor(Math.random() * 10000) + 1000,
       etag: Math.random().toString(36).substr(2, 32)
+    };
+  }
+
+  async executeLoop(node: any, config: any, inputData: any) {
+    const items = Array.isArray(inputData?.items) ? inputData.items : [];
+    const max = parseInt(config.maxIterations) || items.length;
+    const iterations = Math.min(max, items.length);
+
+    return {
+      iterations,
+      items: items.slice(0, iterations)
+    };
+  }
+
+  async executeETL(node: any, config: any, inputData: any) {
+    const data = Array.isArray(inputData?.data) ? inputData.data : [];
+    const transformed = data.map((item: any) => {
+      if (typeof item === 'object') {
+        const res: any = {};
+        for (const [k, v] of Object.entries(item)) {
+          res[k] = typeof v === 'string' ? v.toUpperCase() : v;
+        }
+        return res;
+      }
+      return item;
+    });
+
+    return {
+      extracted: data.length,
+      transformed: transformed.length,
+      loaded: transformed.length,
+      sample: transformed.slice(0, 3)
     };
   }
   
