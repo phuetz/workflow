@@ -38,7 +38,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
   - [ ] Job queuing for executions
   - [ ] Priority queues
   - [ ] Dead letter queues
-  - [ ] Queue monitoring dashboard
+  - [x] Queue monitoring dashboard
 
 - [ ] **Authentication & Security**
   - [ ] JWT token system
