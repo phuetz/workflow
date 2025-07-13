@@ -111,7 +111,10 @@ export class WorkflowExecutor {
         case 's3':
           result = await this.executeS3(node, config, inputData);
           break;
-          
+
+        case 'errorGenerator':
+          throw new Error(config.message || 'Intentional error');
+
         default:
           result = await this.executeGeneric(node, config, inputData);
       }
@@ -557,6 +560,26 @@ export class WorkflowExecutor {
       timestamp: new Date().toISOString()
     };
   }
+
+  // Évalue une expression simple basée sur les données
+  parseExpression(expression: string, data: any) {
+    if (!expression) return true;
+    try {
+      const func = new Function('$json', `return ${expression}`);
+      return func(data);
+    } catch (e) {
+      console.error('Expression evaluation failed:', expression, e);
+      return false;
+    }
+  }
+
+  // Vérifie si l'arête doit être suivie
+  edgeConditionMet(edge: any, data: any) {
+    if (edge.data && edge.data.condition) {
+      return this.parseExpression(edge.data.condition, data);
+    }
+    return true;
+  }
   
   // Obtenir les nœuds suivants
   getNextNodes(nodeId: string, branch?: string) {
@@ -632,13 +655,32 @@ export class WorkflowExecutor {
         const result = await this.executeNode(node, nodeInputData);
         results[node.id] = result;
 
+        if (result.status === 'error') {
+          console.error(`❌ Node returned error: ${node.data.label}`, result.error);
+          errors.push({ nodeId: node.id, error: result.error });
+          onNodeError(node.id, result.error);
+          executed.add(node.id);
+
+          const errorEdges = this.getNextNodes(node.id, 'error');
+          for (const { node: nextNode, edge } of errorEdges) {
+            if (nextNode && !executed.has(nextNode.id) && this.edgeConditionMet(edge, result)) {
+              executionQueue.push({ node: nextNode, inputData: { error: result.error } });
+            }
+          }
+
+          if (!node.data.config?.continueOnFail && errorEdges.length === 0) {
+            break;
+          }
+          continue;
+        }
+
         console.log(`✅ Node completed: ${node.data.label}`, result);
         onNodeComplete(node.id, nodeInputData, result);
         executed.add(node.id);
-        
+
         // Gérer les nœuds suivants
         let nextNodes = [];
-        
+
         if (result.status === 'success' && node.data.type === 'condition' && result.data?.branch) {
           // Pour les conditions, utiliser la branche spécifique
           nextNodes = this.getNextNodes(node.id, result.data.branch);
@@ -646,10 +688,10 @@ export class WorkflowExecutor {
           // Pour les autres nœuds, prendre toutes les sorties
           nextNodes = this.getNextNodes(node.id);
         }
-        
+
         // Ajouter les nœuds suivants à la queue
-        for (const { node: nextNode } of nextNodes) {
-          if (nextNode && !executed.has(nextNode.id)) {
+        for (const { node: nextNode, edge } of nextNodes) {
+          if (nextNode && !executed.has(nextNode.id) && this.edgeConditionMet(edge, result.data)) {
             executionQueue.push({
               node: nextNode,
               inputData: result.data || {}
@@ -662,9 +704,14 @@ export class WorkflowExecutor {
         errors.push({ nodeId: node.id, error });
         onNodeError(node.id, error);
         executed.add(node.id);
-        
-        // En cas d'erreur, continuer avec les autres nœuds si configuré
-        if (!node.data.config?.continueOnFail) {
+        const errorEdges = this.getNextNodes(node.id, 'error');
+        for (const { node: nextNode, edge } of errorEdges) {
+          if (nextNode && !executed.has(nextNode.id) && this.edgeConditionMet(edge, { error })) {
+            executionQueue.push({ node: nextNode, inputData: { error } });
+          }
+        }
+
+        if (!node.data.config?.continueOnFail && errorEdges.length === 0) {
           break;
         }
       }

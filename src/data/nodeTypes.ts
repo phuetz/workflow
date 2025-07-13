@@ -749,6 +749,16 @@ export const nodeTypes: { [key: string]: NodeType } = {
     description: 'Retry failed operations'
   },
   
+  errorGenerator: {
+    type: 'errorGenerator',
+    label: 'Error Generator',
+    icon: 'AlertTriangle',
+    color: 'bg-red-500',
+    category: 'dev',
+    inputs: 1,
+    outputs: 1,
+    description: 'Generate an error for testing',
+  },
   // Data Processing
   jsonParser: {
     type: 'jsonParser',

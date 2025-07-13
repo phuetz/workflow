@@ -26,4 +26,29 @@ describe('WorkflowExecutor advanced nodes', () => {
     expect(res.data.length).toBe(1);
     expect(res.data[0]).toEqual({ name: 'Alice' });
   });
+
+  it('routes to error handle when node fails', async () => {
+    const n1 = dummyNode('1', 'errorGenerator');
+    const n2 = dummyNode('2', 'transform');
+    const edges = [
+      { id: 'e1-2', source: '1', target: '2', sourceHandle: 'error', type: 'default' }
+    ];
+    const executor = new WorkflowExecutor([n1, n2], edges);
+    const res: any = await executor.execute(() => {}, () => {}, () => {});
+    expect(Object.keys(res.results)).toContain('2');
+  });
+
+  it('respects edge expression conditions', async () => {
+    const start = dummyNode('s', 'trigger', { mockData: { value: 5 } });
+    const yes = dummyNode('y', 'transform');
+    const no = dummyNode('n', 'transform');
+    const edges = [
+      { id: 'e1', source: 's', target: 'y', type: 'default', data: { condition: '$json.data.value > 3' } },
+      { id: 'e2', source: 's', target: 'n', type: 'default', data: { condition: '$json.data.value < 3' } }
+    ];
+    const exec = new WorkflowExecutor([start, yes, no], edges);
+    const res: any = await exec.execute(() => {}, () => {}, () => {});
+    expect(Object.keys(res.results)).toContain('y');
+    expect(Object.keys(res.results)).not.toContain('n');
+  });
 });
