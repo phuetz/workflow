@@ -283,6 +283,8 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
     }
   };
 
+  const [showTooltip, setShowTooltip] = React.useState(false);
+
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêche la propagation de l'événement aux éléments parents
     setSelectedNode({ id, data });
@@ -294,13 +296,17 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
   const outputCount = nodeType.outputs || 0;
 
   return (
-    <div 
-      onClick={handleClick} 
-      className="relative cursor-pointer" 
-      role="button" 
-      tabIndex={0} 
+    <div
+      onClick={handleClick}
+      className="relative cursor-pointer"
+      role="button"
+      tabIndex={0}
       aria-label={`Configure ${data.label || data.type} node`}
       onKeyDown={(e) => e.key === 'Enter' && handleClick(e as any)}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onFocus={() => setShowTooltip(true)}
+      onBlur={() => setShowTooltip(false)}
     >
       {/* Nœud principal */}
       <div className={`
@@ -404,9 +410,11 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
       </div>
 
       {/* Tooltip au hover */}
-      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-        {nodeType.description}
-      </div>
+      {showTooltip && (
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-2 py-1 rounded text-xs whitespace-nowrap z-10 pointer-events-none">
+          {nodeType.description}
+        </div>
+      )}
     </div>
   );
 }
