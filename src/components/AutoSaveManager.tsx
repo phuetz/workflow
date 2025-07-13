@@ -8,13 +8,14 @@ interface AutoSaveManagerProps {
 }
 
 export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClose }) => {
-  const { 
-    autoSaveState, 
+  const {
+    autoSaveState,
     autoSaveSettings,
     toggleAutoSave,
     updateAutoSaveSettings,
     manualSave,
-    lastSaved
+    lastSaved,
+    darkMode
   } = useWorkflowStore();
   
   const [localSettings, setLocalSettings] = useState(autoSaveSettings);
@@ -58,40 +59,54 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-4 top-20 w-80 bg-white rounded-lg shadow-xl border z-50">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+    <div
+      className={`fixed right-4 top-20 w-80 rounded-lg shadow-xl border z-50 ${
+        darkMode ? 'bg-gray-900 text-white border-gray-700' : 'bg-white text-gray-800 border-gray-200'
+      }`}
+    >
+      <div
+        className={`flex items-center justify-between p-4 border-b ${
+          darkMode ? 'border-gray-700' : 'border-gray-200'
+        }`}
+      >
+        <h3
+          className={`text-lg font-semibold flex items-center gap-2 ${
+            darkMode ? 'text-white' : 'text-gray-800'
+          }`}
+        >
           <Save size={20} className="text-blue-500" />
           Auto-Save Manager
         </h3>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className={`transition-colors ${
+            darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'
+          }`}
         >
           <X size={20} />
         </button>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className={`p-4 space-y-4 ${darkMode ? 'bg-gray-800' : ''}`}>
         {/* Status */}
-        <div className="bg-gray-50 p-3 rounded-lg">
+        <div className={`${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50'} p-3 rounded-lg`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-800">Status</span>
+            <span className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Status</span>
             {getStatusIcon()}
           </div>
-          <div className="text-sm text-gray-600 capitalize">{autoSaveState.status}</div>
+          <div className={`text-sm capitalize ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{autoSaveState.status}</div>
           {autoSaveState.lastError && (
             <div className="text-xs text-red-600 mt-1">{autoSaveState.lastError}</div>
           )}
         </div>
 
         {/* Last Saved */}
-        <div className="bg-gray-50 p-3 rounded-lg">
+        <div className={`${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50'} p-3 rounded-lg`}>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-800">Last Saved</span>
+            <span className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Last Saved</span>
             <Clock size={16} className="text-gray-400" />
           </div>
-          <div className="text-sm text-gray-600">{formatLastSaved(lastSaved)}</div>
+          <div className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>{formatLastSaved(lastSaved)}</div>
         </div>
 
         {/* Manual Save */}
@@ -108,8 +123,12 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
             onClick={toggleAutoSave}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               autoSaveSettings.enabled
-                ? 'bg-red-50 text-red-700 hover:bg-red-100'
-                : 'bg-green-50 text-green-700 hover:bg-green-100'
+                ? darkMode
+                  ? 'bg-red-700 text-white hover:bg-red-600'
+                  : 'bg-red-50 text-red-700 hover:bg-red-100'
+                : darkMode
+                  ? 'bg-green-700 text-white hover:bg-green-600'
+                  : 'bg-green-50 text-green-700 hover:bg-green-100'
             }`}
           >
             {autoSaveSettings.enabled ? 'Disable' : 'Enable'}
@@ -120,12 +139,12 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Settings size={16} className="text-gray-400" />
-            <span className="text-sm font-medium text-gray-800">Settings</span>
+            <span className={`text-sm font-medium ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Settings</span>
           </div>
           
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Auto-save interval (seconds)
               </label>
               <input
@@ -153,7 +172,7 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
                   })}
                   className="mr-2"
                 />
-                <label htmlFor="saveOnChange" className="text-sm text-gray-700">
+                <label htmlFor="saveOnChange" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Save on every change
                 </label>
               </div>
@@ -169,7 +188,7 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
                   })}
                   className="mr-2"
                 />
-                <label htmlFor="saveOnExecute" className="text-sm text-gray-700">
+                <label htmlFor="saveOnExecute" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Save before execution
                 </label>
               </div>
@@ -185,7 +204,7 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
                   })}
                   className="mr-2"
                 />
-                <label htmlFor="saveOnBlur" className="text-sm text-gray-700">
+                <label htmlFor="saveOnBlur" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Save when window loses focus
                 </label>
               </div>
@@ -201,7 +220,7 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
                   })}
                   className="mr-2"
                 />
-                <label htmlFor="showNotifications" className="text-sm text-gray-700">
+                <label htmlFor="showNotifications" className={`text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Show save notifications
                 </label>
               </div>
@@ -209,7 +228,9 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
 
             <button
               onClick={handleSaveSettings}
-              className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              className={`w-full px-4 py-2 rounded-lg transition-colors ${
+                darkMode ? 'bg-gray-600 text-gray-100 hover:bg-gray-500' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
             >
               Apply Settings
             </button>
@@ -217,15 +238,15 @@ export const AutoSaveManager: React.FC<AutoSaveManagerProps> = ({ isOpen, onClos
         </div>
 
         {/* Statistics */}
-        <div className="bg-gray-50 p-3 rounded-lg">
-          <div className="text-sm font-medium text-gray-800 mb-2">Statistics</div>
+        <div className={`${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-50'} p-3 rounded-lg`}>
+          <div className={`text-sm font-medium mb-2 ${darkMode ? 'text-gray-100' : 'text-gray-800'}`}>Statistics</div>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <div className="text-gray-600">Total saves</div>
+              <div className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total saves</div>
               <div className="font-medium">{autoSaveState.saveCount}</div>
             </div>
             <div>
-              <div className="text-gray-600">Failed saves</div>
+              <div className={`${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Failed saves</div>
               <div className="font-medium text-red-600">{autoSaveState.errorCount}</div>
             </div>
           </div>

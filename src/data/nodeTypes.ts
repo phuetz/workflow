@@ -518,6 +518,16 @@ export const nodeTypes: { [key: string]: NodeType } = {
     outputs: 1,
     description: 'Monday.com project management'
   },
+  pipedrive: {
+    type: 'pipedrive',
+    label: 'Pipedrive',
+    icon: 'Handshake',
+    color: 'bg-green-600',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Pipedrive CRM integration'
+  },
   zendesk: {
     type: 'zendesk',
     label: 'Zendesk',
