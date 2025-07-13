@@ -720,7 +720,7 @@ export const nodeTypes: { [key: string]: NodeType } = {
   // Advanced Flow Control
   subWorkflow: {
     type: 'subWorkflow',
-    label: 'Sub-Workflow',
+    label: 'Sub-workflow',
     icon: 'Workflow',
     color: 'bg-purple-600',
     category: 'flow',

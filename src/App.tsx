@@ -19,7 +19,7 @@ import { useWorkflowStore } from './store/workflowStore';
 import { nodeTypes } from './data/nodeTypes';
 import { WorkflowExecutor } from './components/ExecutionEngine';
 import CustomNode from './components/CustomNode';
-import NodeConfigPanel from './components/NodeConfigPanel';
+import NodeConfigPanel from './workflow/NodeConfigPanel';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
@@ -84,7 +84,8 @@ function WorkflowEditor() {
     stickyNotes,
     addStickyNote,
     updateStickyNote,
-    deleteStickyNote
+    deleteStickyNote,
+    workflows
   } = useWorkflowStore();
   
   const [realTimeData, setRealTimeData] = useState<any[]>([]);
@@ -227,6 +228,7 @@ function WorkflowEditor() {
       globalVariables,
       environment: environments[currentEnvironment],
       credentials,
+      loadWorkflow: async (id: string) => workflows[id],
     });
     
     try {

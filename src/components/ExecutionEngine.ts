@@ -88,6 +88,10 @@ export class WorkflowExecutor {
           result = await this.executeDelay(node, config, inputData);
           break;
 
+        case 'subWorkflow':
+          result = await this.executeSubWorkflow(node, config, inputData);
+          break;
+
         case 'loop':
           result = await this.executeLoop(node, config, inputData);
           break;
@@ -524,7 +528,26 @@ export class WorkflowExecutor {
       data: transformed
     };
   }
-  
+
+  async executeSubWorkflow(node: any, config: any, inputData: any) {
+    const workflowId = config.workflowId;
+    if (!workflowId) {
+      throw new Error('No workflow selected');
+    }
+    if (typeof this.options.loadWorkflow !== 'function') {
+      throw new Error('loadWorkflow option not provided');
+    }
+
+    const sub = await this.options.loadWorkflow(workflowId);
+    if (!sub || !Array.isArray(sub.nodes)) {
+      throw new Error('Workflow not found');
+    }
+
+    const executor = new WorkflowExecutor(sub.nodes, sub.edges || [], this.options);
+    const res = await executor.execute(() => {}, () => {}, () => {});
+    return { workflowId, result: res };
+  }
+
   async executeGeneric(node: any, config: any, inputData: any) {
     return {
       nodeType: node.data.type,
