@@ -1,6 +1,6 @@
 import React from 'react';
 import { useWorkflowStore } from '../store/workflowStore';
-import { Copy, Trash2, Group, Square } from 'lucide-react';
+import { Copy, Trash2, Group, Square, ClipboardPaste, AlignLeft, AlignHorizontalJustifyCenter, AlignVerticalJustifyCenter } from 'lucide-react';
 
 export const MultiSelectManager: React.FC = () => {
   const {
@@ -10,8 +10,11 @@ export const MultiSelectManager: React.FC = () => {
     setNodes,
     darkMode,
     copySelectedNodes,
+    pasteNodes,
     deleteSelectedNodes,
     groupSelectedNodes,
+    alignNodes,
+    distributeNodes,
   } = useWorkflowStore();
 
   const handleCopyNodes = () => {
@@ -27,6 +30,18 @@ export const MultiSelectManager: React.FC = () => {
   const handleGroupNodes = () => {
     if (selectedNodes.length < 2) return;
     groupSelectedNodes();
+  };
+
+  const handlePasteNodes = () => {
+    pasteNodes();
+  };
+
+  const handleAlign = (dir: 'left' | 'right' | 'top' | 'bottom' | 'centerX' | 'centerY') => {
+    alignNodes(dir);
+  };
+
+  const handleDistribute = (o: 'horizontal' | 'vertical') => {
+    distributeNodes(o);
   };
 
   const handleMoveNodes = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -67,6 +82,10 @@ export const MultiSelectManager: React.FC = () => {
             e.preventDefault();
             handleCopyNodes();
             break;
+          case 'v':
+            e.preventDefault();
+            handlePasteNodes();
+            break;
           case 'a':
             e.preventDefault();
             handleSelectAll();
@@ -74,6 +93,18 @@ export const MultiSelectManager: React.FC = () => {
           case 'g':
             e.preventDefault();
             handleGroupNodes();
+            break;
+          case 'l':
+            e.preventDefault();
+            handleAlign('left');
+            break;
+          case 'h':
+            e.preventDefault();
+            handleDistribute('horizontal');
+            break;
+          case 'd':
+            e.preventDefault();
+            handleDistribute('vertical');
             break;
         }
       }
@@ -130,6 +161,49 @@ export const MultiSelectManager: React.FC = () => {
             <Copy size={16} />
             Copy
           </button>
+
+          <button
+            onClick={handlePasteNodes}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              darkMode ? 'bg-blue-700 text-white hover:bg-blue-600' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            }`}
+            title="Paste (Ctrl+V)"
+          >
+            <ClipboardPaste size={16} />
+            Paste
+          </button>
+
+          {selectedNodes.length >= 2 && (
+            <>
+              <button
+                onClick={() => handleAlign('left')}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+                title="Align Left (Ctrl+L)"
+              >
+                <AlignLeft size={16} />
+              </button>
+              <button
+                onClick={() => handleDistribute('horizontal')}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+                title="Distribute H (Ctrl+H)"
+              >
+                <AlignHorizontalJustifyCenter size={16} />
+              </button>
+              <button
+                onClick={() => handleDistribute('vertical')}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+                title="Distribute V (Ctrl+D)"
+              >
+                <AlignVerticalJustifyCenter size={16} />
+              </button>
+            </>
+          )}
 
           <button
             onClick={handleDeleteNodes}

@@ -107,28 +107,42 @@ export const useWorkflowStore = create(
         set({ selectedNode: node });
       },
 
-      addNode: (node) => set((state) => ({
-        nodes: [...state.nodes, node],
-        nodeStats: {
-          ...state.nodeStats,
-          [node.data.type]: (state.nodeStats[node.data.type] || 0) + 1
-        }
-      })),
+      addNode: (node) => {
+        const { nodes, edges, addToHistory } = get();
+        addToHistory(nodes, edges);
+        set((state) => ({
+          nodes: [...state.nodes, node],
+          nodeStats: {
+            ...state.nodeStats,
+            [node.data.type]: (state.nodeStats[node.data.type] || 0) + 1
+          }
+        }));
+      },
       
-      updateNode: (id, data) => set((state) => ({
-        nodes: state.nodes.map(node => 
-          node.id === id ? { ...node, data: { ...node.data, ...data } } : node
-        )
-      })),
+      updateNode: (id, data) => {
+        const { nodes, edges, addToHistory } = get();
+        addToHistory(nodes, edges);
+        set((state) => ({
+          nodes: state.nodes.map(node =>
+            node.id === id ? { ...node, data: { ...node.data, ...data } } : node
+          )
+        }));
+      },
       
-      deleteNode: (id) => set((state) => ({
-        nodes: state.nodes.filter(node => node.id !== id),
-        edges: state.edges.filter(edge => edge.source !== id && edge.target !== id)
-      })),
+      deleteNode: (id) => {
+        const { nodes, edges, addToHistory } = get();
+        addToHistory(nodes, edges);
+        set((state) => ({
+          nodes: state.nodes.filter(node => node.id !== id),
+          edges: state.edges.filter(edge => edge.source !== id && edge.target !== id)
+        }));
+      },
       
       duplicateNode: (id) => {
-        const node = get().nodes.find(n => n.id === id);
+        const { nodes, edges, addToHistory } = get();
+        const node = nodes.find(n => n.id === id);
         if (node) {
+          addToHistory(nodes, edges);
           const newNode = {
             ...node,
             id: `${node.id}_copy_${Date.now()}`,
@@ -401,7 +415,98 @@ export const useWorkflowStore = create(
   
   copySelectedNodes: () => {
     const state = get();
-    localStorage.setItem('copiedNodes', JSON.stringify(state.selectedNodes));
+    const nodes = state.selectedNodes;
+    const edges = state.edges.filter(e =>
+      nodes.some(n => n.id === e.source) && nodes.some(n => n.id === e.target)
+    );
+    localStorage.setItem('copiedNodes', JSON.stringify({ nodes, edges }));
+  },
+
+  pasteNodes: () => {
+    const copied = localStorage.getItem('copiedNodes');
+    if (!copied) return;
+    try {
+      const { nodes: copiedNodes = [], edges: copiedEdges = [] } = JSON.parse(copied);
+      const idMap: Record<string, string> = {};
+      const offset = 40;
+      const newNodes = copiedNodes.map((n: any) => {
+        const newId = `${n.id}_copy_${Date.now()}_${Math.random().toString(36).slice(2,5)}`;
+        idMap[n.id] = newId;
+        return { ...n, id: newId, position: { x: n.position.x + offset, y: n.position.y + offset } };
+      });
+      const newEdges = copiedEdges.map((e: any) => ({
+        ...e,
+        id: `${e.id}_copy_${Date.now()}`,
+        source: idMap[e.source],
+        target: idMap[e.target]
+      }));
+      const { nodes, edges, addToHistory } = get();
+      addToHistory(nodes, edges);
+      set({ nodes: [...nodes, ...newNodes], edges: [...edges, ...newEdges] });
+    } catch (err) {
+      console.error('Error pasting nodes', err);
+    }
+  },
+
+  alignNodes: (direction: 'left' | 'right' | 'top' | 'bottom' | 'centerX' | 'centerY') => {
+    const state = get();
+    const selected = state.selectedNodes;
+    if (selected.length < 2) return;
+
+    const xs = selected.map(n => n.position.x);
+    const ys = selected.map(n => n.position.y);
+
+    const targetX = direction === 'left' ? Math.min(...xs)
+      : direction === 'right' ? Math.max(...xs)
+      : direction === 'centerX' ? (Math.min(...xs) + Math.max(...xs)) / 2
+      : null;
+    const targetY = direction === 'top' ? Math.min(...ys)
+      : direction === 'bottom' ? Math.max(...ys)
+      : direction === 'centerY' ? (Math.min(...ys) + Math.max(...ys)) / 2
+      : null;
+
+    set({
+      nodes: state.nodes.map(n => {
+        if (selected.some(sn => sn.id === n.id)) {
+          return {
+            ...n,
+            position: {
+              x: targetX !== null ? targetX : n.position.x,
+              y: targetY !== null ? targetY : n.position.y
+            }
+          };
+        }
+        return n;
+      })
+    });
+  },
+
+  distributeNodes: (orientation: 'horizontal' | 'vertical') => {
+    const state = get();
+    const selected = [...state.selectedNodes];
+    if (selected.length < 3) return;
+
+    const key = orientation === 'horizontal' ? 'x' : 'y';
+    selected.sort((a, b) => a.position[key] - b.position[key]);
+    const start = selected[0].position[key];
+    const end = selected[selected.length - 1].position[key];
+    const gap = (end - start) / (selected.length - 1);
+
+    set({
+      nodes: state.nodes.map(n => {
+        const idx = selected.findIndex(sn => sn.id === n.id);
+        if (idx !== -1) {
+          return {
+            ...n,
+            position: {
+              ...n.position,
+              [key]: start + gap * idx
+            }
+          };
+        }
+        return n;
+      })
+    });
   },
   
   groupSelectedNodes: () => {
