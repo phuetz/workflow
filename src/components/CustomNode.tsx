@@ -134,6 +134,11 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
         return <div className="w-4 h-4 bg-orange-500 rounded-sm flex items-center justify-center">
           <Icons.RotateCcw size={10} className="text-white" />
         </div>;
+
+      case 'forEach':
+        return <div className="w-4 h-4 bg-orange-500 rounded-sm flex items-center justify-center">
+          <Icons.List size={10} className="text-white" />
+        </div>;
       
       case 'filter':
         return <div className="w-4 h-4 bg-purple-500 rounded-sm flex items-center justify-center">

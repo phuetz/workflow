@@ -92,6 +92,10 @@ export class WorkflowExecutor {
           result = await this.executeLoop(node, config, inputData);
           break;
 
+        case 'forEach':
+          result = await this.executeForEach(node, config, inputData);
+          break;
+
         case 'etl':
           result = await this.executeETL(node, config, inputData);
           break;
@@ -463,32 +467,61 @@ export class WorkflowExecutor {
   async executeLoop(node: any, config: any, inputData: any) {
     const items = Array.isArray(inputData?.items) ? inputData.items : [];
     const max = parseInt(config.maxIterations) || items.length;
-    const iterations = Math.min(max, items.length);
+    const delay = parseInt(config.delayMs) || 0;
+
+    const results: any[] = [];
+    for (let i = 0; i < items.length && i < max; i++) {
+      results.push({ index: i, item: items[i] });
+      if (delay > 0) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
 
     return {
-      iterations,
-      items: items.slice(0, iterations)
+      iterations: results.length,
+      results
+    };
+  }
+
+  async executeForEach(node: any, config: any, inputData: any) {
+    const items = Array.isArray(inputData?.items) ? inputData.items : [];
+    const results: any[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      results.push({ index: i, item: items[i] });
+    }
+
+    return {
+      count: results.length,
+      results
     };
   }
 
   async executeETL(node: any, config: any, inputData: any) {
     const data = Array.isArray(inputData?.data) ? inputData.data : [];
-    const transformed = data.map((item: any) => {
-      if (typeof item === 'object') {
-        const res: any = {};
-        for (const [k, v] of Object.entries(item)) {
-          res[k] = typeof v === 'string' ? v.toUpperCase() : v;
+    let transformed = data;
+
+    if (config.filterField) {
+      transformed = transformed.filter((item: any) =>
+        item && item[config.filterField] === config.filterValue
+      );
+    }
+
+    if (Array.isArray(config.selectFields) && config.selectFields.length > 0) {
+      transformed = transformed.map((item: any) => {
+        const out: any = {};
+        for (const field of config.selectFields) {
+          out[field] = item[field];
         }
-        return res;
-      }
-      return item;
-    });
+        return out;
+      });
+    }
 
     return {
       extracted: data.length,
-      transformed: transformed.length,
       loaded: transformed.length,
-      sample: transformed.slice(0, 3)
+      sample: transformed.slice(0, 3),
+      data: transformed
     };
   }
   
