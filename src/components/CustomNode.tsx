@@ -13,17 +13,19 @@ interface CustomNodeProps {
 export default function CustomNode({ data, id, selected }: CustomNodeProps) {
   const { 
     setSelectedNode, 
-    executionResults, 
-    executionErrors, 
+    executionResults,
+    executionErrors,
     currentExecutingNode,
+    nodeExecutionStatus,
     darkMode 
   } = useWorkflowStore();
   
   const nodeType = nodeTypes[data.type] || nodeTypes.trigger;
   
-  const hasResult = executionResults[id];
-  const hasError = executionErrors[id];
-  const isExecuting = currentExecutingNode === id;
+  const status = nodeExecutionStatus[id];
+  const hasResult = status === 'success' || executionResults[id];
+  const hasError = status === 'error' || executionErrors[id];
+  const isExecuting = status === 'running' || currentExecutingNode === id;
   
   // Fonction pour obtenir l'icône spécifique à n8n
   const getNodeIcon = () => {

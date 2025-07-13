@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect, useState } from 'react';
+import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import * as Icons from 'lucide-react';
 import ReactFlow, {
   ReactFlowProvider,
@@ -67,6 +67,9 @@ function WorkflowEditor() {
     setExecutionResult,
     setExecutionError,
     setNodeExecutionData,
+    setNodeStatus,
+    clearNodeStatuses,
+    nodeExecutionStatus,
     setCurrentExecutingNode,
     clearExecution,
     addExecutionToHistory,
@@ -94,6 +97,25 @@ function WorkflowEditor() {
   
   let id = 0;
   const getId = () => `node_${++id}_${Date.now()}`;
+
+  const displayEdges = useMemo(() => {
+    return edges.map((edge: any) => {
+      const status = nodeExecutionStatus[edge.source];
+      let style = edge.style || {};
+      let animated = edge.animated;
+      if (status === 'running') {
+        style = { ...style, stroke: '#3b82f6' };
+        animated = true;
+      } else if (status === 'success') {
+        style = { ...style, stroke: '#16a34a' };
+        animated = false;
+      } else if (status === 'error') {
+        style = { ...style, stroke: '#dc2626' };
+        animated = false;
+      }
+      return { ...edge, style, animated };
+    });
+  }, [edges, nodeExecutionStatus]);
   
   // Simulation de données temps réel
   useEffect(() => {
@@ -221,6 +243,7 @@ function WorkflowEditor() {
     }
     
     clearExecution();
+    clearNodeStatuses();
     setIsExecuting(true);
     
     const startTime = Date.now();
@@ -234,14 +257,19 @@ function WorkflowEditor() {
     
     try {
       const result = await executor.execute(
-        (nodeId: string) => setCurrentExecutingNode(nodeId),
+        (nodeId: string) => {
+          setCurrentExecutingNode(nodeId);
+          setNodeStatus(nodeId, 'running');
+        },
         (nodeId: string, input: any, result: any) => {
           setExecutionResult(nodeId, result);
           setNodeExecutionData(nodeId, { input, output: result });
+          setNodeStatus(nodeId, 'success');
           setCurrentExecutingNode(null);
         },
         (nodeId: string, error: any) => {
           setExecutionError(nodeId, error);
+          setNodeStatus(nodeId, 'error');
           setCurrentExecutingNode(null);
         }
       );
@@ -413,7 +441,7 @@ function WorkflowEditor() {
       
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={displayEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
