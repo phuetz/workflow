@@ -144,6 +144,11 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
         return <div className="w-4 h-4 bg-indigo-500 rounded-sm flex items-center justify-center">
           <Icons.ArrowUpDown size={10} className="text-white" />
         </div>;
+
+      case 'etl':
+        return <div className="w-4 h-4 bg-orange-700 rounded-sm flex items-center justify-center">
+          <Icons.Database size={10} className="text-white" />
+        </div>;
       
       // AI
       case 'openai':

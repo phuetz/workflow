@@ -486,6 +486,16 @@ export const nodeTypes: { [key: string]: NodeType } = {
     outputs: 1,
     description: 'Sort data'
   },
+  etl: {
+    type: 'etl',
+    label: 'ETL Pipeline',
+    icon: 'Database',
+    color: 'bg-orange-700',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Extract, transform and load data'
+  },
 
   // SaaS Platforms
   salesforce: {
