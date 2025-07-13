@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useWorkflowStore } from '../store/workflowStore';
 import { nodeTypes } from '../data/nodeTypes';
 import { X, Settings, HelpCircle, Activity } from 'lucide-react';
+import ExpressionEditor from './ExpressionEditor';
 
 export default function NodeConfigPanel() {
   const {
@@ -69,25 +70,21 @@ export default function NodeConfigPanel() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Headers</label>
-              <textarea
+              <ExpressionEditor
                 value={config.headers || '{\n  "Content-Type": "application/json"\n}'}
-                onChange={(e) => updateNodeConfig('headers', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md h-24 font-mono text-sm ${
-                  darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                }`}
-                placeholder="JSON headers"
+                onChange={(val) => updateNodeConfig('headers', val)}
+                nodeId={selectedNode.id}
+                height="100px"
               />
             </div>
             {(config.method === 'POST' || config.method === 'PUT' || config.method === 'PATCH') && (
               <div>
                 <label className="block text-sm font-medium mb-1">Body</label>
-                <textarea
+                <ExpressionEditor
                   value={config.body || ''}
-                  onChange={(e) => updateNodeConfig('body', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-md h-32 font-mono text-sm ${
-                    darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                  }`}
-                  placeholder="Request body (JSON)"
+                  onChange={(val) => updateNodeConfig('body', val)}
+                  nodeId={selectedNode.id}
+                  height="120px"
                 />
               </div>
             )}
@@ -124,13 +121,11 @@ export default function NodeConfigPanel() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Body</label>
-              <textarea
+              <ExpressionEditor
                 value={config.body || ''}
-                onChange={(e) => updateNodeConfig('body', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md h-32 ${
-                  darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                }`}
-                placeholder="Email content"
+                onChange={(val) => updateNodeConfig('body', val)}
+                nodeId={selectedNode.id}
+                height="120px"
               />
             </div>
           </div>
@@ -153,13 +148,11 @@ export default function NodeConfigPanel() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Message</label>
-              <textarea
+              <ExpressionEditor
                 value={config.message || ''}
-                onChange={(e) => updateNodeConfig('message', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md h-24 ${
-                  darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                }`}
-                placeholder="Message content"
+                onChange={(val) => updateNodeConfig('message', val)}
+                nodeId={selectedNode.id}
+                height="100px"
               />
             </div>
           </div>
@@ -170,14 +163,11 @@ export default function NodeConfigPanel() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Condition</label>
-              <input
-                type="text"
+              <ExpressionEditor
                 value={config.condition || ''}
-                onChange={(e) => updateNodeConfig('condition', e.target.value)}
-                placeholder="$json.amount > 100"
-                className={`w-full px-3 py-2 border rounded-md font-mono ${
-                  darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
-                }`}
+                onChange={(val) => updateNodeConfig('condition', val)}
+                nodeId={selectedNode.id}
+                height="60px"
               />
             </div>
             <div className="text-sm text-gray-500">
