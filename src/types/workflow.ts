@@ -31,4 +31,6 @@ export interface NodeType {
   inputs: number;
   outputs: number;
   description: string;
+  /** Whether the node exposes an "on error" handle */
+  errorHandle?: boolean;
 }

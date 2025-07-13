@@ -20,6 +20,7 @@ import { nodeTypes } from './data/nodeTypes';
 import { WorkflowExecutor } from './components/ExecutionEngine';
 import CustomNode from './components/CustomNode';
 import NodeConfigPanel from './workflow/NodeConfigPanel';
+import EdgeConfigPanel from './components/EdgeConfigPanel';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
@@ -60,7 +61,9 @@ function WorkflowEditor() {
     edges,
     setNodes,
     setEdges,
-    setSelectedNode, 
+    setSelectedNode,
+    selectedEdge,
+    setSelectedEdge,
     darkMode,
     isExecuting,
     setIsExecuting,
@@ -444,6 +447,10 @@ function WorkflowEditor() {
         edges={displayEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
+        onEdgeClick={(_, edge) => {
+          setSelectedEdge(edge);
+          setSelectedNode(null);
+        }}
         onConnect={onConnect}
         onDrop={onDrop}
         onDragOver={onDragOver}
@@ -459,6 +466,10 @@ function WorkflowEditor() {
         panOnScroll={false}
         panOnDrag={true}
         preventScrolling={true}
+        onPaneClick={() => {
+          setSelectedEdge(null);
+          setSelectedNode(null);
+        }}
         defaultEdgeOptions={{
           style: { strokeWidth: 1.5, stroke: '#9CA3AF' },
           markerEnd: { type: MarkerType.ArrowClosed, color: '#9CA3AF', width: 12, height: 12 },
@@ -610,7 +621,8 @@ function WorkflowEditor() {
       
       <Sidebar />
       <NodeConfigPanel />
-      
+      <EdgeConfigPanel />
+
       <KeyboardShortcuts />
       <ExecutionViewer />
       
