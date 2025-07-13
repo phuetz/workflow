@@ -399,6 +399,15 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
         );
       })}
 
+      {/* Handle de sortie en cas d'erreur */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="error"
+        className="w-2 h-2 bg-red-600 rounded-full border-0 hover:bg-red-500 transition-colors"
+        style={{ bottom: -4 }}
+      />
+
       {/* Labels pour les sorties de condition */}
       {data.type === 'condition' && outputCount > 1 && (
         <>
