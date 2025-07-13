@@ -25,4 +25,8 @@ describe('nodeTypes', () => {
   it('includes forEach node', () => {
     expect(nodeTypes.forEach.label).toBe('For Each');
   });
+
+  it('includes subWorkflow node', () => {
+    expect(nodeTypes.subWorkflow.label).toBe('Sub-workflow');
+  });
 });
