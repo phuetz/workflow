@@ -4,7 +4,15 @@ import { nodeTypes } from '../data/nodeTypes';
 import { X, Settings, HelpCircle, Activity } from 'lucide-react';
 
 export default function NodeConfigPanel() {
-  const { selectedNode, setSelectedNode, updateNode, executionResults, executionErrors, darkMode } = useWorkflowStore();
+  const {
+    selectedNode,
+    setSelectedNode,
+    updateNode,
+    executionResults,
+    executionErrors,
+    nodeExecutionData,
+    darkMode
+  } = useWorkflowStore();
   const [activeTab, setActiveTab] = useState('config');
 
   if (!selectedNode) return null;
@@ -12,6 +20,7 @@ export default function NodeConfigPanel() {
   const nodeType = nodeTypes[selectedNode.data.type] || nodeTypes.trigger;
   const nodeResult = executionResults[selectedNode.id];
   const nodeError = executionErrors[selectedNode.id];
+  const nodeData = nodeExecutionData[selectedNode.id];
 
   const updateNodeConfig = (field: string, value: any) => {
     updateNode(selectedNode.id, {
@@ -306,7 +315,26 @@ export default function NodeConfigPanel() {
         
         {activeTab === 'results' && (
           <div className="space-y-4">
-            {nodeResult ? (
+            {nodeData ? (
+              <>
+                <div>
+                  <h4 className="font-medium mb-2">Input Data</h4>
+                  <pre className={`p-3 rounded-lg text-sm overflow-x-auto ${
+                    darkMode ? 'bg-gray-800' : 'bg-gray-100'
+                  }`}>
+                    {JSON.stringify(nodeData.input, null, 2)}
+                  </pre>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Output Data</h4>
+                  <pre className={`p-3 rounded-lg text-sm overflow-x-auto ${
+                    darkMode ? 'bg-gray-800' : 'bg-gray-100'
+                  }`}>
+                    {JSON.stringify(nodeData.output.data ?? nodeData.output, null, 2)}
+                  </pre>
+                </div>
+              </>
+            ) : nodeResult ? (
               <div>
                 <h4 className="font-medium mb-2">Execution Result</h4>
                 <pre className={`p-3 rounded-lg text-sm overflow-x-auto ${

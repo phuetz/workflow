@@ -66,6 +66,7 @@ function WorkflowEditor() {
     setIsExecuting,
     setExecutionResult,
     setExecutionError,
+    setNodeExecutionData,
     setCurrentExecutingNode,
     clearExecution,
     addExecutionToHistory,
@@ -234,8 +235,9 @@ function WorkflowEditor() {
     try {
       const result = await executor.execute(
         (nodeId: string) => setCurrentExecutingNode(nodeId),
-        (nodeId: string, result: any) => {
+        (nodeId: string, input: any, result: any) => {
           setExecutionResult(nodeId, result);
+          setNodeExecutionData(nodeId, { input, output: result });
           setCurrentExecutingNode(null);
         },
         (nodeId: string, error: any) => {
