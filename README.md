@@ -41,6 +41,12 @@ WorkflowBuilder Pro est un éditeur de workflows visuels open-source qui permet 
 - **Sélection multiple** et actions groupées
 - **Sticky notes** pour documentation
 
+### ✏️ Fonctionnalités d'Édition Essentielles
+- **Undo/Redo** : Permet aux utilisateurs d'annuler et de rétablir les modifications apportées au workflow (ajout/suppression de nœuds, connexions, modifications de configuration).
+- **Copier/Coller (Nœuds et Connexions)** : La possibilité de dupliquer rapidement des sections de workflow.
+- **Alignement et Distribution des Nœuds** : Des outils pour organiser visuellement les nœuds sur le canevas (aligner à gauche, distribuer horizontalement/verticalement).
+- **Impact** : Améliore considérablement l'ergonomie et la productivité de l'utilisateur.
+
 ### 📊 Monitoring
 - **Dashboard analytics** avec métriques temps réel
 - **Performance monitoring** (CPU, Memory, Latency)
