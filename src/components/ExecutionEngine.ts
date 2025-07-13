@@ -579,7 +579,11 @@ export class WorkflowExecutor {
   }
   
   // Exécution principale avec support des branches
-  async execute(onNodeStart: Function, onNodeComplete: Function, onNodeError: Function) {
+  async execute(
+    onNodeStart: (nodeId: string) => void,
+    onNodeComplete: (nodeId: string, inputData: any, result: any) => void,
+    onNodeError: (nodeId: string, error: any) => void
+  ) {
     const startTime = Date.now();
     const executionId = `exec_${Date.now()}`;
     
@@ -627,9 +631,9 @@ export class WorkflowExecutor {
         // Exécuter le nœud
         const result = await this.executeNode(node, nodeInputData);
         results[node.id] = result;
-        
+
         console.log(`✅ Node completed: ${node.data.label}`, result);
-        onNodeComplete(node.id, result);
+        onNodeComplete(node.id, nodeInputData, result);
         executed.add(node.id);
         
         // Gérer les nœuds suivants

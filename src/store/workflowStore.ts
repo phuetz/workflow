@@ -12,6 +12,7 @@ export const useWorkflowStore = create(
       isExecuting: false,
       executionResults: {},
       executionErrors: {},
+      nodeExecutionData: {},
       currentExecutingNode: null,
       
       // Workflows et templates
@@ -287,6 +288,10 @@ export const useWorkflowStore = create(
       setExecutionResult: (nodeId, result) => set((state) => ({
         executionResults: { ...state.executionResults, [nodeId]: result }
       })),
+
+      setNodeExecutionData: (nodeId, data) => set((state) => ({
+        nodeExecutionData: { ...state.nodeExecutionData, [nodeId]: data }
+      })),
       
       setExecutionError: (nodeId, error) => set((state) => ({
         executionErrors: { ...state.executionErrors, [nodeId]: error }
@@ -295,6 +300,7 @@ export const useWorkflowStore = create(
       clearExecution: () => set({
         executionResults: {},
         executionErrors: {},
+        nodeExecutionData: {},
         currentExecutingNode: null,
       }),
       

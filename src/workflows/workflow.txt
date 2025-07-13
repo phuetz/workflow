@@ -1815,7 +1815,7 @@ class WorkflowExecutor {
         if (!this.context.nodes) this.context.nodes = {};
         this.context.nodes[node.id] = result;
         
-        onNodeComplete(node.id, result);
+        onNodeComplete(node.id, nodeInputData, result);
         executed.add(node.id);
         
         // Handle branching
