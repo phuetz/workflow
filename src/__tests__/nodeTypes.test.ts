@@ -13,4 +13,8 @@ describe('nodeTypes', () => {
   it('includes QuickBooks node', () => {
     expect(nodeTypes.quickbooks.label).toBe('QuickBooks');
   });
+
+  it('includes Pipedrive node', () => {
+    expect(nodeTypes.pipedrive.label).toBe('Pipedrive');
+  });
 });

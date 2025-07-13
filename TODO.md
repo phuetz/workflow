@@ -60,7 +60,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 - [ ] **Nœuds manquants (250+ à ajouter)**
   - [ ] **SaaS Platforms** (50 nœuds)
     - [x] Monday.com, Asana, ClickUp
-    - [ ] Pipedrive, Salesforce (complet)
+    - [x] Pipedrive, Salesforce (complet)
     - [ ] Jira, Confluence, Linear
     - [ ] Intercom, Freshdesk, Help Scout
     - [ ] Shopify, WooCommerce, Magento
@@ -283,7 +283,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 
 ### 🟢 Mineurs
 - [ ] **Tooltips** qui ne disparaissent pas parfois
-- [ ] **Dark mode** incomplet dans certains panels
+ - [x] **Dark mode** incomplet dans certains panels
 - [x] **Sticky notes** qui se chevauchent
 
 ---
