@@ -10,7 +10,8 @@ export const nodeTypes: { [key: string]: NodeType } = {
     category: 'trigger',
     inputs: 0,
     outputs: 1,
-    description: 'Receive HTTP requests'
+    description: 'Receive HTTP requests',
+    errorHandle: false
   },
   webhook: {
     type: 'webhook',
@@ -20,7 +21,8 @@ export const nodeTypes: { [key: string]: NodeType } = {
     category: 'trigger',
     inputs: 0,
     outputs: 1,
-    description: 'Webhook endpoint'
+    description: 'Webhook endpoint',
+    errorHandle: false
   },
   schedule: {
     type: 'schedule',
@@ -30,7 +32,8 @@ export const nodeTypes: { [key: string]: NodeType } = {
     category: 'trigger',
     inputs: 0,
     outputs: 1,
-    description: 'Schedule execution'
+    description: 'Schedule execution',
+    errorHandle: false
   },
   rssFeed: {
     type: 'rssFeed',
@@ -40,7 +43,8 @@ export const nodeTypes: { [key: string]: NodeType } = {
     category: 'trigger',
     inputs: 0,
     outputs: 1,
-    description: 'Monitor RSS feeds'
+    description: 'Monitor RSS feeds',
+    errorHandle: false
   },
   
   // Manual Trigger

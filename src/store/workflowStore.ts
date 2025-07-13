@@ -9,6 +9,7 @@ export const useWorkflowStore = create(
       nodes: [],
       edges: [],
       selectedNode: null,
+      selectedEdge: null,
       isExecuting: false,
       executionResults: {},
       executionErrors: {},
@@ -106,6 +107,16 @@ export const useWorkflowStore = create(
       setSelectedNode: (node) => {
         console.log("Setting selected node:", node);
         set({ selectedNode: node });
+      },
+      setSelectedEdge: (edge) => set({ selectedEdge: edge }),
+      updateEdge: (id, data) => {
+        const { nodes, edges, addToHistory } = get();
+        addToHistory(nodes, edges);
+        set((state) => ({
+          edges: state.edges.map(e =>
+            e.id === id ? { ...e, data: { ...e.data, ...data } } : e
+          )
+        }));
       },
 
       addNode: (node) => {
