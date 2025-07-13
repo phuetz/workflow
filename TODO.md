@@ -85,6 +85,13 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
     - [ ] Vercel, Netlify, Heroku
     - [ ] Postman, Insomnia
 
+  - [ ] **Communication & Collaboration** (15 nœuds)
+    - [ ] Slack
+    - [ ] Discord
+    - [ ] Trello
+    - [ ] Notion
+    - [ ] Airtable
+
 - [ ] **Configuration avancée**
   - [ ] Field dependencies (champs conditionnels)
   - [ ] Dynamic options loading
