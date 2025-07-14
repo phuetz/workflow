@@ -2,6 +2,25 @@ import http from 'http';
 import os from 'os';
 import { fileURLToPath } from 'url';
 
+// Simple in-memory rate limiting (P0 API security)
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 100;
+const rateLimitMap = new Map(); // ip -> { count, reset }
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.reset) {
+    rateLimitMap.set(ip, { count: 1, reset: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count += 1;
+  if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+  return false;
+}
+
 // Simple in-memory metrics for the queue system
 const queueMetrics = {
   'workflow-execution': {
@@ -78,6 +97,12 @@ function startMetricsUpdates(server) {
 
 export function createHealthServer() {
   const server = http.createServer(async (req, res) => {
+    const ip = req.socket.remoteAddress || 'unknown';
+    if (isRateLimited(ip)) {
+      res.writeHead(429, { 'Content-Type': 'text/plain' });
+      res.end('Too Many Requests');
+      return;
+    }
     if (req.method === 'GET' && req.url === '/api/v1/health') {
       const payload = {
         status: 'ok',
