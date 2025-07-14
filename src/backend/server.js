@@ -34,6 +34,10 @@ const queueMetrics = {
 const workflows = new Map();
 let workflowCounter = 1;
 
+// In-memory credentials storage
+const credentials = new Map();
+let credentialCounter = 1;
+
 function parseJsonBody(req) {
   return new Promise((resolve) => {
     let body = '';
@@ -118,6 +122,48 @@ export function createHealthServer() {
         }
       } else if (req.method === 'DELETE' && id) {
         const existed = workflows.delete(id);
+        res.writeHead(existed ? 200 : 404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: existed }));
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
+      }
+    } else if (req.url && req.url.startsWith('/api/v1/credentials')) {
+      const url = new URL(req.url, 'http://localhost');
+      const id = url.pathname.split('/')[4];
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/credentials') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ credentials: Array.from(credentials.values()) }));
+      } else if (req.method === 'POST' && url.pathname === '/api/v1/credentials') {
+        const body = await parseJsonBody(req);
+        const credential = { id: String(credentialCounter++), ...body };
+        credentials.set(credential.id, credential);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(credential));
+      } else if (req.method === 'GET' && id) {
+        const cred = credentials.get(id);
+        if (cred) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(cred));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'PUT' && id) {
+        const body = await parseJsonBody(req);
+        const cred = credentials.get(id);
+        if (cred) {
+          const updated = { ...cred, ...body };
+          credentials.set(id, updated);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(updated));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'DELETE' && id) {
+        const existed = credentials.delete(id);
         res.writeHead(existed ? 200 : 404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: existed }));
       } else {
