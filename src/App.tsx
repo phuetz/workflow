@@ -368,7 +368,7 @@ function WorkflowEditor() {
     <div className={`h-screen w-screen relative ${darkMode ? 'bg-gray-900' : ''}`} ref={reactFlowWrapper}>
       {/* Navigation Views */}
       <div className="absolute top-20 left-4 z-20">
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-3">
           {[
             { id: 'editor', label: '🔧 Editor', icon: '🔧' },
             { id: 'validator', label: '✅ Validator', icon: '✅' },
@@ -381,7 +381,7 @@ function WorkflowEditor() {
             <button
               key={view.id}
               onClick={() => setSelectedView(view.id)}
-              className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm transition-colors w-36 text-left ${
                 selectedView === view.id
                   ? 'bg-blue-500 text-white'
                   : darkMode 
@@ -509,16 +509,16 @@ function WorkflowEditor() {
         
         {/* Barre d'exécution */}
         <Panel position="top-center" className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-xl border ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm`}>
-          <div className="p-3 flex items-center justify-center space-x-3">
+          <div className="p-3 flex items-center justify-center space-x-4 w-full">
             {/* Undo/Redo */}
             <UndoRedoManager />
             
-            <div className="h-6 w-px bg-gray-300"></div>
+            <div className="h-6 w-px bg-gray-300 mx-2"></div>
             
             <button
               onClick={executeWorkflow}
               disabled={isExecuting || nodes.length === 0}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium transition-all duration-200 hover:scale-105"
+              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium transition-all duration-200 hover:scale-105 min-w-[100px] justify-center"
             >
               {isExecuting ? (
                 <>
@@ -536,7 +536,7 @@ function WorkflowEditor() {
             <button
               onClick={() => saveWorkflow()}
               disabled={isExecuting}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105"
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[90px] justify-center"
             >
               <Icons.Save size={16} />
               <span>Save</span>
@@ -545,14 +545,14 @@ function WorkflowEditor() {
             <button
               onClick={exportWorkflow}
               disabled={isExecuting}
-              className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105"
+              className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[90px] justify-center"
             >
               <Icons.Download size={16} />
               <span>Export</span>
             </button>
             
             <label className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 cursor-pointer">
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 min-w-[90px] justify-center">
                 <Icons.Upload size={16} />
                 <span>Import</span>
               </div>
@@ -568,16 +568,16 @@ function WorkflowEditor() {
             <button
               onClick={clearExecution}
               disabled={isExecuting}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105"
+              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[90px] justify-center"
             >
               <Icons.RotateCcw size={16} />
               <span>Reset</span>
             </button>
             
-            <div className="h-6 w-px bg-gray-300 mx-2"></div>
+            <div className="h-6 w-px bg-gray-300 mx-3"></div>
             
             <select
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 min-w-[140px] ${
                 currentEnvironment === 'prod' 
                   ? 'bg-red-500 text-white' 
                   : currentEnvironment === 'staging'
