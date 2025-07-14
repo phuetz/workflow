@@ -23,7 +23,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
   - [ ] Executions management (/api/v1/executions)
   - [ ] Credentials management (/api/v1/credentials)
   - [x] Webhooks endpoints (/api/v1/webhooks)
-  - [ ] Users & permissions (/api/v1/users)
+  - [x] Users & permissions (/api/v1/users)
   - [x] Health checks (/api/v1/health)
 
 - [ ] **Database Layer**

@@ -38,6 +38,10 @@ let workflowCounter = 1;
 const webhooks = new Map();
 let webhookCounter = 1;
 
+// In-memory user storage
+const users = new Map();
+let userCounter = 1;
+
 function parseJsonBody(req) {
   return new Promise((resolve) => {
     let body = '';
@@ -183,6 +187,48 @@ export function createHealthServer() {
         }
       } else if (req.method === 'DELETE' && id) {
         const existed = webhooks.delete(id);
+        res.writeHead(existed ? 200 : 404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: existed }));
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
+      }
+    } else if (req.url && req.url.startsWith('/api/v1/users')) {
+      const url = new URL(req.url, 'http://localhost');
+      const id = url.pathname.split('/')[4];
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/users') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ users: Array.from(users.values()) }));
+      } else if (req.method === 'POST' && url.pathname === '/api/v1/users') {
+        const body = await parseJsonBody(req);
+        const user = { id: String(userCounter++), ...body };
+        users.set(user.id, user);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(user));
+      } else if (req.method === 'GET' && id) {
+        const u = users.get(id);
+        if (u) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(u));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'PUT' && id) {
+        const body = await parseJsonBody(req);
+        const u = users.get(id);
+        if (u) {
+          const updated = { ...u, ...body };
+          users.set(id, updated);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(updated));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'DELETE' && id) {
+        const existed = users.delete(id);
         res.writeHead(existed ? 200 : 404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: existed }));
       } else {
