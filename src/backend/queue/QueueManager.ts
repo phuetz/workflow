@@ -87,6 +87,16 @@ export class QueueManager {
   private createQueue(name: string, options: any) {
     const queue = new Queue(name, options);
     this.queues.set(name, queue);
+
+    // Initialize empty metrics so values are available immediately
+    this.metrics.set(name, {
+      waiting: 0,
+      active: 0,
+      completed: 0,
+      failed: 0,
+      delayed: 0,
+      paused: 0
+    });
     
     // Initialize workers
     const workers = this.createWorkers(name, options.concurrency);
