@@ -288,6 +288,26 @@ export const nodeTypes: { [key: string]: NodeType } = {
     outputs: 1,
     description: 'Jira issue tracking'
   },
+  confluence: {
+    type: 'confluence',
+    label: 'Confluence',
+    icon: 'BookOpen',
+    color: 'bg-blue-600',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'Confluence documentation platform',
+  },
+  linear: {
+    type: 'linear',
+    label: 'Linear',
+    icon: 'Kanban',
+    color: 'bg-gray-600',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'Linear issue tracking',
+  },
   
   // E-commerce
   stripe: {
@@ -541,6 +561,26 @@ export const nodeTypes: { [key: string]: NodeType } = {
     inputs: 1,
     outputs: 1,
     description: 'Monday.com project management'
+  },
+  asana: {
+    type: 'asana',
+    label: 'Asana',
+    icon: 'ListTodo',
+    color: 'bg-orange-400',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Asana project management',
+  },
+  clickup: {
+    type: 'clickup',
+    label: 'ClickUp',
+    icon: 'CheckSquare',
+    color: 'bg-purple-500',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'ClickUp project management',
   },
   pipedrive: {
     type: 'pipedrive',
