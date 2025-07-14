@@ -16,7 +16,7 @@ interface MetricData {
 }
 
 export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, onClose }) => {
-  const { executionHistory } = useWorkflowStore();
+  const { executionHistory, darkMode } = useWorkflowStore();
   const [metrics, setMetrics] = useState<MetricData[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'metrics' | 'logs'>('overview');
 
@@ -58,24 +58,36 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-4 top-20 w-96 bg-white rounded-lg shadow-xl border z-50">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-800">Performance Monitor</h3>
+    <div
+      className={`fixed right-4 top-20 w-96 rounded-lg shadow-xl border z-50 ${
+        darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-200'
+      }`}
+    >
+      <div
+        className={`flex items-center justify-between p-4 border-b ${
+          darkMode ? 'border-gray-700' : 'border-gray-200'
+        }`}
+      >
+        <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Performance Monitor</h3>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className={`${darkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'} transition-colors`}
         >
           <X size={20} />
         </button>
       </div>
 
-      <div className="flex border-b">
+      <div className={`flex border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <button
           onClick={() => setActiveTab('overview')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'overview'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-gray-800'
+              ? darkMode
+                ? 'bg-gray-800 text-blue-300 border-b-2 border-blue-400'
+                : 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : darkMode
+                ? 'text-gray-300 hover:text-gray-100'
+                : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <Activity size={16} />
@@ -85,8 +97,12 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
           onClick={() => setActiveTab('metrics')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'metrics'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-gray-800'
+              ? darkMode
+                ? 'bg-gray-800 text-blue-300 border-b-2 border-blue-400'
+                : 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : darkMode
+                ? 'text-gray-300 hover:text-gray-100'
+                : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <TrendingUp size={16} />
@@ -96,8 +112,12 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
           onClick={() => setActiveTab('logs')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'logs'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-gray-800'
+              ? darkMode
+                ? 'bg-gray-800 text-blue-300 border-b-2 border-blue-400'
+                : 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : darkMode
+                ? 'text-gray-300 hover:text-gray-100'
+                : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <AlertTriangle size={16} />
@@ -109,56 +129,56 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
         {activeTab === 'overview' && (
           <div className="p-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-3 rounded-lg`}>
                 <div className="flex items-center justify-between mb-2">
                   <Cpu size={16} className="text-blue-500" />
                   <span className={`text-sm font-medium ${getHealthColor(currentMetrics.cpu, { good: 70, warning: 85 })}`}>
                     {currentMetrics.cpu.toFixed(1)}%
                   </span>
                 </div>
-                <div className="text-xs text-gray-600">CPU Usage</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>CPU Usage</div>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-3 rounded-lg`}>
                 <div className="flex items-center justify-between mb-2">
                   <HardDrive size={16} className="text-green-500" />
                   <span className={`text-sm font-medium ${getHealthColor(currentMetrics.memory, { good: 80, warning: 90 })}`}>
                     {currentMetrics.memory.toFixed(1)}%
                   </span>
                 </div>
-                <div className="text-xs text-gray-600">Memory Usage</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Memory Usage</div>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-3 rounded-lg`}>
                 <div className="flex items-center justify-between mb-2">
                   <Clock size={16} className="text-orange-500" />
                   <span className={`text-sm font-medium ${getHealthColor(currentMetrics.latency, { good: 100, warning: 150 })}`}>
                     {currentMetrics.latency.toFixed(0)}ms
                   </span>
                 </div>
-                <div className="text-xs text-gray-600">Latency</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Latency</div>
               </div>
               
-              <div className="bg-gray-50 p-3 rounded-lg">
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-3 rounded-lg`}>
                 <div className="flex items-center justify-between mb-2">
                   <TrendingUp size={16} className="text-purple-500" />
-                  <span className="text-sm font-medium text-gray-800">
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}` }>
                     {currentMetrics.throughput.toFixed(0)}
                   </span>
                 </div>
-                <div className="text-xs text-gray-600">Throughput/min</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Throughput/min</div>
               </div>
             </div>
 
-            <div className="bg-gray-50 p-3 rounded-lg">
+            <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-3 rounded-lg`}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-800">Success Rate</span>
+                <span className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Success Rate</span>
                 <span className={`text-sm font-medium ${successRate >= 95 ? 'text-green-600' : successRate >= 80 ? 'text-yellow-600' : 'text-red-600'}`}>
                   {successRate.toFixed(1)}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+              <div className={`w-full rounded-full h-2 ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                <div
                   className={`h-2 rounded-full transition-all duration-300 ${
                     successRate >= 95 ? 'bg-green-500' : successRate >= 80 ? 'bg-yellow-500' : 'bg-red-500'
                   }`}
@@ -168,24 +188,24 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
             </div>
 
             <div className="space-y-2">
-              <div className="text-sm font-medium text-gray-800">System Health</div>
+              <div className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>System Health</div>
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">API</span>
+                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>API</span>
                   <div className="flex items-center gap-1">
                     <CheckCircle size={12} className="text-green-500" />
                     <span className="text-xs text-green-600">Online</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Database</span>
+                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Database</span>
                   <div className="flex items-center gap-1">
                     <CheckCircle size={12} className="text-green-500" />
                     <span className="text-xs text-green-600">Connected</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-gray-600">Queue</span>
+                  <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Queue</span>
                   <div className="flex items-center gap-1">
                     <CheckCircle size={12} className="text-green-500" />
                     <span className="text-xs text-green-600">Processing</span>
@@ -201,8 +221,8 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
             <div className="space-y-4">
               {metrics.length > 0 && (
                 <div className="space-y-2">
-                  <div className="text-sm font-medium text-gray-800">Real-time Metrics</div>
-                  <div className="bg-gray-50 p-2 rounded text-xs font-mono">
+                  <div className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Real-time Metrics</div>
+                  <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-2 rounded text-xs font-mono`}>
                     {metrics.slice(-5).map((metric, index) => (
                       <div key={index} className="flex justify-between">
                         <span>{new Date(metric.timestamp).toLocaleTimeString()}</span>
@@ -215,11 +235,11 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
               )}
               
               <div className="space-y-2">
-                <div className="text-sm font-medium text-gray-800">Recent Executions</div>
+                <div className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Recent Executions</div>
                 <div className="space-y-1">
                   {recentExecutions.map((execution) => (
                     <div key={execution.id} className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">{execution.workflowId}</span>
+                      <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{execution.workflowId}</span>
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         execution.status === 'completed' ? 'bg-green-100 text-green-800' :
                         execution.status === 'failed' ? 'bg-red-100 text-red-800' :
@@ -238,22 +258,22 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({ isOpen, 
         {activeTab === 'logs' && (
           <div className="p-4">
             <div className="space-y-2">
-              <div className="text-sm font-medium text-gray-800">System Logs</div>
+              <div className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>System Logs</div>
               <div className="space-y-1 text-xs">
                 <div className="flex items-center gap-2">
                   <CheckCircle size={12} className="text-green-500" />
-                  <span className="text-gray-600">Workflow execution completed</span>
-                  <span className="text-gray-400 ml-auto">2m ago</span>
+                  <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Workflow execution completed</span>
+                  <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} ml-auto`}>2m ago</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <AlertTriangle size={12} className="text-yellow-500" />
-                  <span className="text-gray-600">High memory usage detected</span>
-                  <span className="text-gray-400 ml-auto">5m ago</span>
+                  <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>High memory usage detected</span>
+                  <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} ml-auto`}>5m ago</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle size={12} className="text-green-500" />
-                  <span className="text-gray-600">Database connection restored</span>
-                  <span className="text-gray-400 ml-auto">8m ago</span>
+                  <span className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Database connection restored</span>
+                  <span className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} ml-auto`}>8m ago</span>
                 </div>
               </div>
             </div>
