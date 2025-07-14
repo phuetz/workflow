@@ -34,6 +34,10 @@ const queueMetrics = {
 const workflows = new Map();
 let workflowCounter = 1;
 
+// In-memory webhook storage
+const webhooks = new Map();
+let webhookCounter = 1;
+
 function parseJsonBody(req) {
   return new Promise((resolve) => {
     let body = '';
@@ -118,6 +122,48 @@ export function createHealthServer() {
         }
       } else if (req.method === 'DELETE' && id) {
         const existed = workflows.delete(id);
+        res.writeHead(existed ? 200 : 404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: existed }));
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
+      }
+    } else if (req.url && req.url.startsWith('/api/v1/webhooks')) {
+      const url = new URL(req.url, 'http://localhost');
+      const id = url.pathname.split('/')[4];
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/webhooks') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ webhooks: Array.from(webhooks.values()) }));
+      } else if (req.method === 'POST' && url.pathname === '/api/v1/webhooks') {
+        const body = await parseJsonBody(req);
+        const webhook = { id: String(webhookCounter++), ...body };
+        webhooks.set(webhook.id, webhook);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(webhook));
+      } else if (req.method === 'GET' && id) {
+        const wh = webhooks.get(id);
+        if (wh) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(wh));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'PUT' && id) {
+        const body = await parseJsonBody(req);
+        const wh = webhooks.get(id);
+        if (wh) {
+          const updated = { ...wh, ...body };
+          webhooks.set(id, updated);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(updated));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'DELETE' && id) {
+        const existed = webhooks.delete(id);
         res.writeHead(existed ? 200 : 404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: existed }));
       } else {
