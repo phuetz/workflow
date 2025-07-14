@@ -88,7 +88,8 @@ export function createHealthServer() {
       res.end(JSON.stringify(queueMetrics));
     } else if (req.url && req.url.startsWith('/api/v1/workflows')) {
       const url = new URL(req.url, 'http://localhost');
-      const id = url.pathname.split('/')[4];
+      const parts = url.pathname.split('/');
+      const id = parts[4];
 
       if (req.method === 'GET' && url.pathname === '/api/v1/workflows') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -116,6 +117,24 @@ export function createHealthServer() {
           workflows.set(id, updated);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(updated));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'POST' && parts[5] === 'duplicate' && id) {
+        const wf = workflows.get(id);
+        if (wf) {
+          const newId = String(workflowCounter++);
+          const copy = {
+            ...wf,
+            id: newId,
+            name: `${wf.name || 'Workflow'} (Copy)`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          workflows.set(newId, copy);
+          res.writeHead(201, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(copy));
         } else {
           res.writeHead(404);
           res.end('Not Found');

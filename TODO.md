@@ -148,7 +148,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
   - [ ] Advanced search & filters
   - [ ] Workflow versioning UI
   - [ ] Comparison tool (diff viewer)
-  - [ ] Workflow duplication
+  - [x] Workflow duplication
 
 - [ ] **Mobile Responsiveness**
   - [ ] Mobile-first canvas

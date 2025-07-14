@@ -275,6 +275,23 @@ export const useWorkflowStore = create(
           });
         }
       },
+
+      duplicateWorkflow: (workflowId) => {
+        const wf = get().workflows[workflowId];
+        if (!wf) return null;
+        const newId = `workflow_${Date.now()}`;
+        const copy = {
+          ...wf,
+          id: newId,
+          name: `${wf.name || 'Workflow'} (Copy)`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        set((state) => ({
+          workflows: { ...state.workflows, [newId]: copy },
+        }));
+        return newId;
+      },
       
       exportWorkflow: () => {
         const { nodes, edges, currentWorkflowId } = get();
