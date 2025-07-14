@@ -9,6 +9,7 @@ export const NodeGroupManager: React.FC = () => {
     selectedNodes,
     addNodeGroup,
     deleteNodeGroup,
+    darkMode,
   } = useWorkflowStore();
 
   const handleGroupNodes = () => {
@@ -46,14 +47,22 @@ export const NodeGroupManager: React.FC = () => {
   );
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-sm border">
+    <div
+      className={`flex items-center gap-2 p-2 rounded-lg shadow-sm border ${
+        darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}
+    >
       <button
         onClick={handleGroupNodes}
         disabled={!canGroup}
         className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
           canGroup
-            ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-            : 'bg-gray-50 text-gray-400 cursor-not-allowed'
+            ? darkMode
+              ? 'bg-blue-700 text-white hover:bg-blue-600'
+              : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+            : darkMode
+              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+              : 'bg-gray-50 text-gray-400 cursor-not-allowed'
         }`}
         title="Group selected nodes"
       >
@@ -64,7 +73,7 @@ export const NodeGroupManager: React.FC = () => {
       {selectedGroups.length > 0 && (
         <button
           onClick={() => selectedGroups.forEach(group => handleUngroupNodes(group.id))}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${darkMode ? 'bg-red-700 text-white hover:bg-red-600' : 'bg-red-50 text-red-700 hover:bg-red-100'}`}
           title="Ungroup selected groups"
         >
           <Ungroup size={16} />
@@ -72,11 +81,11 @@ export const NodeGroupManager: React.FC = () => {
         </button>
       )}
 
-      <div className="w-px h-6 bg-gray-200 mx-1" />
+      <div className={`w-px h-6 mx-1 ${darkMode ? 'bg-gray-600' : 'bg-gray-200'}`} />
 
       <div className="flex items-center gap-1">
-        <Square size={14} className="text-gray-400" />
-        <span className="text-xs text-gray-500">
+        <Square size={14} className={darkMode ? 'text-gray-400' : 'text-gray-400'} />
+        <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           {nodeGroups.length} group{nodeGroups.length !== 1 ? 's' : ''}
         </span>
       </div>
