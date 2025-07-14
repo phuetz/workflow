@@ -8,7 +8,13 @@ interface CollaborationPanelProps {
 }
 
 export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, onClose }) => {
-  const { collaborators, comments, addComment, updateCollaborator } = useWorkflowStore();
+  const {
+    collaborators,
+    comments,
+    addComment,
+    updateCollaborator,
+    darkMode
+  } = useWorkflowStore();
   const [activeTab, setActiveTab] = useState<'users' | 'chat' | 'comments'>('users');
   const [newMessage, setNewMessage] = useState('');
   const [newComment, setNewComment] = useState('');
@@ -42,24 +48,36 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-4 top-20 w-80 bg-white rounded-lg shadow-xl border z-50">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="text-lg font-semibold text-gray-800">Collaboration</h3>
+    <div
+      className={`fixed right-4 top-20 w-80 rounded-lg shadow-xl border z-50 ${
+        darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-200 text-gray-800'
+      }`}
+    >
+      <div
+        className={`flex items-center justify-between p-4 border-b ${
+          darkMode ? 'border-gray-700' : 'border-gray-200'
+        }`}
+      >
+        <h3 className="text-lg font-semibold">Collaboration</h3>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className={`transition-colors ${darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-600'}`}
         >
           <X size={20} />
         </button>
       </div>
 
-      <div className="flex border-b">
+      <div className={`flex border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}> 
         <button
           onClick={() => setActiveTab('users')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'users'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-gray-800'
+              ? darkMode
+                ? 'bg-blue-700 text-white border-b-2 border-blue-500'
+                : 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : darkMode
+                ? 'text-gray-300 hover:text-white'
+                : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <Users size={16} />
@@ -69,8 +87,12 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, 
           onClick={() => setActiveTab('chat')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'chat'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-gray-800'
+              ? darkMode
+                ? 'bg-blue-700 text-white border-b-2 border-blue-500'
+                : 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : darkMode
+                ? 'text-gray-300 hover:text-white'
+                : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <MessageCircle size={16} />
@@ -80,8 +102,12 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, 
           onClick={() => setActiveTab('comments')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === 'comments'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-              : 'text-gray-600 hover:text-gray-800'
+              ? darkMode
+                ? 'bg-blue-700 text-white border-b-2 border-blue-500'
+                : 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
+              : darkMode
+                ? 'text-gray-300 hover:text-white'
+                : 'text-gray-600 hover:text-gray-800'
           }`}
         >
           <Share2 size={16} />
@@ -130,15 +156,15 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, 
         {activeTab === 'chat' && (
           <div className="p-4">
             <div className="space-y-3 mb-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="text-sm font-medium text-gray-800">Alice Johnson</div>
-                <div className="text-sm text-gray-600">Hey, I made some changes to the email workflow</div>
-                <div className="text-xs text-gray-500 mt-1">2 minutes ago</div>
+              <div className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-3 rounded-lg`}>
+                <div className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>Alice Johnson</div>
+                <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Hey, I made some changes to the email workflow</div>
+                <div className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'} mt-1`}>2 minutes ago</div>
               </div>
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <div className="text-sm font-medium text-blue-800">You</div>
-                <div className="text-sm text-blue-600">Looks good! I'll review it now</div>
-                <div className="text-xs text-blue-500 mt-1">1 minute ago</div>
+              <div className={`${darkMode ? 'bg-blue-900' : 'bg-blue-50'} p-3 rounded-lg`}>
+                <div className={`text-sm font-medium ${darkMode ? 'text-blue-200' : 'text-blue-800'}`}>You</div>
+                <div className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>Looks good! I'll review it now</div>
+                <div className={`text-xs ${darkMode ? 'text-blue-400' : 'text-blue-500'} mt-1`}>1 minute ago</div>
               </div>
             </div>
             <div className="flex gap-2">
@@ -148,12 +174,14 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, 
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type a message..."
-                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  darkMode ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300'
+                }`}
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim()}
-                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                className={`px-3 py-2 rounded-lg transition-colors ${darkMode ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'} text-white disabled:opacity-50`}
               >
                 <Send size={16} />
               </button>
@@ -165,16 +193,16 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, 
           <div className="p-4">
             <div className="space-y-3 mb-4">
               {comments.map((comment) => (
-                <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                <div key={comment.id} className={`${darkMode ? 'bg-gray-800' : 'bg-gray-50'} p-3 rounded-lg`}>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-800">{comment.author}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>{comment.author}</div>
+                    <div className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                       {comment.timestamp.toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-sm text-gray-600">{comment.text}</div>
+                  <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{comment.text}</div>
                   {comment.nodeId && (
-                    <div className="text-xs text-blue-600 mt-1">On node: {comment.nodeId}</div>
+                    <div className={`text-xs mt-1 ${darkMode ? 'text-blue-300' : 'text-blue-600'}`}>On node: {comment.nodeId}</div>
                   )}
                 </div>
               ))}
@@ -186,12 +214,14 @@ export const CollaborationPanel: React.FC<CollaborationPanelProps> = ({ isOpen, 
                 onChange={(e) => setNewComment(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddComment()}
                 placeholder="Add a comment..."
-                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  darkMode ? 'bg-gray-800 border-gray-600 text-gray-100' : 'bg-white border-gray-300'
+                }`}
               />
               <button
                 onClick={handleAddComment}
                 disabled={!newComment.trim()}
-                className="px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-colors"
+                className={`px-3 py-2 rounded-lg transition-colors ${darkMode ? 'bg-blue-700 hover:bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'} text-white disabled:opacity-50`}
               >
                 <Send size={16} />
               </button>

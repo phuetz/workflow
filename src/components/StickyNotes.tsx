@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useWorkflowStore } from '../store/workflowStore';
 import { isContrastSufficient, bestTextColor } from '../utils/colorContrast';
 import { Plus, X } from 'lucide-react';
 
@@ -32,6 +33,7 @@ export default function StickyNotes({
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [srMessage, setSrMessage] = useState('');
   const addBtnRef = useRef<HTMLButtonElement>(null);
+  const { darkMode } = useWorkflowStore();
 
   const noteWidth = 192;
   const noteHeight = 128;
@@ -91,11 +93,11 @@ export default function StickyNotes({
   };
 
   return (
-    <div className="sticky-notes-container">
+    <div className={`sticky-notes-container ${darkMode ? 'text-gray-100' : ''}`}>
       <button
         ref={addBtnRef}
         onClick={() => setIsAddingNote(!isAddingNote)}
-        className="add-note-btn flex items-center gap-2 px-3 py-1.5 text-sm bg-yellow-400 hover:bg-yellow-500 rounded-lg transition-colors"
+        className={`add-note-btn flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg transition-colors ${darkMode ? 'bg-yellow-600 hover:bg-yellow-500 text-gray-100' : 'bg-yellow-400 hover:bg-yellow-500'}`}
         aria-label="Add sticky note"
       >
         <Plus size={16} />
@@ -106,7 +108,7 @@ export default function StickyNotes({
         <div className="mt-2">
           <button
             onClick={handleAddNote}
-            className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${darkMode ? 'bg-green-700 hover:bg-green-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
             aria-label="Create sticky note"
           >
             Create Note
@@ -117,7 +119,7 @@ export default function StickyNotes({
       {notes.map((note) => (
         <div
           key={note.id}
-          className="sticky-note absolute w-48 h-32 p-3 shadow-lg cursor-pointer select-none"
+          className={`sticky-note absolute w-48 h-32 p-3 shadow-lg cursor-pointer select-none ${darkMode ? 'border border-gray-600' : ''}`}
           role="region"
           aria-label="Sticky note"
           tabIndex={0}
@@ -156,7 +158,7 @@ export default function StickyNotes({
               setSrMessage('Sticky note deleted');
               addBtnRef.current?.focus();
             }}
-            className="absolute top-1 right-1 text-gray-600 hover:text-red-600 transition-colors"
+            className={`absolute top-1 right-1 transition-colors ${darkMode ? 'text-gray-300 hover:text-red-400' : 'text-gray-600 hover:text-red-600'}`}
             aria-label="Delete sticky note"
           >
             <X size={14} />
