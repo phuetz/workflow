@@ -44,7 +44,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
   - [ ] JWT token system
   - [ ] OAuth2 providers (Google, GitHub)
   - [ ] RBAC (Role-Based Access Control)
-  - [ ] API rate limiting
+  - [x] API rate limiting
   - [ ] Credential encryption at rest
   - [ ] Audit logging
 
