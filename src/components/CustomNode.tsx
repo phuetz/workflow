@@ -297,6 +297,21 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
   };
 
   const [showTooltip, setShowTooltip] = React.useState(false);
+  const tooltipTimeout = React.useRef<NodeJS.Timeout | null>(null);
+
+  const hideTooltip = () => {
+    if (tooltipTimeout.current) {
+      clearTimeout(tooltipTimeout.current);
+      tooltipTimeout.current = null;
+    }
+    setShowTooltip(false);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+    };
+  }, []);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Empêche la propagation de l'événement aux éléments parents
@@ -317,10 +332,18 @@ export default function CustomNode({ data, id, selected }: CustomNodeProps) {
       tabIndex={0}
       aria-label={`Configure ${data.label || data.type} node`}
       onKeyDown={(e) => e.key === 'Enter' && handleClick(e as any)}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-      onFocus={() => setShowTooltip(true)}
-      onBlur={() => setShowTooltip(false)}
+      onMouseEnter={() => {
+        if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+        setShowTooltip(true);
+      }}
+      onMouseLeave={() => {
+        tooltipTimeout.current = setTimeout(hideTooltip, 200);
+      }}
+      onFocus={() => {
+        if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+        setShowTooltip(true);
+      }}
+      onBlur={hideTooltip}
     >
       {/* Nœud principal */}
       <div className={`

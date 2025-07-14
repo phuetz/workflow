@@ -282,7 +282,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
 - [ ] **Credentials** non rechargés après modification
 
 ### 🟢 Mineurs
-- [ ] **Tooltips** qui ne disparaissent pas parfois
+- [x] **Tooltips** qui ne disparaissent pas parfois
  - [x] **Dark mode** incomplet dans certains panels
 - [x] **Sticky notes** qui se chevauchent
 
