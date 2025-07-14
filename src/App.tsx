@@ -598,9 +598,6 @@ function WorkflowEditor() {
             </div>
           </Panel>
         </ReactFlow>
-          </div>
-        </Panel>
-      </ReactFlow>
       
       {/* Advanced Components */}
       <MultiSelectManager />
