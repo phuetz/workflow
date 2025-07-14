@@ -41,4 +41,21 @@ describe('workflows API endpoints', () => {
     const list = await res.json();
     expect(Array.isArray(list.workflows)).toBe(true);
   });
+
+  it('duplicates a workflow', async () => {
+    const createRes = await fetch(`http://localhost:${port}/api/v1/workflows`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Dup Source' })
+    });
+    const created = await createRes.json();
+
+    const dupRes = await fetch(`http://localhost:${port}/api/v1/workflows/${created.id}/duplicate`, {
+      method: 'POST'
+    });
+    expect(dupRes.status).toBe(201);
+    const copy = await dupRes.json();
+    expect(copy.id).not.toBe(created.id);
+    expect(copy.name).toContain('Copy');
+  });
 });
