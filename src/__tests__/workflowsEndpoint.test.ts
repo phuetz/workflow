@@ -58,4 +58,13 @@ describe('workflows API endpoints', () => {
     expect(copy.id).not.toBe(created.id);
     expect(copy.name).toContain('Copy');
   });
+
+  it('returns 400 for invalid JSON body', async () => {
+    const res = await fetch(`http://localhost:${port}/api/v1/workflows`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{invalid'
+    });
+    expect(res.status).toBe(400);
+  });
 });
