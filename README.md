@@ -227,6 +227,7 @@ npm run test:coverage # Coverage des tests
 VITE_API_URL=http://localhost:3000
 VITE_WEBHOOK_BASE_URL=https://your-domain.com/webhook
 VITE_STORAGE_TYPE=localStorage
+RATE_LIMIT_MAX_REQUESTS=100
 ```
 
 ### Credentials
