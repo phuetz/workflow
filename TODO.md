@@ -22,7 +22,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
   - [ ] Workflows CRUD (/api/v1/workflows)
   - [ ] Executions management (/api/v1/executions)
   - [ ] Credentials management (/api/v1/credentials)
-  - [ ] Webhooks endpoints (/api/v1/webhooks)
+  - [x] Webhooks endpoints (/api/v1/webhooks)
   - [ ] Users & permissions (/api/v1/users)
   - [x] Health checks (/api/v1/health)
 
