@@ -63,16 +63,20 @@ const users = new Map();
 let userCounter = 1;
 
 function parseJsonBody(req) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
     });
     req.on('end', () => {
-      try {
-        resolve(body ? JSON.parse(body) : {});
-      } catch {
+      if (!body) {
         resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error('Invalid JSON'));
       }
     });
   });
@@ -125,7 +129,14 @@ export function createHealthServer() {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ workflows: Array.from(workflows.values()) }));
       } else if (req.method === 'POST' && url.pathname === '/api/v1/workflows') {
-        const body = await parseJsonBody(req);
+        let body;
+        try {
+          body = await parseJsonBody(req);
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          return;
+        }
         const workflow = { id: String(workflowCounter++), ...body };
         workflows.set(workflow.id, workflow);
         res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -140,7 +151,14 @@ export function createHealthServer() {
           res.end('Not Found');
         }
       } else if (req.method === 'PUT' && id) {
-        const body = await parseJsonBody(req);
+        let body;
+        try {
+          body = await parseJsonBody(req);
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          return;
+        }
         const wf = workflows.get(id);
         if (wf) {
           const updated = { ...wf, ...body };
@@ -185,7 +203,14 @@ export function createHealthServer() {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ webhooks: Array.from(webhooks.values()) }));
       } else if (req.method === 'POST' && url.pathname === '/api/v1/webhooks') {
-        const body = await parseJsonBody(req);
+        let body;
+        try {
+          body = await parseJsonBody(req);
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          return;
+        }
         const webhook = { id: String(webhookCounter++), ...body };
         webhooks.set(webhook.id, webhook);
         res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -200,7 +225,14 @@ export function createHealthServer() {
           res.end('Not Found');
         }
       } else if (req.method === 'PUT' && id) {
-        const body = await parseJsonBody(req);
+        let body;
+        try {
+          body = await parseJsonBody(req);
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          return;
+        }
         const wh = webhooks.get(id);
         if (wh) {
           const updated = { ...wh, ...body };
@@ -227,7 +259,14 @@ export function createHealthServer() {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ users: Array.from(users.values()) }));
       } else if (req.method === 'POST' && url.pathname === '/api/v1/users') {
-        const body = await parseJsonBody(req);
+        let body;
+        try {
+          body = await parseJsonBody(req);
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          return;
+        }
         const user = { id: String(userCounter++), ...body };
         users.set(user.id, user);
         res.writeHead(201, { 'Content-Type': 'application/json' });
@@ -242,7 +281,14 @@ export function createHealthServer() {
           res.end('Not Found');
         }
       } else if (req.method === 'PUT' && id) {
-        const body = await parseJsonBody(req);
+        let body;
+        try {
+          body = await parseJsonBody(req);
+        } catch {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          return;
+        }
         const u = users.get(id);
         if (u) {
           const updated = { ...u, ...body };
