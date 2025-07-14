@@ -30,6 +30,26 @@ const queueMetrics = {
   },
 };
 
+// In-memory workflow storage
+const workflows = new Map();
+let workflowCounter = 1;
+
+function parseJsonBody(req) {
+  return new Promise((resolve) => {
+    let body = '';
+    req.on('data', (chunk) => {
+      body += chunk;
+    });
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch {
+        resolve({});
+      }
+    });
+  });
+}
+
 function startMetricsUpdates(server) {
   const interval = setInterval(() => {
     for (const name of Object.keys(queueMetrics)) {
@@ -49,7 +69,7 @@ function startMetricsUpdates(server) {
 }
 
 export function createHealthServer() {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/api/v1/health') {
       const payload = {
         status: 'ok',
@@ -62,6 +82,48 @@ export function createHealthServer() {
     } else if (req.method === 'GET' && req.url === '/api/v1/queues/metrics') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(queueMetrics));
+    } else if (req.url && req.url.startsWith('/api/v1/workflows')) {
+      const url = new URL(req.url, 'http://localhost');
+      const id = url.pathname.split('/')[4];
+
+      if (req.method === 'GET' && url.pathname === '/api/v1/workflows') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ workflows: Array.from(workflows.values()) }));
+      } else if (req.method === 'POST' && url.pathname === '/api/v1/workflows') {
+        const body = await parseJsonBody(req);
+        const workflow = { id: String(workflowCounter++), ...body };
+        workflows.set(workflow.id, workflow);
+        res.writeHead(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(workflow));
+      } else if (req.method === 'GET' && id) {
+        const wf = workflows.get(id);
+        if (wf) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(wf));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'PUT' && id) {
+        const body = await parseJsonBody(req);
+        const wf = workflows.get(id);
+        if (wf) {
+          const updated = { ...wf, ...body };
+          workflows.set(id, updated);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(updated));
+        } else {
+          res.writeHead(404);
+          res.end('Not Found');
+        }
+      } else if (req.method === 'DELETE' && id) {
+        const existed = workflows.delete(id);
+        res.writeHead(existed ? 200 : 404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: existed }));
+      } else {
+        res.writeHead(404);
+        res.end('Not Found');
+      }
     } else {
       res.statusCode = 404;
       res.end('Not Found');
