@@ -334,11 +334,11 @@ export default function AFLOWOptimizer() {
 
   return (
     <>
-      {/* AFLOW Optimizer Button */}
+      {/* AFLOW Optimizer Button - positioned by parent container in App.tsx */}
       <button
         onClick={runAFLOWOptimization}
         disabled={isOptimizing || nodes.length === 0}
-        className={`fixed bottom-4 right-4 z-40 px-4 py-2 rounded-lg ${
+        className={`px-5 py-2.5 rounded-lg ${
           darkMode ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-yellow-500 hover:bg-yellow-600'
         } text-white shadow-lg flex items-center space-x-2 transition-all hover:scale-105 disabled:opacity-50`}
       >

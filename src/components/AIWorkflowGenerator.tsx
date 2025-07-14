@@ -303,15 +303,17 @@ export default function AIWorkflowGenerator() {
   return (
     <>
       {/* AI Generator Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`fixed top-32 left-4 z-40 px-4 py-2 rounded-lg ${
-          darkMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'
-        } text-white shadow-lg flex items-center space-x-2 transition-all hover:scale-105`}
-      >
-        <Sparkles size={16} />
-        <span>Generate with AI</span>
-      </button>
+      <div className="fixed top-[140px] left-4 z-40">
+        <button
+          onClick={() => setIsOpen(true)}
+          className={`px-4 py-2.5 rounded-lg ${
+            darkMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'
+          } text-white shadow-lg flex items-center space-x-2 transition-all hover:scale-105 w-full`}
+        >
+          <Sparkles size={16} />
+          <span>Generate with AI</span>
+        </button>
+      </div>
 
       {/* AI Generation Modal */}
       {isOpen && (

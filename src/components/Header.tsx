@@ -7,7 +7,7 @@ export default function Header() {
   const { darkMode, toggleDarkMode } = useWorkflowStore();
 
   return (
-    <header className={`${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-b px-6 py-4`}>
+    <header className={`${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-b px-6 py-4 fixed top-0 left-0 right-0 z-50`}>
       <div className="flex items-center justify-between">
         {/* Logo and title */}
         <div className="flex items-center space-x-3">
@@ -25,7 +25,7 @@ export default function Header() {
         </div>
 
         {/* Navigation centrale */}
-        <nav className="hidden md:flex items-center space-x-6">
+        <nav className="hidden md:flex items-center space-x-8">
           <a href="#" className={`text-sm font-medium ${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-900 hover:text-gray-700'} transition-colors`}>
             🏠 Accueil
           </a>

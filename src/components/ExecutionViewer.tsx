@@ -21,11 +21,11 @@ export default function ExecutionViewer() {
   const hasErrors = Object.keys(executionErrors).length > 0;
 
   return (
-    <div className={`fixed right-0 top-16 h-[calc(100vh-4rem)] w-96 ${
+    <div className={`fixed right-0 top-16 h-[calc(100vh-4rem)] w-[350px] ${
       darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
-    } border-l shadow-lg overflow-hidden flex flex-col`}>
+    } border-l shadow-lg overflow-hidden flex flex-col z-20`}>
       {/* Header */}
-      <div className={`p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
+      <div className={`p-5 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b`}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">🔍 Execution Viewer</h2>
           <div className="flex items-center space-x-2">

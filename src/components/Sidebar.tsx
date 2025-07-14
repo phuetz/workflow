@@ -79,9 +79,9 @@ export default function Sidebar() {
   };
   
   return (
-    <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-hidden flex flex-col z-10`}>
+    <div className={`fixed left-0 top-16 h-[calc(100vh-4rem)] w-80 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} border-r overflow-hidden flex flex-col z-10 shadow-md`}>
       {/* Header */}
-      <div className={`p-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b flex-shrink-0`}>
+      <div className={`p-5 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'} border-b flex-shrink-0`}>
         <h2 className="text-lg font-semibold mb-4 truncate">Node Library</h2>
         
         {/* Search */}
@@ -101,11 +101,11 @@ export default function Sidebar() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-2 mt-4">
+        <div className="grid grid-cols-2 gap-3 mt-4">
           <button
             onClick={() => saveWorkflow()}
             disabled={isExecuting}
-            className="bg-blue-500 text-white px-2 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 text-xs flex items-center justify-center space-x-1 transition-colors"
+            className="bg-blue-500 text-white px-3 py-2.5 rounded-lg hover:bg-blue-600 disabled:opacity-50 text-xs flex items-center justify-center space-x-2 transition-colors"
           >
             <Icons.Save size={14} />
             <span>Save</span>
@@ -113,7 +113,7 @@ export default function Sidebar() {
           <button
             onClick={exportWorkflow}
             disabled={isExecuting}
-            className="bg-green-500 text-white px-2 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 text-xs flex items-center justify-center space-x-1 transition-colors"
+            className="bg-green-500 text-white px-3 py-2.5 rounded-lg hover:bg-green-600 disabled:opacity-50 text-xs flex items-center justify-center space-x-2 transition-colors"
           >
             <Icons.Download size={14} />
             <span>Export</span>

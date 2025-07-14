@@ -367,7 +367,7 @@ function WorkflowEditor() {
   return (
     <div className={`h-screen w-screen relative ${darkMode ? 'bg-gray-900' : ''}`} ref={reactFlowWrapper}>
       {/* Navigation Views */}
-      <div className="absolute top-20 left-4 z-20">
+      <div className="absolute top-20 left-4 z-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-2 rounded-lg shadow-lg">
         <div className="flex flex-col space-y-3">
           {[
             { id: 'editor', label: '🔧 Editor', icon: '🔧' },
@@ -407,190 +407,197 @@ function WorkflowEditor() {
       
       {selectedView === 'editor' && (
         <>
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-          }
-          .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-          
-          ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-          }
-          ::-webkit-scrollbar-track {
-            background: ${darkMode ? '#1f2937' : '#f3f4f6'};
-          }
-          ::-webkit-scrollbar-thumb {
-            background: ${darkMode ? '#4b5563' : '#d1d5db'};
-            border-radius: 4px;
-          }
-          .react-flow__handle {
-            width: 12px;
-            height: 12px;
-          }
-          .react-flow__edge.animated path {
-            stroke-dasharray: 5;
-            animation: dashdraw 0.5s linear infinite;
-          }
-          @keyframes dashdraw {
-            to {
-              stroke-dashoffset: -10;
+        <style>
+          {`
+            @keyframes fadeIn {
+              from { opacity: 0; transform: scale(0.8); }
+              to { opacity: 1; transform: scale(1); }
             }
-          }
-        `}
-      </style>
+            .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+            
+            ::-webkit-scrollbar {
+              width: 8px;
+              height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+              background: ${darkMode ? '#1f2937' : '#f3f4f6'};
+            }
+            ::-webkit-scrollbar-thumb {
+              background: ${darkMode ? '#4b5563' : '#d1d5db'};
+              border-radius: 4px;
+            }
+            .react-flow__handle {
+              width: 12px;
+              height: 12px;
+            }
+            .react-flow__edge.animated path {
+              stroke-dasharray: 5;
+              animation: dashdraw 0.5s linear infinite;
+            }
+            @keyframes dashdraw {
+              to {
+                stroke-dashoffset: -10;
+              }
+            }
+          `}
+        </style>
       
-      <ReactFlow
-        nodes={nodes}
-        edges={displayEdges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onEdgeClick={(_, edge) => {
-          setSelectedEdge(edge);
-          setSelectedNode(null);
-        }}
-        onConnect={onConnect}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        nodeTypes={nodeTypesMap}
-        connectionLineStyle={connectionLineStyle}
-        connectionMode={ConnectionMode.Loose}
-        fitView
-        className={darkMode ? 'bg-gray-900' : 'bg-gray-100'}
-        deleteKeyCode="Delete"
-        multiSelectionKeyCode="Shift"
-        zoomOnScroll={true}
-        zoomOnPinch={true}
-        panOnScroll={false}
-        panOnDrag={true}
-        preventScrolling={true}
-        onPaneClick={() => {
-          setSelectedEdge(null);
-          setSelectedNode(null);
-        }}
-        defaultEdgeOptions={{
-          style: { strokeWidth: 1.5, stroke: '#9CA3AF' },
-          markerEnd: { type: MarkerType.ArrowClosed, color: '#9CA3AF', width: 12, height: 12 },
-          animated: true,
-          type: 'default'
-        }}
-      >
-        <Controls 
-          className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
-          showZoom={true}
-          showFitView={true}
-          showInteractive={true}
-        />
-        <MiniMap 
-          className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-lg`}
-          maskColor={darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)'}
-          nodeColor={(node) => {
-            const nodeType = nodeTypes[node.data.type];
-            switch (nodeType?.category) {
-              case 'trigger': return '#f97316';
-              case 'communication': return '#3b82f6';
-              case 'database': return '#8b5cf6';
-              case 'ai': return '#10b981';
-              case 'cloud': return '#06b6d4';
-              case 'core': return '#6b7280';
-              case 'flow': return '#6366f1';
-              default: return '#6b7280';
-            }
+        <ReactFlow
+          nodes={nodes}
+          edges={displayEdges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onEdgeClick={(_, edge) => {
+            setSelectedEdge(edge);
+            setSelectedNode(null);
           }}
-        />
-        <Background 
-          variant="dots"
-          gap={15}
-          size={1}
-          color={darkMode ? '#374151' : '#d1d5db'}
-        />
-        
-        {/* Barre d'exécution */}
-        <Panel position="top-center" className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-xl border ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm`}>
-          <div className="p-3 flex items-center justify-center space-x-4 w-full">
-            {/* Undo/Redo */}
-            <UndoRedoManager />
-            
-            <div className="h-6 w-px bg-gray-300 mx-2"></div>
-            
-            <button
-              onClick={executeWorkflow}
-              disabled={isExecuting || nodes.length === 0}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium transition-all duration-200 hover:scale-105 min-w-[100px] justify-center"
-            >
-              {isExecuting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  <span>Executing...</span>
-                </>
-              ) : (
-                <>
-                  <Icons.Play size={16} />
-                  <span>Execute</span>
-                </>
-              )}
-            </button>
-            
-            <button
-              onClick={() => saveWorkflow()}
-              disabled={isExecuting}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[90px] justify-center"
-            >
-              <Icons.Save size={16} />
-              <span>Save</span>
-            </button>
-            
-            <button
-              onClick={exportWorkflow}
-              disabled={isExecuting}
-              className="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[90px] justify-center"
-            >
-              <Icons.Download size={16} />
-              <span>Export</span>
-            </button>
-            
-            <label className="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 cursor-pointer">
-              <div className="flex items-center space-x-2 min-w-[90px] justify-center">
-                <Icons.Upload size={16} />
-                <span>Import</span>
+          onConnect={onConnect}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          nodeTypes={nodeTypesMap}
+          connectionLineStyle={connectionLineStyle}
+          connectionMode={ConnectionMode.Loose}
+          fitView
+          className={darkMode ? 'bg-gray-900' : 'bg-gray-100'}
+          deleteKeyCode="Delete"
+          multiSelectionKeyCode="Shift"
+          zoomOnScroll={true}
+          zoomOnPinch={true}
+          panOnScroll={false}
+          panOnDrag={true}
+          preventScrolling={true}
+          onPaneClick={() => {
+            setSelectedEdge(null);
+            setSelectedNode(null);
+          }}
+          defaultEdgeOptions={{
+            style: { strokeWidth: 1.5, stroke: '#9CA3AF' },
+            markerEnd: { type: MarkerType.ArrowClosed, color: '#9CA3AF', width: 12, height: 12 },
+            animated: true,
+            type: 'default'
+          }}
+        >
+          <Controls 
+            className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-lg`}
+            showZoom={true}
+            showFitView={true}
+            showInteractive={true}
+            position="bottom-left"
+          />
+          <MiniMap 
+            className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-lg`}
+            maskColor={darkMode ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)'}
+            nodeColor={(node) => {
+              const nodeType = nodeTypes[node.data.type];
+              switch (nodeType?.category) {
+                case 'trigger': return '#f97316';
+                case 'communication': return '#3b82f6';
+                case 'database': return '#8b5cf6';
+                case 'ai': return '#10b981';
+                case 'cloud': return '#06b6d4';
+                case 'core': return '#6b7280';
+                case 'flow': return '#6366f1';
+                default: return '#6b7280';
+              }
+            }}
+            position="bottom-right"
+          />
+          <Background 
+            variant="dots"
+            gap={15}
+            size={1}
+            color={darkMode ? '#374151' : '#d1d5db'}
+          />
+          
+          {/* Barre d'exécution */}
+          <Panel position="top-center" className={`mt-4 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg rounded-xl border ${darkMode ? 'border-gray-700' : 'border-gray-200'} backdrop-blur-sm`}>
+            <div className="p-4 flex items-center justify-center space-x-6 w-full">
+              {/* Undo/Redo */}
+              <div className="flex-shrink-0">
+                <UndoRedoManager />
               </div>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleFileUpload}
+              
+              <div className="h-6 w-px bg-gray-300 mx-3"></div>
+            
+              <button
+                onClick={executeWorkflow}
+                disabled={isExecuting || nodes.length === 0}
+                className="bg-green-500 text-white px-5 py-2.5 rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-medium transition-all duration-200 hover:scale-105 min-w-[120px] justify-center"
+              >
+                {isExecuting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <span>Executing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Icons.Play size={16} />
+                    <span>Execute</span>
+                  </>
+                )}
+              </button>
+            
+              <button
+                onClick={() => saveWorkflow()}
                 disabled={isExecuting}
-                className="hidden"
-              />
-            </label>
+                className="bg-blue-500 text-white px-5 py-2.5 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[100px] justify-center"
+              >
+                <Icons.Save size={16} />
+                <span>Save</span>
+              </button>
             
-            <button
-              onClick={clearExecution}
-              disabled={isExecuting}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[90px] justify-center"
-            >
-              <Icons.RotateCcw size={16} />
-              <span>Reset</span>
-            </button>
+              <button
+                onClick={exportWorkflow}
+                disabled={isExecuting}
+                className="bg-purple-500 text-white px-5 py-2.5 rounded-lg hover:bg-purple-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[100px] justify-center"
+              >
+                <Icons.Download size={16} />
+                <span>Export</span>
+              </button>
             
-            <div className="h-6 w-px bg-gray-300 mx-3"></div>
+              <label className="bg-indigo-500 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-600 cursor-pointer">
+                <div className="flex items-center space-x-2 min-w-[100px] justify-center">
+                  <Icons.Upload size={16} />
+                  <span>Import</span>
+                </div>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileUpload}
+                  disabled={isExecuting}
+                  className="hidden"
+                />
+              </label>
             
-            <select
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 min-w-[140px] ${
-                currentEnvironment === 'prod' 
-                  ? 'bg-red-500 text-white' 
-                  : currentEnvironment === 'staging'
-                  ? 'bg-yellow-500 text-white hover:bg-yellow-600'
-                  : 'bg-green-500 text-white hover:bg-green-600'
-              }`}
-              value={currentEnvironment}
-              onChange={(e) => useWorkflowStore.getState().setCurrentEnvironment(e.target.value)}
-            >
-              <option value="dev">Development</option>
-              <option value="staging">Staging</option>
-              <option value="prod">Production</option>
-            </select>
+              <button
+                onClick={clearExecution}
+                disabled={isExecuting}
+                className="bg-gray-500 text-white px-5 py-2.5 rounded-lg hover:bg-gray-600 disabled:opacity-50 flex items-center space-x-2 transition-all duration-200 hover:scale-105 min-w-[100px] justify-center"
+              >
+                <Icons.RotateCcw size={16} />
+                <span>Reset</span>
+              </button>
+            
+              <div className="h-6 w-px bg-gray-300 mx-3"></div>
+            
+              <select
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 min-w-[160px] ${
+                  currentEnvironment === 'prod' 
+                    ? 'bg-red-500 text-white' 
+                    : currentEnvironment === 'staging'
+                    ? 'bg-yellow-500 text-white hover:bg-yellow-600'
+                    : 'bg-green-500 text-white hover:bg-green-600'
+                }`}
+                value={currentEnvironment}
+                onChange={(e) => useWorkflowStore.getState().setCurrentEnvironment(e.target.value)}
+              >
+                <option value="dev">Development</option>
+                <option value="staging">Staging</option>
+                <option value="prod">Production</option>
+              </select>
+            </div>
+          </Panel>
+        </ReactFlow>
           </div>
         </Panel>
       </ReactFlow>
@@ -611,7 +618,9 @@ function WorkflowEditor() {
       <CollaborationPanel isOpen={false} onClose={() => {}} />
       <PerformanceMonitor isOpen={false} onClose={() => {}} />
       <AIWorkflowGenerator />
-      <AFLOWOptimizer />
+      <div className="fixed bottom-4 right-4 z-40">
+        <AFLOWOptimizer />
+      </div>
       <PluginHotReload />
       <VoiceAssistant />
       <AdvancedOnboarding />
@@ -644,8 +653,8 @@ function WorkflowEditor() {
       )}
       
       {/* Minimap personnalisée */}
-      <div className="absolute bottom-4 right-4 w-48 h-32 bg-white rounded-lg shadow-lg border overflow-hidden">
-        <div className="p-2 bg-gray-50 border-b">
+      <div className="absolute bottom-20 right-4 w-48 h-32 bg-white rounded-lg shadow-lg border overflow-hidden">
+        <div className="p-2 bg-gray-50 border-b flex items-center justify-between">
           <h3 className="text-xs font-semibold text-gray-700">Workflow Overview</h3>
         </div>
         <div className="p-2 space-y-1">
@@ -675,7 +684,7 @@ function WorkflowEditor() {
       </div>
       
       {/* Barre de statut */}
-      <div className={`absolute bottom-0 left-80 right-0 h-8 ${darkMode ? 'bg-gray-800 text-gray-300 border-gray-700' : 'bg-white text-gray-700 border-gray-200'} border-t flex items-center px-4 text-xs`}>
+      <div className={`fixed bottom-0 left-80 right-0 h-10 ${darkMode ? 'bg-gray-800 text-gray-300 border-gray-700' : 'bg-white text-gray-700 border-gray-200'} border-t flex items-center px-6 text-xs z-10`}>
         <div className="flex items-center space-x-4">
           <span>Nodes: {nodes.length}</span>
           <span>Connections: {edges.length}</span>

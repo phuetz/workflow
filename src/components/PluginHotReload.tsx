@@ -255,20 +255,22 @@ export default function PluginHotReload() {
   return (
     <>
       {/* Plugin Hot-Reload Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className={`fixed top-44 left-4 z-40 px-4 py-2 rounded-lg ${
-          darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'
-        } text-white shadow-lg flex items-center space-x-2 transition-all hover:scale-105`}
-      >
-        <Package size={16} />
-        <span>Hot-Reload Plugin</span>
-        {loadedPlugins.length > 0 && (
-          <span className="bg-white text-green-600 px-2 py-1 rounded-full text-xs font-bold">
-            {loadedPlugins.length}
-          </span>
-        )}
-      </button>
+      <div className="fixed top-[190px] left-4 z-40">
+        <button
+          onClick={() => setIsOpen(true)}
+          className={`px-4 py-2.5 rounded-lg ${
+            darkMode ? 'bg-green-600 hover:bg-green-700' : 'bg-green-500 hover:bg-green-600'
+          } text-white shadow-lg flex items-center space-x-2 transition-all hover:scale-105 w-full`}
+        >
+          <Package size={16} />
+          <span>Hot-Reload Plugin</span>
+          {loadedPlugins.length > 0 && (
+            <span className="bg-white text-green-600 px-2 py-1 rounded-full text-xs font-bold">
+              {loadedPlugins.length}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* Plugin Manager Modal */}
       {isOpen && (
