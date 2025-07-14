@@ -18,6 +18,14 @@ describe('nodeTypes', () => {
     expect(nodeTypes.pipedrive.label).toBe('Pipedrive');
   });
 
+  it('includes Asana node', () => {
+    expect(nodeTypes.asana.label).toBe('Asana');
+  });
+
+  it('includes ClickUp node', () => {
+    expect(nodeTypes.clickup.label).toBe('ClickUp');
+  });
+
   it('includes ETL node', () => {
     expect(nodeTypes.etl.label).toBe('ETL Pipeline');
   });
@@ -28,5 +36,13 @@ describe('nodeTypes', () => {
 
   it('includes subWorkflow node', () => {
     expect(nodeTypes.subWorkflow.label).toBe('Sub-workflow');
+  });
+
+  it('includes Confluence node', () => {
+    expect(nodeTypes.confluence.label).toBe('Confluence');
+  });
+
+  it('includes Linear node', () => {
+    expect(nodeTypes.linear.label).toBe('Linear');
   });
 });

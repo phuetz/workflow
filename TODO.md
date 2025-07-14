@@ -61,7 +61,7 @@ Ce document liste toutes les tâches, améliorations et fonctionnalités à impl
   - [ ] **SaaS Platforms** (50 nœuds)
     - [x] Monday.com, Asana, ClickUp
     - [x] Pipedrive, Salesforce (complet)
-    - [ ] Jira, Confluence, Linear
+    - [x] Jira, Confluence, Linear
     - [ ] Intercom, Freshdesk, Help Scout
     - [ ] Shopify, WooCommerce, Magento
 
