@@ -19,7 +19,7 @@ import { useWorkflowStore } from './store/workflowStore';
 import { nodeTypes } from './data/nodeTypes';
 import { WorkflowExecutor } from './components/ExecutionEngine';
 import CustomNode from './components/CustomNode';
-import NodeConfigPanel from './workflow/NodeConfigPanel';
+import NodeConfigPanel from './components/NodeConfigPanel';
 import EdgeConfigPanel from './components/EdgeConfigPanel';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
