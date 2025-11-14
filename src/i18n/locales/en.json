@@ -1,0 +1,93 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "close": "Close",
+    "open": "Open",
+    "settings": "Settings",
+    "help": "Help",
+    "logout": "Logout"
+  },
+  "workflow": {
+    "title": "Workflows",
+    "create": "Create Workflow",
+    "edit": "Edit Workflow",
+    "delete": "Delete Workflow",
+    "execute": "Execute Workflow",
+    "save": "Save Workflow",
+    "export": "Export Workflow",
+    "import": "Import Workflow",
+    "duplicate": "Duplicate Workflow",
+    "share": "Share Workflow",
+    "name": "Workflow Name",
+    "description": "Description",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "draft": "Draft"
+  },
+  "node": {
+    "add": "Add Node",
+    "configure": "Configure Node",
+    "delete": "Delete Node",
+    "duplicate": "Duplicate Node",
+    "library": "Node Library",
+    "categories": "Categories",
+    "search": "Search nodes..."
+  },
+  "execution": {
+    "run": "Run",
+    "stop": "Stop",
+    "pause": "Pause",
+    "resume": "Resume",
+    "history": "Execution History",
+    "status": "Status",
+    "pending": "Pending",
+    "running": "Running",
+    "completed": "Completed",
+    "failed": "Failed",
+    "cancelled": "Cancelled"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "or": "Or",
+    "loginWith": "Login with {{provider}}",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "errors": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "passwordMismatch": "Passwords do not match",
+    "networkError": "Network error. Please try again.",
+    "unauthorized": "Unauthorized. Please login.",
+    "notFound": "Resource not found",
+    "serverError": "Server error. Please try again later."
+  },
+  "notifications": {
+    "workflowSaved": "Workflow saved successfully",
+    "workflowDeleted": "Workflow deleted successfully",
+    "executionStarted": "Execution started",
+    "executionCompleted": "Execution completed successfully",
+    "executionFailed": "Execution failed: {{error}}"
+  }
+}
