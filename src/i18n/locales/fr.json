@@ -1,0 +1,93 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "update": "Mettre à jour",
+    "search": "Rechercher",
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "success": "Succès",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "finish": "Terminer",
+    "close": "Fermer",
+    "open": "Ouvrir",
+    "settings": "Paramètres",
+    "help": "Aide",
+    "logout": "Déconnexion"
+  },
+  "workflow": {
+    "title": "Workflows",
+    "create": "Créer un workflow",
+    "edit": "Modifier le workflow",
+    "delete": "Supprimer le workflow",
+    "execute": "Exécuter le workflow",
+    "save": "Enregistrer le workflow",
+    "export": "Exporter le workflow",
+    "import": "Importer le workflow",
+    "duplicate": "Dupliquer le workflow",
+    "share": "Partager le workflow",
+    "name": "Nom du workflow",
+    "description": "Description",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "draft": "Brouillon"
+  },
+  "node": {
+    "add": "Ajouter un nœud",
+    "configure": "Configurer le nœud",
+    "delete": "Supprimer le nœud",
+    "duplicate": "Dupliquer le nœud",
+    "library": "Bibliothèque de nœuds",
+    "categories": "Catégories",
+    "search": "Rechercher des nœuds..."
+  },
+  "execution": {
+    "run": "Exécuter",
+    "stop": "Arrêter",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "history": "Historique d'exécution",
+    "status": "Statut",
+    "pending": "En attente",
+    "running": "En cours",
+    "completed": "Terminé",
+    "failed": "Échoué",
+    "cancelled": "Annulé"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "rememberMe": "Se souvenir de moi",
+    "or": "Ou",
+    "loginWith": "Se connecter avec {{provider}}",
+    "noAccount": "Vous n'avez pas de compte ?",
+    "hasAccount": "Vous avez déjà un compte ?"
+  },
+  "errors": {
+    "required": "Ce champ est requis",
+    "invalidEmail": "Adresse email invalide",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "networkError": "Erreur réseau. Veuillez réessayer.",
+    "unauthorized": "Non autorisé. Veuillez vous connecter.",
+    "notFound": "Ressource non trouvée",
+    "serverError": "Erreur serveur. Veuillez réessayer plus tard."
+  },
+  "notifications": {
+    "workflowSaved": "Workflow enregistré avec succès",
+    "workflowDeleted": "Workflow supprimé avec succès",
+    "executionStarted": "Exécution démarrée",
+    "executionCompleted": "Exécution terminée avec succès",
+    "executionFailed": "Échec de l'exécution : {{error}}"
+  }
+}

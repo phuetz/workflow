@@ -1,0 +1,707 @@
+openapi: 3.0.3
+info:
+  title: WorkflowBuilder Pro API
+  description: |
+    Professional Workflow Automation Platform API
+
+    ## Authentication
+    All API requests require authentication using JWT tokens obtained from the `/auth/login` endpoint.
+    Include the token in the `Authorization` header: `Bearer <token>`
+
+    ## Rate Limiting
+    - Free tier: 100 requests per minute
+    - Pro tier: 1000 requests per minute
+    - Enterprise: Custom limits
+  version: 2.0.0
+  contact:
+    name: WorkflowBuilder Pro Support
+    email: support@workflowbuilder.app
+    url: https://workflowbuilder.app/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.workflowbuilder.app/v1
+    description: Production server
+  - url: https://staging-api.workflowbuilder.app/v1
+    description: Staging server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Workflows
+    description: Workflow management operations
+  - name: Executions
+    description: Workflow execution management
+  - name: Nodes
+    description: Node type information
+  - name: Credentials
+    description: Secure credential management
+  - name: Webhooks
+    description: Webhook management
+  - name: Organizations
+    description: Organization and team management
+  - name: Users
+    description: User profile management
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: WORKFLOW_NOT_FOUND
+        message:
+          type: string
+          example: The requested workflow was not found
+        details:
+          type: object
+          additionalProperties: true
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+        role:
+          type: string
+          enum: [super_admin, admin, power_user, user, developer, viewer, guest]
+        organizationId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Workflow:
+      type: object
+      required:
+        - name
+        - nodes
+        - edges
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 1000
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Node'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Edge'
+        settings:
+          type: object
+          properties:
+            maxExecutionTime:
+              type: integer
+              description: Maximum execution time in seconds
+              default: 300
+            retryAttempts:
+              type: integer
+              default: 3
+            notifyOnFailure:
+              type: boolean
+              default: true
+        tags:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+          default: true
+        version:
+          type: integer
+          readOnly: true
+        createdBy:
+          type: string
+          format: uuid
+          readOnly: true
+        organizationId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Node:
+      type: object
+      required:
+        - id
+        - type
+        - position
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [trigger, action, condition, loop, transform]
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+        data:
+          type: object
+          additionalProperties: true
+
+    Edge:
+      type: object
+      required:
+        - id
+        - source
+        - target
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+        type:
+          type: string
+          default: default
+
+    Execution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Execution duration in milliseconds
+        input:
+          type: object
+          additionalProperties: true
+        output:
+          type: object
+          additionalProperties: true
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string
+            stack:
+              type: string
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutionLog'
+
+    ExecutionLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [debug, info, warn, error]
+        nodeId:
+          type: string
+        message:
+          type: string
+
+    Credential:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        type:
+          type: string
+          enum: [api_key, oauth2, basic_auth, bearer_token, custom]
+        data:
+          type: object
+          writeOnly: true
+          description: Credential data (write-only, encrypted at rest)
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflowId:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+          readOnly: true
+        method:
+          type: string
+          enum: [GET, POST, PUT, PATCH, DELETE]
+          default: POST
+        isActive:
+          type: boolean
+          default: true
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Authenticate user and receive JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                rememberMe:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  tokens:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      refreshToken:
+                        type: string
+                      expiresIn:
+                        type: integer
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - displayName
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                displayName:
+                  type: string
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  tokens:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      refreshToken:
+                        type: string
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /workflows:
+    get:
+      tags:
+        - Workflows
+      summary: List workflows
+      description: Get all workflows accessible to the user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Workflows retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Workflow'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      totalPages:
+                        type: integer
+
+    post:
+      tags:
+        - Workflows
+      summary: Create workflow
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workflow'
+      responses:
+        '201':
+          description: Workflow created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /workflows/{id}:
+    get:
+      tags:
+        - Workflows
+      summary: Get workflow by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Workflow found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '404':
+          description: Workflow not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Workflows
+      summary: Update workflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workflow'
+      responses:
+        '200':
+          description: Workflow updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        '404':
+          description: Workflow not found
+
+    delete:
+      tags:
+        - Workflows
+      summary: Delete workflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Workflow deleted
+        '404':
+          description: Workflow not found
+
+  /workflows/{id}/execute:
+    post:
+      tags:
+        - Executions
+      summary: Execute workflow
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '202':
+          description: Execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+
+  /executions/{id}:
+    get:
+      tags:
+        - Executions
+      summary: Get execution status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Execution found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+
+  /credentials:
+    get:
+      tags:
+        - Credentials
+      summary: List credentials
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Credentials list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Credential'
+
+    post:
+      tags:
+        - Credentials
+      summary: Create credential
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credential'
+      responses:
+        '201':
+          description: Credential created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credential'
+
+  /webhooks:
+    post:
+      tags:
+        - Webhooks
+      summary: Create webhook
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - workflowId
+              properties:
+                workflowId:
+                  type: string
+                  format: uuid
+                method:
+                  type: string
+                  enum: [GET, POST, PUT, PATCH, DELETE]
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+  /webhooks/{id}:
+    delete:
+      tags:
+        - Webhooks
+      summary: Delete webhook
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Webhook deleted

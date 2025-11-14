@@ -1,0 +1,93 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "create": "Erstellen",
+    "update": "Aktualisieren",
+    "search": "Suchen",
+    "loading": "Wird geladen...",
+    "error": "Ein Fehler ist aufgetreten",
+    "success": "Erfolg",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "finish": "Fertig",
+    "close": "Schließen",
+    "open": "Öffnen",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "logout": "Abmelden"
+  },
+  "workflow": {
+    "title": "Workflows",
+    "create": "Workflow erstellen",
+    "edit": "Workflow bearbeiten",
+    "delete": "Workflow löschen",
+    "execute": "Workflow ausführen",
+    "save": "Workflow speichern",
+    "export": "Workflow exportieren",
+    "import": "Workflow importieren",
+    "duplicate": "Workflow duplizieren",
+    "share": "Workflow teilen",
+    "name": "Workflow-Name",
+    "description": "Beschreibung",
+    "status": "Status",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "draft": "Entwurf"
+  },
+  "node": {
+    "add": "Knoten hinzufügen",
+    "configure": "Knoten konfigurieren",
+    "delete": "Knoten löschen",
+    "duplicate": "Knoten duplizieren",
+    "library": "Knoten-Bibliothek",
+    "categories": "Kategorien",
+    "search": "Knoten suchen..."
+  },
+  "execution": {
+    "run": "Ausführen",
+    "stop": "Stoppen",
+    "pause": "Pausieren",
+    "resume": "Fortsetzen",
+    "history": "Ausführungsverlauf",
+    "status": "Status",
+    "pending": "Ausstehend",
+    "running": "Läuft",
+    "completed": "Abgeschlossen",
+    "failed": "Fehlgeschlagen",
+    "cancelled": "Abgebrochen"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "logout": "Abmelden",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "forgotPassword": "Passwort vergessen?",
+    "rememberMe": "Angemeldet bleiben",
+    "or": "Oder",
+    "loginWith": "Anmelden mit {{provider}}",
+    "noAccount": "Noch kein Konto?",
+    "hasAccount": "Bereits ein Konto?"
+  },
+  "errors": {
+    "required": "Dieses Feld ist erforderlich",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "unauthorized": "Nicht autorisiert. Bitte melden Sie sich an.",
+    "notFound": "Ressource nicht gefunden",
+    "serverError": "Serverfehler. Bitte versuchen Sie es später erneut."
+  },
+  "notifications": {
+    "workflowSaved": "Workflow erfolgreich gespeichert",
+    "workflowDeleted": "Workflow erfolgreich gelöscht",
+    "executionStarted": "Ausführung gestartet",
+    "executionCompleted": "Ausführung erfolgreich abgeschlossen",
+    "executionFailed": "Ausführung fehlgeschlagen: {{error}}"
+  }
+}
