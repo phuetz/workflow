@@ -25,26 +25,31 @@ vi.mock('../../backend/security/EncryptionService', () => ({
 }));
 
 // Mock crypto
-vi.mock('crypto', () => ({
-  default: {
-    randomBytes: (size: number) => ({
-      toString: (encoding: string) => {
-        if (encoding === 'base64url') {
-          return 'randomBase64UrlString' + Math.random().toString(36).substring(7);
+vi.mock('crypto', async () => {
+  const actual = await vi.importActual('crypto') as any;
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      randomBytes: (size: number) => ({
+        toString: (encoding: string) => {
+          if (encoding === 'base64url') {
+            return 'randomBase64UrlString' + Math.random().toString(36).substring(7);
+          }
+          return 'randomString';
         }
-        return 'randomString';
-      }
-    }),
-    randomUUID: () => 'api-key-' + Math.random().toString(36).substring(7),
-    createHash: (algorithm: string) => ({
-      update: (data: string) => ({
-        digest: (encoding: string) => {
-          return `hashed_${data}`;
-        }
+      }),
+      randomUUID: () => 'api-key-' + Math.random().toString(36).substring(7),
+      createHash: (algorithm: string) => ({
+        update: (data: string) => ({
+          digest: (encoding: string) => {
+            return `hashed_${data}`;
+          }
+        })
       })
-    })
-  }
-}));
+    }
+  };
+});
 
 describe('APIKeyService', () => {
   let apiKeyService: APIKeyService;

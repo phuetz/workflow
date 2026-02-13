@@ -7,7 +7,7 @@
  * @important This follows the project's rule: NO AUTOMATIC CORRECTIONS without validation
  */
 
-import { notificationService } from '../../services/NotificationService';
+import { notificationService } from '../../services/core/UnifiedNotificationService';
 
 export interface ErrorContext {
   timestamp: Date;

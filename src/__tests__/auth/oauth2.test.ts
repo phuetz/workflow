@@ -25,25 +25,30 @@ vi.mock('../../backend/security/EncryptionService', () => ({
 }));
 
 // Mock crypto
-vi.mock('crypto', () => ({
-  default: {
-    randomBytes: (size: number) => ({
-      toString: (encoding: string) => {
-        if (encoding === 'base64url') {
-          return 'random_' + Math.random().toString(36).substring(7);
+vi.mock('crypto', async () => {
+  const actual = await vi.importActual('crypto') as any;
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      randomBytes: (size: number) => ({
+        toString: (encoding: string) => {
+          if (encoding === 'base64url') {
+            return 'random_' + Math.random().toString(36).substring(7);
+          }
+          return 'randomBytes';
         }
-        return 'randomBytes';
-      }
-    }),
-    createHash: (algorithm: string) => ({
-      update: (data: string) => ({
-        digest: (encoding: string) => {
-          return `hash_${data}`;
-        }
+      }),
+      createHash: (algorithm: string) => ({
+        update: (data: string) => ({
+          digest: (encoding: string) => {
+            return `hash_${data}`;
+          }
+        })
       })
-    })
-  }
-}));
+    }
+  };
+});
 
 // Mock fetch
 global.fetch = vi.fn();

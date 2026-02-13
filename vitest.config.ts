@@ -1,13 +1,15 @@
 import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 export default defineConfig({
+  plugins: [react()],
   test: {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test-setup.ts'],
-    testTimeout: 30000, // 30 seconds default timeout
-    hookTimeout: 30000, // 30 seconds for hooks
+    testTimeout: 15000, // 15 seconds default timeout
+    hookTimeout: 15000, // 15 seconds for hooks
     pool: 'threads',
     poolOptions: {
       threads: {
@@ -20,7 +22,8 @@ export default defineConfig({
       '**/cypress/**',
       '**/tests/e2e/**',
       '**/*.spec.ts', // Exclude Playwright specs
-      '**/e2e/**'
+      '**/e2e/**',
+      '**/tests/integration/**' // Exclude DB-dependent integration tests
     ],
     coverage: {
       provider: 'v8',
@@ -39,8 +42,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
+      '@components': resolve(__dirname, './src/components'),
+      '@store': resolve(__dirname, './src/store'),
+      '@services': resolve(__dirname, './src/services'),
+      '@types': resolve(__dirname, './src/types'),
+      '@utils': resolve(__dirname, './src/utils'),
+      '@hooks': resolve(__dirname, './src/hooks'),
+      '@data': resolve(__dirname, './src/data'),
       'events': 'events',
-      'crypto': 'crypto-browserify',
       'stream': 'stream-browserify',
       'buffer': 'buffer',
       'process': 'process/browser'
