@@ -1,0 +1,523 @@
+# PLAN C - Infrastructure Services for Scalability
+# Redis, RabbitMQ, PostgreSQL deployments for K8s
+# Ultra Think methodology - Supporting services
+
+---
+# Redis StatefulSet for caching and queuing
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: workflow-scalability
+  labels:
+    app: redis
+    component: cache
+spec:
+  serviceName: redis-service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        component: cache
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+        command:
+        - redis-server
+        - --appendonly
+        - "yes"
+        - --maxmemory
+        - "2gb"
+        - --maxmemory-policy
+        - "allkeys-lru"
+        - --requirepass
+        - "$(REDIS_PASSWORD)"
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: scalability-secrets
+              key: REDIS_PASSWORD
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "redis-cli -a $REDIS_PASSWORD ping"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "redis-cli -a $REDIS_PASSWORD ping"
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      - name: redis-exporter
+        image: oliver006/redis_exporter:latest
+        ports:
+        - containerPort: 9121
+          name: metrics
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: scalability-secrets
+              key: REDIS_PASSWORD
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: workflow-scalability
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  - port: 9121
+    targetPort: 9121
+    protocol: TCP
+    name: metrics
+  selector:
+    app: redis
+
+---
+# RabbitMQ StatefulSet for message queuing
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: rabbitmq
+  namespace: workflow-scalability
+  labels:
+    app: rabbitmq
+    component: queue
+spec:
+  serviceName: rabbitmq-service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+        component: queue
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "15692"
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3-management-alpine
+        ports:
+        - containerPort: 5672
+          name: amqp
+        - containerPort: 15672
+          name: management
+        - containerPort: 15692
+          name: metrics
+        - containerPort: 25672
+          name: clustering
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: admin
+        - name: RABBITMQ_DEFAULT_PASS
+          valueFrom:
+            secretKeyRef:
+              name: scalability-secrets
+              key: RABBITMQ_PASSWORD
+        - name: RABBITMQ_ERLANG_COOKIE
+          value: "workflow-cookie-secret"
+        - name: RABBITMQ_USE_LONGNAME
+          value: "true"
+        - name: RABBITMQ_NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: K8S_SERVICE_NAME
+          value: rabbitmq-service
+        - name: K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: RABBITMQ_PLUGINS
+          value: "rabbitmq_management rabbitmq_prometheus rabbitmq_peer_discovery_k8s"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        volumeMounts:
+        - name: rabbitmq-data
+          mountPath: /var/lib/rabbitmq
+        livenessProbe:
+          exec:
+            command:
+            - rabbitmq-diagnostics
+            - ping
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - rabbitmq-diagnostics
+            - check_port_connectivity
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 10
+  volumeClaimTemplates:
+  - metadata:
+      name: rabbitmq-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# RabbitMQ Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-service
+  namespace: workflow-scalability
+  labels:
+    app: rabbitmq
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 5672
+    targetPort: 5672
+    protocol: TCP
+    name: amqp
+  - port: 15672
+    targetPort: 15672
+    protocol: TCP
+    name: management
+  - port: 15692
+    targetPort: 15692
+    protocol: TCP
+    name: metrics
+  - port: 25672
+    targetPort: 25672
+    protocol: TCP
+    name: clustering
+  selector:
+    app: rabbitmq
+
+---
+# PostgreSQL StatefulSet for persistent storage
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: workflow-scalability
+  labels:
+    app: postgres
+    component: database
+spec:
+  serviceName: postgres-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: database
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+          name: postgres
+        env:
+        - name: POSTGRES_DB
+          value: workflow
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: scalability-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_MAX_CONNECTIONS
+          value: "500"
+        - name: POSTGRES_SHARED_BUFFERS
+          value: "2GB"
+        - name: POSTGRES_EFFECTIVE_CACHE_SIZE
+          value: "6GB"
+        - name: POSTGRES_MAINTENANCE_WORK_MEM
+          value: "512MB"
+        - name: POSTGRES_CHECKPOINT_COMPLETION_TARGET
+          value: "0.9"
+        - name: POSTGRES_WAL_BUFFERS
+          value: "16MB"
+        - name: POSTGRES_DEFAULT_STATISTICS_TARGET
+          value: "100"
+        - name: POSTGRES_RANDOM_PAGE_COST
+          value: "1.1"
+        - name: POSTGRES_EFFECTIVE_IO_CONCURRENCY
+          value: "200"
+        - name: POSTGRES_WORK_MEM
+          value: "10MB"
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "8Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        - name: postgres-init
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      - name: postgres-exporter
+        image: prometheuscommunity/postgres-exporter:latest
+        ports:
+        - containerPort: 9187
+          name: metrics
+        env:
+        - name: DATA_SOURCE_NAME
+          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@localhost:5432/workflow?sslmode=disable"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: scalability-secrets
+              key: POSTGRES_PASSWORD
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: postgres-init
+        configMap:
+          name: postgres-init-script
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: workflow-scalability
+  labels:
+    app: postgres
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+    name: postgres
+  - port: 9187
+    targetPort: 9187
+    protocol: TCP
+    name: metrics
+  selector:
+    app: postgres
+
+---
+# PostgreSQL Initialization Script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: workflow-scalability
+data:
+  init.sql: |
+    -- Create scalability schema
+    CREATE SCHEMA IF NOT EXISTS scalability;
+    
+    -- Create tables for workflow management
+    CREATE TABLE IF NOT EXISTS scalability.workflows (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      status VARCHAR(50) DEFAULT 'draft',
+      metadata JSONB DEFAULT '{}'
+    );
+    
+    CREATE TABLE IF NOT EXISTS scalability.executions (
+      id SERIAL PRIMARY KEY,
+      workflow_id INTEGER REFERENCES scalability.workflows(id),
+      started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      completed_at TIMESTAMP,
+      status VARCHAR(50) DEFAULT 'pending',
+      result JSONB,
+      error TEXT,
+      metrics JSONB DEFAULT '{}'
+    );
+    
+    CREATE TABLE IF NOT EXISTS scalability.tasks (
+      id SERIAL PRIMARY KEY,
+      execution_id INTEGER REFERENCES scalability.executions(id),
+      task_type VARCHAR(100) NOT NULL,
+      payload JSONB,
+      status VARCHAR(50) DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      started_at TIMESTAMP,
+      completed_at TIMESTAMP,
+      result JSONB,
+      error TEXT,
+      worker_id VARCHAR(100),
+      retry_count INTEGER DEFAULT 0
+    );
+    
+    CREATE TABLE IF NOT EXISTS scalability.queue_messages (
+      id SERIAL PRIMARY KEY,
+      queue_name VARCHAR(100) NOT NULL,
+      message_id VARCHAR(100) UNIQUE NOT NULL,
+      payload JSONB,
+      priority INTEGER DEFAULT 5,
+      status VARCHAR(50) DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      processed_at TIMESTAMP,
+      retry_count INTEGER DEFAULT 0,
+      max_retries INTEGER DEFAULT 3,
+      visibility_timeout TIMESTAMP,
+      dead_letter BOOLEAN DEFAULT FALSE
+    );
+    
+    CREATE TABLE IF NOT EXISTS scalability.metrics (
+      id SERIAL PRIMARY KEY,
+      metric_type VARCHAR(100) NOT NULL,
+      metric_name VARCHAR(255) NOT NULL,
+      value NUMERIC,
+      tags JSONB DEFAULT '{}',
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS scalability.scaling_events (
+      id SERIAL PRIMARY KEY,
+      service_name VARCHAR(100) NOT NULL,
+      action VARCHAR(50) NOT NULL,
+      from_instances INTEGER,
+      to_instances INTEGER,
+      reason TEXT,
+      metrics JSONB,
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    -- Create indexes for performance
+    CREATE INDEX idx_workflows_status ON scalability.workflows(status);
+    CREATE INDEX idx_executions_workflow_id ON scalability.executions(workflow_id);
+    CREATE INDEX idx_executions_status ON scalability.executions(status);
+    CREATE INDEX idx_tasks_execution_id ON scalability.tasks(execution_id);
+    CREATE INDEX idx_tasks_status ON scalability.tasks(status);
+    CREATE INDEX idx_tasks_worker_id ON scalability.tasks(worker_id);
+    CREATE INDEX idx_queue_messages_queue_name ON scalability.queue_messages(queue_name);
+    CREATE INDEX idx_queue_messages_status ON scalability.queue_messages(status);
+    CREATE INDEX idx_queue_messages_priority ON scalability.queue_messages(priority DESC);
+    CREATE INDEX idx_metrics_type_name ON scalability.metrics(metric_type, metric_name);
+    CREATE INDEX idx_metrics_timestamp ON scalability.metrics(timestamp DESC);
+    CREATE INDEX idx_scaling_events_service ON scalability.scaling_events(service_name);
+    CREATE INDEX idx_scaling_events_timestamp ON scalability.scaling_events(timestamp DESC);
+    
+    -- Create functions for automatic timestamp updates
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = CURRENT_TIMESTAMP;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    
+    CREATE TRIGGER update_workflows_updated_at
+    BEFORE UPDATE ON scalability.workflows
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+    
+    -- Grant permissions
+    GRANT ALL PRIVILEGES ON SCHEMA scalability TO postgres;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA scalability TO postgres;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA scalability TO postgres;

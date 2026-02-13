@@ -1,0 +1,203 @@
+{
+  "name": "RAG Document Q&A Workflow",
+  "description": "Retrieval Augmented Generation workflow for question answering over documents using LangChain",
+  "category": "AI/ML",
+  "tags": ["ai", "langchain", "rag", "qa", "documents"],
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "id": "trigger-1",
+      "type": "httpRequest",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "Trigger: Document Q&A Request",
+        "config": {
+          "method": "POST",
+          "path": "/api/rag/question",
+          "expectedFields": ["question", "documentUrl"]
+        }
+      }
+    },
+    {
+      "id": "loader-1",
+      "type": "documentLoader",
+      "position": { "x": 300, "y": 100 },
+      "data": {
+        "label": "Load Document",
+        "config": {
+          "sourceType": "url",
+          "source": "{{$input.documentUrl}}",
+          "loaderType": "auto"
+        }
+      }
+    },
+    {
+      "id": "splitter-1",
+      "type": "textSplitter",
+      "position": { "x": 500, "y": 100 },
+      "data": {
+        "label": "Split into Chunks",
+        "config": {
+          "chunkSize": 1000,
+          "chunkOverlap": 200,
+          "separator": "\\n\\n"
+        }
+      }
+    },
+    {
+      "id": "embeddings-1",
+      "type": "embeddings",
+      "position": { "x": 700, "y": 100 },
+      "data": {
+        "label": "Generate Embeddings",
+        "config": {
+          "provider": "openai",
+          "model": "text-embedding-3-small"
+        }
+      }
+    },
+    {
+      "id": "vectorstore-1",
+      "type": "chromaVectorStore",
+      "position": { "x": 900, "y": 100 },
+      "data": {
+        "label": "Store in Chroma",
+        "config": {
+          "collectionName": "documents",
+          "operation": "upsert"
+        }
+      }
+    },
+    {
+      "id": "retriever-1",
+      "type": "vectorStoreRetriever",
+      "position": { "x": 1100, "y": 100 },
+      "data": {
+        "label": "Retrieve Relevant Chunks",
+        "config": {
+          "query": "{{$input.question}}",
+          "topK": 3,
+          "scoreThreshold": 0.7
+        }
+      }
+    },
+    {
+      "id": "ragchain-1",
+      "type": "ragChain",
+      "position": { "x": 1300, "y": 100 },
+      "data": {
+        "label": "RAG Chain",
+        "config": {
+          "llmProvider": "openai",
+          "llmModel": "gpt-4",
+          "temperature": 0.7,
+          "systemPrompt": "You are a helpful assistant. Answer the question based on the provided context. If you cannot answer based on the context, say so.",
+          "question": "{{$input.question}}",
+          "context": "{{$retriever-1.output.documents}}"
+        }
+      }
+    },
+    {
+      "id": "response-1",
+      "type": "httpRequest",
+      "position": { "x": 1500, "y": 100 },
+      "data": {
+        "label": "Return Response",
+        "config": {
+          "method": "RESPONSE",
+          "body": {
+            "success": true,
+            "question": "{{$input.question}}",
+            "answer": "{{$ragchain-1.output.answer}}",
+            "sources": "{{$retriever-1.output.sources}}",
+            "model": "{{$ragchain-1.config.llmModel}}"
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-trigger-loader",
+      "source": "trigger-1",
+      "target": "loader-1",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "e-loader-splitter",
+      "source": "loader-1",
+      "target": "splitter-1",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "e-splitter-embeddings",
+      "source": "splitter-1",
+      "target": "embeddings-1",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "e-embeddings-vectorstore",
+      "source": "embeddings-1",
+      "target": "vectorstore-1",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "e-vectorstore-retriever",
+      "source": "vectorstore-1",
+      "target": "retriever-1",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "e-retriever-ragchain",
+      "source": "retriever-1",
+      "target": "ragchain-1",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    },
+    {
+      "id": "e-ragchain-response",
+      "source": "ragchain-1",
+      "target": "response-1",
+      "sourceHandle": "output",
+      "targetHandle": "input"
+    }
+  ],
+  "config": {
+    "executionMode": "sequential",
+    "errorHandling": "stop",
+    "timeout": 300000,
+    "retryPolicy": {
+      "maxRetries": 3,
+      "retryDelay": 1000
+    }
+  },
+  "metadata": {
+    "author": "Claude Code",
+    "createdAt": "2025-10-13",
+    "tags": ["AI", "LangChain", "RAG", "Document Q&A"],
+    "useCases": [
+      "Document question answering",
+      "Knowledge base search",
+      "Semantic document retrieval",
+      "Context-aware AI responses"
+    ],
+    "requirements": {
+      "apiKeys": ["OPENAI_API_KEY"],
+      "services": ["Chroma Vector Store (optional - can use in-memory)"],
+      "nodes": [
+        "documentLoader",
+        "textSplitter",
+        "embeddings",
+        "vectorStore",
+        "vectorStoreRetriever",
+        "ragChain"
+      ]
+    }
+  },
+  "readme": "# RAG Document Q&A Workflow\n\nThis workflow implements a Retrieval Augmented Generation (RAG) system for answering questions about documents.\n\n## How it works:\n\n1. **Document Loading**: Accepts a document URL and loads the content\n2. **Text Splitting**: Splits the document into manageable chunks\n3. **Embeddings**: Generates vector embeddings for each chunk\n4. **Vector Storage**: Stores embeddings in Chroma vector database\n5. **Retrieval**: Finds the most relevant chunks for the question\n6. **RAG Chain**: Uses LLM to answer the question based on retrieved context\n\n## Usage:\n\nPOST /api/rag/question\n{\n  \"question\": \"What is the main topic of this document?\",\n  \"documentUrl\": \"https://example.com/document.pdf\"\n}\n\n## Configuration:\n\n- Set OPENAI_API_KEY in environment variables\n- Optionally configure Chroma connection (defaults to in-memory)\n- Adjust chunk size and overlap for your use case\n- Modify topK in retriever for more/fewer context chunks\n\n## Customization:\n\n- Change LLM provider (OpenAI, Anthropic, etc.)\n- Use different vector store (Pinecone, Weaviate, FAISS)\n- Adjust prompts for different response styles\n- Add memory for conversational Q&A"
+}

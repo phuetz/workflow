@@ -1,0 +1,976 @@
+/**
+ * Real-Time Collaboration Service
+ * Advanced collaboration features with operational transformation, presence awareness, and conflict resolution
+ */
+
+import { EventEmitter } from 'events';
+import { logger } from './LoggingService';
+import { webSocketServerService } from './WebSocketServerService';
+import { cachingService } from './CachingService';
+import { monitoringService } from './MonitoringService';
+
+interface CollaborationSession {
+  id: string;
+  workflowId: string;
+  participants: Map<string, Participant>;
+  operations: Operation[];
+  version: number;
+  lastActivity: Date;
+  locked: boolean;
+  lockedBy?: string;
+  settings: SessionSettings;
+}
+
+interface Participant {
+  userId: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  cursor: CursorPosition;
+  selection: SelectionRange;
+  permissions: ParticipantPermissions;
+  status: 'active' | 'idle' | 'away';
+  joinedAt: Date;
+  lastActivity: Date;
+  color: string;
+}
+
+interface CursorPosition {
+  x: number;
+  y: number;
+  nodeId?: string;
+  timestamp: Date;
+}
+
+interface SelectionRange {
+  nodeIds: string[];
+  edgeIds: string[];
+  type: 'nodes' | 'edges' | 'mixed' | 'none';
+  timestamp: Date;
+}
+
+interface ParticipantPermissions {
+  canEdit: boolean;
+  canComment: boolean;
+  canExecute: boolean;
+  canShare: boolean;
+  canManage: boolean;
+}
+
+interface Operation {
+  id: string;
+  type: OperationType;
+  userId: string;
+  timestamp: Date;
+  data: unknown;
+  transformedData?: unknown;
+  version: number;
+  dependencies: string[];
+  applied: boolean;
+}
+
+type OperationType = 
+  | 'node_create' | 'node_update' | 'node_delete' | 'node_move'
+  | 'edge_create' | 'edge_update' | 'edge_delete'
+  | 'property_update' | 'metadata_update'
+  | 'comment_create' | 'comment_update' | 'comment_delete'
+  | 'lock_acquire' | 'lock_release';
+
+interface SessionSettings {
+  allowAnonymous: boolean;
+  maxParticipants: number;
+  autoSave: boolean;
+  autoSaveInterval: number;
+  conflictResolution: 'last-write-wins' | 'operational-transform' | 'manual';
+  permissions: {
+    defaultEdit: boolean;
+    defaultComment: boolean;
+    requireApproval: boolean;
+  };
+}
+
+interface Comment {
+  id: string;
+  userId: string;
+  content: string;
+  position: { x: number; y: number };
+  nodeId?: string;
+  edgeId?: string;
+  resolved: boolean;
+  timestamp: Date;
+  replies: Comment[];
+}
+
+interface ConflictResolution {
+  operationId: string;
+  conflictType: 'concurrent_edit' | 'dependency_violation' | 'permission_denied';
+  resolution: 'accept' | 'reject' | 'merge' | 'manual';
+  data: unknown;
+}
+
+export class RealTimeCollaborationService extends EventEmitter {
+  private static instance: RealTimeCollaborationService;
+  private sessions: Map<string, CollaborationSession> = new Map();
+  private userSessions: Map<string, Set<string>> = new Map(); // userId -> sessionIds
+  private operationQueue: Map<string, Operation[]> = new Map(); // sessionId -> operations
+  private conflicts: Map<string, ConflictResolution[]> = new Map();
+  private comments: Map<string, Comment[]> = new Map(); // workflowId -> comments
+  private presenceInterval: NodeJS.Timeout | null = null;
+  private colors = [
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+    '#DDA0DD', '#FFB347', '#98D8C8', '#F7DC6F', '#BB8FCE'
+  ];
+
+  private constructor() {
+    super();
+    this.startPresenceTracking();
+    this.setupWebSocketHandlers();
+  }
+
+  public static getInstance(): RealTimeCollaborationService {
+    if (!RealTimeCollaborationService.instance) {
+      RealTimeCollaborationService.instance = new RealTimeCollaborationService();
+    }
+    return RealTimeCollaborationService.instance;
+  }
+
+  private setupWebSocketHandlers(): void {
+    // Listen for WebSocket events and handle collaboration
+    webSocketServerService.on('message', this.handleWebSocketMessage.bind(this));
+  }
+
+  private handleWebSocketMessage(data: unknown): void {
+    const { type, payload, userId, _sessionId } = data as { type: string; payload: any; userId: string; _sessionId: string }; // eslint-disable-line @typescript-eslint/no-unused-vars
+
+    switch (type) {
+      case 'collaboration:join':
+        this.handleJoinSession(userId, payload.workflowId, payload.userInfo);
+        break;
+      case 'collaboration:leave':
+        this.handleLeaveSession(userId, payload.sessionId);
+        break;
+      case 'collaboration:operation':
+        this.handleOperation(userId, payload.sessionId, payload.operation);
+        break;
+      case 'collaboration:cursor':
+        this.handleCursorUpdate(userId, payload.sessionId, payload.cursor);
+        break;
+      case 'collaboration:selection':
+        this.handleSelectionUpdate(userId, payload.sessionId, payload.selection);
+        break;
+      case 'collaboration:comment':
+        this.handleComment(userId, payload.workflowId, payload.comment);
+        break;
+    }
+  }
+
+  /**
+   * Join a collaboration session
+   */
+  public async joinSession(
+    userId: string,
+    workflowId: string,
+    userInfo: {
+      name: string;
+      email: string;
+      avatar?: string;
+      permissions?: Partial<ParticipantPermissions>;
+    }
+  ): Promise<CollaborationSession> {
+    let session = this.sessions.get(workflowId);
+
+    if (!session) {
+      session = await this.createSession(workflowId);
+    }
+
+    // Check if user can join
+    if (session.participants.size >= session.settings.maxParticipants) {
+      throw new Error('Session is full');
+    }
+
+    const participant: Participant = {
+      userId,
+      name: userInfo.name,
+      email: userInfo.email,
+      avatar: userInfo.avatar,
+      cursor: { x: 0, y: 0, timestamp: new Date() },
+      selection: { nodeIds: [], edgeIds: [], type: 'none', timestamp: new Date() },
+      permissions: {
+        canEdit: session.settings.permissions.defaultEdit,
+        canComment: session.settings.permissions.defaultComment,
+        canExecute: false,
+        canShare: false,
+        canManage: false,
+        ...userInfo.permissions
+      },
+      status: 'active',
+      joinedAt: new Date(),
+      lastActivity: new Date(),
+      color: this.assignColor(session)
+    };
+
+    session.participants.set(userId, participant);
+    session.lastActivity = new Date();
+
+    // Track user sessions
+    if (!this.userSessions.has(userId)) {
+      this.userSessions.set(userId, new Set());
+    }
+    this.userSessions.get(userId)!.add(workflowId);
+
+    // Broadcast participant joined
+    this.broadcastToSession(workflowId, 'participant:joined', {
+      participant: this.serializeParticipant(participant),
+      sessionInfo: this.serializeSession(session)
+    });
+
+    // Send session state to new participant
+    webSocketServerService.sendNotificationToUser(userId, {
+      type: 'collaboration:session_state',
+      data: {
+        session: this.serializeSession(session),
+        operations: session.operations.slice(-100), // Last 100 operations
+        comments: this.comments.get(workflowId) || []
+      }
+    });
+
+    logger.info(`👥 User ${userId} joined collaboration session for workflow ${workflowId}`);
+    
+    this.recordMetrics('session_join', { workflowId, userId });
+    
+    return session;
+  }
+
+  /**
+   * Leave a collaboration session
+   */
+  public async leaveSession(userId: string, workflowId: string): Promise<void> {
+    const session = this.sessions.get(workflowId);
+    if (!session || !session.participants.has(userId)) {
+      return;
+    }
+
+    // Release any locks held by this user
+    if (session.locked && session.lockedBy === userId) {
+      session.locked = false;
+      session.lockedBy = undefined;
+      this.broadcastToSession(workflowId, 'session:unlocked', { userId });
+    }
+
+    // Remove participant
+    session.participants.delete(userId);
+    session.lastActivity = new Date();
+
+    // Update user sessions tracking
+    const userSessionSet = this.userSessions.get(userId);
+    if (userSessionSet) {
+      userSessionSet.delete(workflowId);
+      if (userSessionSet.size === 0) {
+        this.userSessions.delete(userId);
+      }
+    }
+
+    // Broadcast participant left
+    this.broadcastToSession(workflowId, 'participant:left', { userId });
+
+    // Clean up empty sessions
+    if (session.participants.size === 0) {
+      await this.cleanupSession(workflowId);
+    }
+
+    logger.info(`👤 User ${userId} left collaboration session for workflow ${workflowId}`);
+    
+    this.recordMetrics('session_leave', { workflowId, userId });
+  }
+
+  /**
+   * Handle operation from client
+   */
+  public async handleOperation(
+    userId: string,
+    sessionId: string,
+    operationData: Partial<Operation>
+  ): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      throw new Error('Session not found');
+    }
+
+    const participant = session.participants.get(userId);
+    if (!participant) {
+      throw new Error('User not in session');
+    }
+
+    // Check permissions
+    if (!participant.permissions.canEdit && this.requiresEditPermission(operationData.type!)) {
+      throw new Error('Insufficient permissions');
+    }
+
+    // Create operation
+    const operation: Operation = {
+      id: this.generateOperationId(),
+      type: operationData.type!,
+      userId,
+      timestamp: new Date(),
+      data: operationData.data,
+      version: session.version + 1,
+      dependencies: operationData.dependencies || [],
+      applied: false
+    };
+
+    // Add to operation queue for processing
+    if (!this.operationQueue.has(sessionId)) {
+      this.operationQueue.set(sessionId, []);
+    }
+    this.operationQueue.get(sessionId)!.push(operation);
+
+    // Process operations
+    await this.processOperations(sessionId);
+
+    participant.lastActivity = new Date();
+    session.lastActivity = new Date();
+  }
+
+  private async processOperations(sessionId: string): Promise<void> {
+    const session = this.sessions.get(sessionId);
+    const operations = this.operationQueue.get(sessionId);
+
+    if (!session || !operations || operations.length === 0) {
+      return;
+    }
+
+    // Sort operations by timestamp and dependencies
+    const sortedOps = this.sortOperationsByDependencies(operations);
+
+    for (const operation of sortedOps) {
+      try {
+        // Apply operational transformation if needed
+        const transformedOp = await this.applyOperationalTransform(session, operation);
+
+        // Apply operation to session
+        await this.applyOperation(session, transformedOp);
+        
+        // Broadcast to all participants
+        this.broadcastToSession(sessionId, 'operation:applied', {
+          operation: transformedOp,
+          version: session.version
+        });
+
+        this.recordMetrics('operation_applied', {
+          sessionId,
+          operationType: operation.type,
+          userId: operation.userId
+        });
+
+      } catch (error) {
+        logger.error(`❌ Failed to apply operation ${operation.id}:`, error);
+        
+        // Handle conflict
+        this.handleOperationConflict(sessionId, operation, error);
+      }
+    }
+
+    // Clear processed operations
+    this.operationQueue.set(sessionId, []);
+  }
+
+  private async applyOperationalTransform(
+    session: CollaborationSession,
+    operation: Operation
+  ): Promise<Operation> {
+    // Find concurrent operations that might conflict
+    const concurrentOps = session.operations.filter(op =>
+      op.timestamp > operation.timestamp &&
+      this.operationsConflict(op, operation)
+    );
+
+    if (concurrentOps.length === 0) {
+      return operation;
+    }
+
+    // Apply operational transformation based on operation types
+    let transformedOp = operation;
+
+    for (const concurrentOp of concurrentOps) {
+      transformedOp = this.transformOperation(transformedOp, concurrentOp);
+    }
+
+    return transformedOp;
+  }
+
+  private transformOperation(op1: Operation, op2: Operation): Operation {
+    // Operational transformation logic based on operation types
+    
+    switch (`${op1.type}:${op2.type}`) {
+      case 'node_move:node_move':
+        // Handle concurrent node moves
+        return this.transformNodeMoveOperations(op1, op2);
+      
+      case 'property_update:property_update':
+        // Handle concurrent property updates
+        return this.transformPropertyUpdateOperations(op1, op2);
+      
+      case 'node_create:node_create':
+        // Handle concurrent node creation
+        return this.transformNodeCreateOperations(op1, op2);
+      
+      default:
+        // Default transformation - preserve operation with updated timestamp
+        return {
+          ...op1,
+          timestamp: new Date(),
+          transformedData: op1.data
+        };
+    }
+  }
+
+  private transformNodeMoveOperations(op1: Operation, op2: Operation): Operation {
+    // If moving the same node, use last-write-wins with small offset
+    const data1 = op1.data as any;
+    const data2 = op2.data as any;
+    if (data1.nodeId === data2.nodeId) {
+      return {
+        ...op1,
+        data: {
+          ...data1,
+          position: {
+            x: data1.position.x + 10, // Offset to avoid overlap
+            y: data1.position.y + 10
+          }
+        }
+      };
+    }
+
+    return op1;
+  }
+
+  private transformPropertyUpdateOperations(op1: Operation, op2: Operation): Operation {
+    // If updating the same property, merge changes
+    const data1 = op1.data as any;
+    const data2 = op2.data as any;
+    if (data1.nodeId === data2.nodeId && data1.property === data2.property) {
+      return {
+        ...op1,
+        data: {
+          ...data1,
+          value: this.mergePropertyValues(data1.value, data2.value),
+          conflictResolved: true
+        }
+      };
+    }
+
+    return op1;
+  }
+
+  private transformNodeCreateOperations(op1: Operation, op2: Operation): Operation {
+    // If creating nodes at same position, offset the second one
+    const data1 = op1.data as any;
+    const data2 = op2.data as any;
+    if (this.positionsOverlap(data1.position, data2.position)) {
+      return {
+        ...op1,
+        data: {
+          ...data1,
+          position: {
+            x: data1.position.x + 50,
+            y: data1.position.y + 50
+          }
+        }
+      };
+    }
+
+    return op1;
+  }
+
+  private async applyOperation(session: CollaborationSession, operation: Operation): Promise<void> {
+    // Apply the operation to the session state
+    switch (operation.type) {
+      case 'node_create':
+        await this.applyNodeCreate(session, operation);
+        break;
+      case 'node_update':
+        await this.applyNodeUpdate(session, operation);
+        break;
+      case 'node_delete':
+        await this.applyNodeDelete(session, operation);
+        break;
+      case 'node_move':
+        await this.applyNodeMove(session, operation);
+        break;
+      case 'edge_create':
+        await this.applyEdgeCreate(session, operation);
+        break;
+      case 'edge_delete':
+        await this.applyEdgeDelete(session, operation);
+        break;
+      case 'property_update':
+        await this.applyPropertyUpdate(session, operation);
+        break;
+      case 'comment_create':
+        await this.applyCommentCreate(session, operation);
+        break;
+    }
+
+    // Add to operation history
+    operation.applied = true;
+    session.operations.push(operation);
+    session.version++;
+
+    // Keep only last 1000 operations
+    if (session.operations.length > 1000) {
+      session.operations = session.operations.slice(-1000);
+    }
+
+    // Auto-save if enabled
+    if (session.settings.autoSave) {
+      await this.autoSave(session);
+    }
+  }
+
+  /**
+   * Handle cursor updates
+   */
+  public handleCursorUpdate(
+    userId: string,
+    sessionId: string,
+    cursor: Partial<CursorPosition>
+  ): void {
+    
+    if (!participant) return;
+
+    participant.cursor = {
+      ...participant.cursor,
+      ...cursor,
+      timestamp: new Date()
+    };
+    
+    participant.lastActivity = new Date();
+
+    // Broadcast cursor update to other participants
+    this.broadcastToSession(sessionId, 'cursor:updated', {
+      userId,
+      cursor: participant.cursor
+    }, userId);
+  }
+
+  /**
+   * Handle selection updates
+   */
+  public handleSelectionUpdate(
+    userId: string,
+    sessionId: string,
+    selection: Partial<SelectionRange>
+  ): void {
+    
+    if (!participant) return;
+
+    participant.selection = {
+      ...participant.selection,
+      ...selection,
+      timestamp: new Date()
+    };
+    
+    participant.lastActivity = new Date();
+
+    // Broadcast selection update to other participants
+    this.broadcastToSession(sessionId, 'selection:updated', {
+      userId,
+      selection: participant.selection
+    }, userId);
+  }
+
+  /**
+   * Handle comments
+   */  
+  public async handleComment(
+    userId: string,
+    workflowId: string,
+    commentData: Partial<Comment>
+  ): Promise<Comment> {
+    const comment: Comment = {
+      id: this.generateCommentId(),
+      userId,
+      content: commentData.content!,
+      position: commentData.position!,
+      nodeId: commentData.nodeId,
+      edgeId: commentData.edgeId,
+      resolved: false,
+      timestamp: new Date(),
+      replies: []
+    };
+
+    if (!this.comments.has(workflowId)) {
+      this.comments.set(workflowId, []);
+    }
+    
+    this.comments.get(workflowId)!.push(comment);
+
+    // Broadcast comment to session
+    this.broadcastToSession(workflowId, 'comment:created', { comment });
+
+    logger.info(`💬 Comment created by ${userId} on workflow ${workflowId}`);
+    
+    return comment;
+  }
+
+  /**
+   * Lock/unlock workflow for exclusive editing
+   */
+  public async lockWorkflow(userId: string, workflowId: string): Promise<boolean> {
+    if (!session) return false;
+
+    if (!participant?.permissions.canEdit) return false;
+
+    if (session.locked) {
+      return session.lockedBy === userId;
+    }
+
+    session.locked = true;
+    session.lockedBy = userId;
+
+    this.broadcastToSession(workflowId, 'session:locked', { userId });
+
+    return true;
+  }
+
+  public async unlockWorkflow(userId: string, workflowId: string): Promise<boolean> {
+    if (!session) return false;
+
+    if (!session.locked || session.lockedBy !== userId) return false;
+
+    session.locked = false;
+    session.lockedBy = undefined;
+
+    this.broadcastToSession(workflowId, 'session:unlocked', { userId });
+
+    return true;
+  }
+
+  /**
+   * Helper methods
+   */
+
+  private async createSession(workflowId: string): Promise<CollaborationSession> {
+    const session: CollaborationSession = {
+      id: workflowId,
+      workflowId,
+      participants: new Map(),
+      operations: [],
+      version: 0,
+      lastActivity: new Date(),
+      locked: false,
+      settings: {
+        allowAnonymous: false,
+        maxParticipants: 10,
+        autoSave: true,
+        autoSaveInterval: 30000,
+        conflictResolution: 'operational-transform',
+        permissions: {
+          defaultEdit: true,
+          defaultComment: true,
+          requireApproval: false
+        }
+      }
+    };
+
+    this.sessions.set(workflowId, session);
+    
+    logger.info(`📝 Created collaboration session for workflow ${workflowId}`);
+    
+    return session;
+  }
+
+  private async cleanupSession(workflowId: string): Promise<void> {
+    this.sessions.delete(workflowId);
+    this.operationQueue.delete(workflowId);
+    this.conflicts.delete(workflowId);
+    
+    logger.info(`🧹 Cleaned up collaboration session for workflow ${workflowId}`);
+  }
+
+  private assignColor(session: CollaborationSession): string {
+      Array.from(session.participants.values()).map(p => p.color)
+    );
+    
+    
+    return availableColors.length > 0 
+      ? availableColors[0] 
+      : this.colors[Math.floor(Math.random() * this.colors.length)];
+  }
+
+  private broadcastToSession(
+    sessionId: string,
+    event: string,
+    data: unknown,
+    excludeUserId?: string
+  ): void {
+    if (!session) return;
+
+    for (const [userId] of session.participants) {
+      if (userId !== excludeUserId) {
+        webSocketServerService.sendNotificationToUser(userId, {
+          type: event,
+          data: { sessionId, ...data }
+        });
+      }
+    }
+  }
+
+  private startPresenceTracking(): void {
+    this.presenceInterval = setInterval(() => {
+      this.updatePresenceStatus();
+    }, 30000); // Update every 30 seconds
+  }
+
+  private updatePresenceStatus(): void {
+    
+    for (const session of this.sessions.values()) {
+      
+      for (const [_userId, participant] of session.participants) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        
+        if (timeSinceActivity > 300000) { // 5 minutes
+          newStatus = 'away';
+        } else if (timeSinceActivity > 60000) { // 1 minute
+          newStatus = 'idle';
+        } else {
+          newStatus = 'active';
+        }
+        
+        if (newStatus !== participant.status) {
+          participant.status = newStatus;
+          hasChanges = true;
+        }
+      }
+      
+      if (hasChanges) {
+        this.broadcastToSession(session.id, 'presence:updated', {
+          participants: Array.from(session.participants.values()).map(this.serializeParticipant)
+        });
+      }
+    }
+  }
+
+  private serializeParticipant(participant: Participant): unknown {
+    return {
+      userId: participant.userId,
+      name: participant.name,
+      email: participant.email,
+      avatar: participant.avatar,
+      cursor: participant.cursor,
+      selection: participant.selection,
+      permissions: participant.permissions,
+      status: participant.status,
+      color: participant.color,
+      joinedAt: participant.joinedAt,
+      lastActivity: participant.lastActivity
+    };
+  }
+
+  private serializeSession(session: CollaborationSession): unknown {
+    return {
+      id: session.id,
+      workflowId: session.workflowId,
+      participants: Array.from(session.participants.values()).map(this.serializeParticipant),
+      version: session.version,
+      lastActivity: session.lastActivity,
+      locked: session.locked,
+      lockedBy: session.lockedBy,
+      settings: session.settings
+    };
+  }
+
+  // Additional helper methods for operation processing
+  private sortOperationsByDependencies(operations: Operation[]): Operation[] {
+    // Topological sort based on dependencies
+    const sorted: Operation[] = [];
+
+      if (visiting.has(op.id)) {
+        throw new Error(`Circular dependency detected for operation ${op.id}`);
+      }
+      if (visited.has(op.id)) return;
+
+      visiting.add(op.id);
+      
+      // Visit dependencies first
+      for (const depId of op.dependencies) {
+        if (depOp) visit(depOp);
+      }
+      
+      visiting.delete(op.id);
+      visited.add(op.id);
+      sorted.push(op);
+    };
+
+    operations.forEach(visit);
+    return sorted;
+  }
+
+  private operationsConflict(op1: Operation, op2: Operation): boolean {
+    // Check if two operations conflict with each other
+    if (op1.type === op2.type) {
+      switch (op1.type) {
+        case 'node_update':
+        case 'node_delete':
+        case 'node_move':
+          return op1.data.nodeId === op2.data.nodeId;
+        case 'edge_update':
+        case 'edge_delete':
+          return op1.data.edgeId === op2.data.edgeId;
+        case 'property_update':
+          return op1.data.nodeId === op2.data.nodeId && op1.data.property === op2.data.property;
+      }
+    }
+    return false;
+  }
+
+  private requiresEditPermission(operationType: OperationType): boolean {
+    const editOps: OperationType[] = [
+      'node_create', 'node_update', 'node_delete', 'node_move',
+      'edge_create', 'edge_update', 'edge_delete',
+      'property_update', 'metadata_update'
+    ];
+    return editOps.includes(operationType);
+  }
+
+  private generateOperationId(): string {
+    return `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private generateCommentId(): string {
+    return `comment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  // Operation application methods (simplified implementations)
+  private async applyNodeCreate(session: CollaborationSession, operation: Operation): Promise<void> {
+    // Implementation would update the workflow state
+    logger.debug(`Applied node create operation: ${operation.id}`);
+  }
+
+  private async applyNodeUpdate(session: CollaborationSession, operation: Operation): Promise<void> {
+    logger.debug(`Applied node update operation: ${operation.id}`);
+  }
+
+  private async applyNodeDelete(session: CollaborationSession, operation: Operation): Promise<void> {
+    logger.debug(`Applied node delete operation: ${operation.id}`);
+  }
+
+  private async applyNodeMove(session: CollaborationSession, operation: Operation): Promise<void> {
+    logger.debug(`Applied node move operation: ${operation.id}`);
+  }
+
+  private async applyEdgeCreate(session: CollaborationSession, operation: Operation): Promise<void> {
+    logger.debug(`Applied edge create operation: ${operation.id}`);
+  }
+
+  private async applyEdgeDelete(session: CollaborationSession, operation: Operation): Promise<void> {
+    logger.debug(`Applied edge delete operation: ${operation.id}`);
+  }
+
+  private async applyPropertyUpdate(session: CollaborationSession, operation: Operation): Promise<void> {
+    logger.debug(`Applied property update operation: ${operation.id}`);
+  }
+
+  private async applyCommentCreate(session: CollaborationSession, operation: Operation): Promise<void> {
+    logger.debug(`Applied comment create operation: ${operation.id}`);
+  }
+
+  private positionsOverlap(pos1: { x: number; y: number }, pos2: { x: number; y: number }): boolean {
+    return Math.abs(pos1.x - pos2.x) < threshold && Math.abs(pos1.y - pos2.y) < threshold;
+  }
+
+  private mergePropertyValues(value1: unknown, value2: unknown): unknown {
+    // Simple merge strategy - in practice this would be more sophisticated
+    if (typeof value1 === 'string' && typeof value2 === 'string') {
+      return `${value1} | ${value2}`;
+    }
+    return value2; // Last write wins for non-strings
+  }
+
+  private handleOperationConflict(sessionId: string, operation: Operation, error: Error): void {
+    if (!this.conflicts.has(sessionId)) {
+      this.conflicts.set(sessionId, []);
+    }
+
+    const conflict: ConflictResolution = {
+      operationId: operation.id,
+      conflictType: 'concurrent_edit',
+      resolution: 'manual',
+      data: { operation, error: error.message }
+    };
+
+    this.conflicts.get(sessionId)!.push(conflict);
+
+    this.broadcastToSession(sessionId, 'conflict:detected', { conflict });
+  }
+
+  private async autoSave(session: CollaborationSession): Promise<void> {
+    try {
+      // Cache the current session state
+      await cachingService.set(
+        `session:${session.id}:autosave`,
+        this.serializeSession(session),
+        { ttl: 3600, tags: [`session:${session.id}`] }
+      );
+    } catch (error) {
+      logger.error(`❌ Auto-save failed for session ${session.id}:`, error);
+    }
+  }
+
+  private recordMetrics(event: string, data: Record<string, unknown>): void {
+    monitoringService.recordMetric(`collaboration.${event}`, 1, data);
+  }
+
+  /**
+   * Public API methods
+   */
+  
+  public getSession(workflowId: string): CollaborationSession | undefined {
+    return this.sessions.get(workflowId);
+  }
+
+  public getActiveSessions(): CollaborationSession[] {
+    return Array.from(this.sessions.values());
+  }
+
+  public getUserSessions(userId: string): string[] {
+    return Array.from(this.userSessions.get(userId) || []);
+  }
+
+  public getComments(workflowId: string): Comment[] {
+    return this.comments.get(workflowId) || [];
+  }
+
+  public async resolveComment(commentId: string, workflowId: string): Promise<boolean> {
+    if (!comments) return false;
+
+    if (!comment) return false;
+
+    comment.resolved = true;
+    
+    this.broadcastToSession(workflowId, 'comment:resolved', { commentId });
+    
+    return true;
+  }
+
+  /**
+   * Shutdown service
+   */
+  public async shutdown(): Promise<void> {
+    logger.info('🛑 Shutting down real-time collaboration service...');
+
+    if (this.presenceInterval) {
+      clearInterval(this.presenceInterval);
+    }
+
+    // Clean up all sessions
+    for (const sessionId of this.sessions.keys()) {
+      await this.cleanupSession(sessionId);
+    }
+
+    this.removeAllListeners();
+
+    logger.info('✅ Real-time collaboration service shutdown complete');
+  }
+}
+
+export const realTimeCollaborationService = RealTimeCollaborationService.getInstance();

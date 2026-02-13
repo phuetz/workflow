@@ -1,0 +1,283 @@
+# Workflow GraphQL Schema
+# Apollo Federation 2.x compatible schema for workflow management
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable", "@external", "@requires", "@provides"])
+
+"""
+Workflow represents an automation workflow with nodes and edges
+"""
+type Workflow @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String
+  status: WorkflowStatus!
+  tags: [String!]!
+  nodes: [WorkflowNode!]!
+  edges: [WorkflowEdge!]!
+  variables: [WorkflowVariable!]!
+  schedule: WorkflowSchedule
+  settings: WorkflowSettings!
+  version: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: User!
+  updatedBy: User
+  executions(limit: Int = 10, offset: Int = 0): ExecutionConnection!
+  statistics: WorkflowStatistics!
+  permissions: WorkflowPermissions!
+}
+
+"""
+WorkflowNode represents a single node in the workflow
+"""
+type WorkflowNode {
+  id: ID!
+  type: String!
+  name: String!
+  position: Position!
+  config: JSON!
+  disabled: Boolean!
+  notes: String
+  retryPolicy: RetryPolicy
+  timeout: Int
+}
+
+"""
+WorkflowEdge represents a connection between two nodes
+"""
+type WorkflowEdge {
+  id: ID!
+  source: ID!
+  target: ID!
+  sourceHandle: String
+  targetHandle: String
+  label: String
+  animated: Boolean!
+  style: JSON
+}
+
+"""
+WorkflowVariable represents a workflow-level variable
+"""
+type WorkflowVariable {
+  key: String!
+  value: JSON!
+  type: VariableType!
+  description: String
+}
+
+"""
+WorkflowSchedule defines when the workflow should run automatically
+"""
+type WorkflowSchedule {
+  enabled: Boolean!
+  cron: String!
+  timezone: String!
+  nextRun: DateTime
+}
+
+"""
+WorkflowSettings contains workflow configuration
+"""
+type WorkflowSettings {
+  executionOrder: ExecutionOrder!
+  errorWorkflow: ID
+  saveDataSuccessExecution: Boolean!
+  saveDataErrorExecution: Boolean!
+  saveDataManualExecution: Boolean!
+  saveExecutionProgress: Boolean!
+  timeout: Int
+}
+
+"""
+WorkflowStatistics contains workflow execution statistics
+"""
+type WorkflowStatistics {
+  totalExecutions: Int!
+  successfulExecutions: Int!
+  failedExecutions: Int!
+  averageExecutionTime: Float!
+  lastExecutionTime: DateTime
+  lastExecutionStatus: ExecutionStatus
+}
+
+"""
+WorkflowPermissions contains user permissions for the workflow
+"""
+type WorkflowPermissions {
+  canView: Boolean!
+  canEdit: Boolean!
+  canExecute: Boolean!
+  canDelete: Boolean!
+  canShare: Boolean!
+}
+
+"""
+Position represents 2D coordinates
+"""
+type Position {
+  x: Float!
+  y: Float!
+}
+
+"""
+RetryPolicy defines how to retry failed nodes
+"""
+type RetryPolicy {
+  enabled: Boolean!
+  maxAttempts: Int!
+  delay: Int!
+  backoffStrategy: BackoffStrategy!
+}
+
+"""
+ExecutionConnection provides paginated execution results
+"""
+type ExecutionConnection {
+  edges: [ExecutionEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ExecutionEdge {
+  node: Execution!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum VariableType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  SECRET
+}
+
+enum ExecutionOrder {
+  PARALLEL
+  SEQUENTIAL
+  AUTO
+}
+
+enum BackoffStrategy {
+  FIXED
+  LINEAR
+  EXPONENTIAL
+}
+
+"""
+WorkflowFilter for querying workflows
+"""
+input WorkflowFilter {
+  status: WorkflowStatus
+  tags: [String!]
+  search: String
+  createdAfter: DateTime
+  createdBefore: DateTime
+}
+
+"""
+WorkflowInput for creating/updating workflows
+"""
+input WorkflowInput {
+  name: String!
+  description: String
+  status: WorkflowStatus
+  tags: [String!]
+  nodes: [WorkflowNodeInput!]!
+  edges: [WorkflowEdgeInput!]!
+  variables: [WorkflowVariableInput!]
+  schedule: WorkflowScheduleInput
+  settings: WorkflowSettingsInput
+}
+
+input WorkflowNodeInput {
+  id: ID!
+  type: String!
+  name: String!
+  position: PositionInput!
+  config: JSON!
+  disabled: Boolean
+  notes: String
+  retryPolicy: RetryPolicyInput
+  timeout: Int
+}
+
+input WorkflowEdgeInput {
+  id: ID!
+  source: ID!
+  target: ID!
+  sourceHandle: String
+  targetHandle: String
+  label: String
+  animated: Boolean
+  style: JSON
+}
+
+input WorkflowVariableInput {
+  key: String!
+  value: JSON!
+  type: VariableType!
+  description: String
+}
+
+input WorkflowScheduleInput {
+  enabled: Boolean!
+  cron: String!
+  timezone: String!
+}
+
+input WorkflowSettingsInput {
+  executionOrder: ExecutionOrder
+  errorWorkflow: ID
+  saveDataSuccessExecution: Boolean
+  saveDataErrorExecution: Boolean
+  saveDataManualExecution: Boolean
+  saveExecutionProgress: Boolean
+  timeout: Int
+}
+
+input PositionInput {
+  x: Float!
+  y: Float!
+}
+
+input RetryPolicyInput {
+  enabled: Boolean!
+  maxAttempts: Int!
+  delay: Int!
+  backoffStrategy: BackoffStrategy!
+}
+
+type Query {
+  workflow(id: ID!): Workflow
+  workflows(filter: WorkflowFilter, limit: Int = 20, offset: Int = 0): [Workflow!]!
+  workflowCount(filter: WorkflowFilter): Int!
+}
+
+type Mutation {
+  createWorkflow(input: WorkflowInput!): Workflow!
+  updateWorkflow(id: ID!, input: WorkflowInput!): Workflow!
+  deleteWorkflow(id: ID!): Boolean!
+  duplicateWorkflow(id: ID!, name: String): Workflow!
+  archiveWorkflow(id: ID!): Workflow!
+  activateWorkflow(id: ID!): Workflow!
+  deactivateWorkflow(id: ID!): Workflow!
+}
+
+scalar DateTime
+scalar JSON

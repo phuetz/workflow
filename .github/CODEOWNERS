@@ -1,0 +1,240 @@
+# Code Owners for Workflow Automation Platform
+#
+# This file defines who should review pull requests for different parts of the codebase.
+# When a PR touches files in these directories, the specified owners will automatically
+# be requested as reviewers.
+#
+# Syntax: path/to/file @github-username
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ============================================================================
+# DEFAULT OWNERS
+# ============================================================================
+# These owners will be the default owners for everything in the repo
+# Unless a later match takes precedence, these users will be requested for review
+* @patrice
+
+# ============================================================================
+# DOCUMENTATION
+# ============================================================================
+*.md @patrice
+/docs/ @patrice
+/CLAUDE.md @patrice
+
+# ============================================================================
+# FRONTEND / UI COMPONENTS
+# ============================================================================
+/src/components/ @patrice
+/src/styles/ @patrice
+/src/types/workflow.ts @patrice
+
+# Modern UI Components
+/src/components/Modern*.tsx @patrice
+/src/components/Dashboard.tsx @patrice
+/src/components/Header.tsx @patrice
+/src/components/Sidebar.tsx @patrice
+
+# Canvas & Visual Editor
+/src/components/WorkflowCanvas.tsx @patrice
+/src/components/CustomNode.tsx @patrice
+/src/components/WorkflowNode.tsx @patrice
+/src/components/EdgeConfigPanel.tsx @patrice
+
+# ============================================================================
+# BACKEND / API
+# ============================================================================
+/src/backend/ @patrice
+/src/backend/api/ @patrice
+/src/backend/server.js @patrice
+
+# API Routes
+/src/backend/api/routes/ @patrice
+
+# Services
+/src/services/ @patrice
+/src/backend/services/ @patrice
+
+# ============================================================================
+# EXECUTION ENGINE & WORKFLOW CORE
+# ============================================================================
+/src/components/ExecutionEngine.ts @patrice
+/src/execution/ @patrice
+/src/workflow/ @patrice
+/src/data/nodeTypes.ts @patrice
+
+# Node Configuration
+/src/workflow/nodes/ @patrice
+/src/workflow/nodeConfigRegistry.ts @patrice
+
+# ============================================================================
+# AUTHENTICATION & SECURITY
+# ============================================================================
+/src/backend/auth/ @patrice
+/src/backend/security/ @patrice
+/src/auth/ @patrice
+/src/security/ @patrice
+
+# LDAP & AD Integration
+/src/auth/ldap/ @patrice
+
+# Compliance
+/src/compliance/ @patrice
+
+# ============================================================================
+# DATA & STATE MANAGEMENT
+# ============================================================================
+/src/store/ @patrice
+/src/store/workflowStore.ts @patrice
+
+# Database
+/prisma/ @patrice
+/src/backend/database/ @patrice
+
+# ============================================================================
+# AI & MACHINE LEARNING
+# ============================================================================
+/src/ai/ @patrice
+/src/agentic/ @patrice
+/src/agentops/ @patrice
+/src/analytics/ @patrice
+/src/llmops/ @patrice
+/src/ml/ @patrice
+
+# Predictive Analytics
+/src/analytics/predictive/ @patrice
+
+# ============================================================================
+# EXPRESSIONS & SCRIPTING
+# ============================================================================
+/src/expressions/ @patrice
+/src/components/ExpressionEditor.tsx @patrice
+/src/components/ExpressionBuilder.tsx @patrice
+
+# ============================================================================
+# INTEGRATIONS & PLUGINS
+# ============================================================================
+/src/integrations/ @patrice
+/src/plugins/ @patrice
+/src/sdk/ @patrice
+/src/marketplace/ @patrice
+
+# Node Configurations (400+ integrations)
+/src/workflow/nodes/config/ @patrice
+
+# ============================================================================
+# TESTING
+# ============================================================================
+/src/__tests__/ @patrice
+/src/__mocks__/ @patrice
+/src/test-setup.ts @patrice
+/playwright.config.ts @patrice
+/vitest.config.ts @patrice
+
+# Test utilities
+/src/utils/testUtils.ts @patrice
+/src/utils/testUtils.tsx @patrice
+
+# ============================================================================
+# DEVOPS & DEPLOYMENT
+# ============================================================================
+/.github/workflows/ @patrice
+/docker/ @patrice
+/Dockerfile @patrice
+/docker-compose*.yml @patrice
+/k8s/ @patrice
+/helm/ @patrice
+
+# Deployment scripts
+/scripts/deploy-*.sh @patrice
+/scripts/setup-*.sh @patrice
+
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+/package.json @patrice
+/tsconfig.json @patrice
+/vite.config.ts @patrice
+/eslint.config.js @patrice
+
+# Environment configuration
+/.env.example @patrice
+/.env.*.example @patrice
+
+# ============================================================================
+# SPECIALIZED FEATURES
+# ============================================================================
+
+# Workflow Versioning
+/src/versioning/ @patrice
+/src/git/ @patrice
+
+# Collaboration
+/src/collaboration/ @patrice
+/src/components/RealTimeCollaboration*.tsx @patrice
+
+# Approval Workflows
+/src/workflow/approval/ @patrice
+/src/components/Approval*.tsx @patrice
+
+# Environment Isolation
+/src/environments/ @patrice
+
+# Logging & Monitoring
+/src/logging/ @patrice
+/src/monitoring/ @patrice
+/src/observability/ @patrice
+
+# Debugging & Profiling
+/src/debugging/ @patrice
+/src/profiling/ @patrice
+/src/components/DebugPanel.tsx @patrice
+/src/components/DebuggerPanel.tsx @patrice
+
+# Webhooks
+/src/webhooks/ @patrice
+/src/backend/webhooks/ @patrice
+/src/components/WebhookManager.tsx @patrice
+
+# Queue Management
+/src/queue/ @patrice
+/src/backend/queue/ @patrice
+
+# Notifications
+/src/notifications/ @patrice
+/src/components/NotificationCenter.tsx @patrice
+
+# Edge Computing
+/src/edge/ @patrice
+/src/components/Edge*.tsx @patrice
+
+# Web3 & Blockchain
+/src/web3/ @patrice
+/src/blockchain/ @patrice
+
+# GraphQL
+/src/graphql/ @patrice
+
+# ============================================================================
+# CRITICAL INFRASTRUCTURE
+# ============================================================================
+# These files require extra scrutiny - multiple reviewers recommended
+
+# Core execution engine (critical)
+/src/components/ExecutionEngine.ts @patrice
+/src/execution/PartialExecutor.ts @patrice
+
+# Security-critical files
+/src/backend/security/SecurityManager.ts @patrice
+/src/backend/security/EncryptionService.ts @patrice
+
+# Authentication & Authorization
+/src/backend/auth/AuthManager.ts @patrice
+/src/backend/auth/RBACService.ts @patrice
+
+# Database migrations (requires careful review)
+/prisma/migrations/ @patrice
+
+# Production deployment workflows
+/.github/workflows/deploy-production.yml @patrice
+/.github/workflows/ci-cd.yml @patrice

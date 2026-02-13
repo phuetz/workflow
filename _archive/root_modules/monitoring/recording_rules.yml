@@ -1,0 +1,350 @@
+# Prometheus Recording Rules for Workflow Automation Platform
+# Pre-compute frequently used queries to improve performance
+
+groups:
+  # HTTP metrics aggregations
+  - name: http_metrics
+    interval: 30s
+    rules:
+      # Request rate by route
+      - record: job:http_requests:rate5m
+        expr: sum(rate(workflow_http_requests_total[5m])) by (job)
+
+      - record: job:route:http_requests:rate5m
+        expr: sum(rate(workflow_http_requests_total[5m])) by (job, route, method)
+
+      # Error rate
+      - record: job:http_errors:rate5m
+        expr: sum(rate(workflow_http_requests_total{status=~"5.."}[5m])) by (job)
+
+      - record: job:http_errors:ratio5m
+        expr: |
+          sum(rate(workflow_http_requests_total{status=~"5.."}[5m])) by (job)
+          /
+          sum(rate(workflow_http_requests_total[5m])) by (job)
+
+      # Client error rate
+      - record: job:http_client_errors:rate5m
+        expr: sum(rate(workflow_http_requests_total{status=~"4.."}[5m])) by (job)
+
+      # Success rate
+      - record: job:http_success:ratio5m
+        expr: |
+          sum(rate(workflow_http_requests_total{status=~"2.."}[5m])) by (job)
+          /
+          sum(rate(workflow_http_requests_total[5m])) by (job)
+
+      # Response time percentiles
+      - record: job:http_request_duration_seconds:p50
+        expr: histogram_quantile(0.50, sum(rate(workflow_http_request_duration_seconds_bucket[5m])) by (job, le))
+
+      - record: job:http_request_duration_seconds:p90
+        expr: histogram_quantile(0.90, sum(rate(workflow_http_request_duration_seconds_bucket[5m])) by (job, le))
+
+      - record: job:http_request_duration_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(workflow_http_request_duration_seconds_bucket[5m])) by (job, le))
+
+      - record: job:http_request_duration_seconds:p99
+        expr: histogram_quantile(0.99, sum(rate(workflow_http_request_duration_seconds_bucket[5m])) by (job, le))
+
+      # Average response time
+      - record: job:http_request_duration_seconds:avg5m
+        expr: |
+          sum(rate(workflow_http_request_duration_seconds_sum[5m])) by (job)
+          /
+          sum(rate(workflow_http_request_duration_seconds_count[5m])) by (job)
+
+  # Workflow execution metrics
+  - name: workflow_metrics
+    interval: 30s
+    rules:
+      # Execution rate
+      - record: job:workflow_executions:rate5m
+        expr: sum(rate(workflow_workflow_executions_total[5m])) by (job)
+
+      - record: workflow:executions:rate5m
+        expr: sum(rate(workflow_workflow_executions_total[5m])) by (workflow_id)
+
+      # Success/failure rates
+      - record: job:workflow_executions_success:rate5m
+        expr: sum(rate(workflow_workflow_executions_total{status="success"}[5m])) by (job)
+
+      - record: job:workflow_executions_error:rate5m
+        expr: sum(rate(workflow_workflow_executions_total{status="error"}[5m])) by (job)
+
+      - record: job:workflow_executions:success_ratio5m
+        expr: |
+          sum(rate(workflow_workflow_executions_total{status="success"}[5m])) by (job)
+          /
+          sum(rate(workflow_workflow_executions_total[5m])) by (job)
+
+      # Execution duration percentiles
+      - record: job:workflow_execution_duration_seconds:p50
+        expr: histogram_quantile(0.50, sum(rate(workflow_workflow_execution_duration_seconds_bucket[5m])) by (job, le))
+
+      - record: job:workflow_execution_duration_seconds:p90
+        expr: histogram_quantile(0.90, sum(rate(workflow_workflow_execution_duration_seconds_bucket[5m])) by (job, le))
+
+      - record: job:workflow_execution_duration_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(workflow_workflow_execution_duration_seconds_bucket[5m])) by (job, le))
+
+      - record: job:workflow_execution_duration_seconds:p99
+        expr: histogram_quantile(0.99, sum(rate(workflow_workflow_execution_duration_seconds_bucket[5m])) by (job, le))
+
+      # Per-workflow metrics
+      - record: workflow:execution_duration_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(workflow_workflow_execution_duration_seconds_bucket[5m])) by (workflow_id, le))
+
+      - record: workflow:success_ratio5m
+        expr: |
+          sum(rate(workflow_workflow_executions_total{status="success"}[5m])) by (workflow_id)
+          /
+          sum(rate(workflow_workflow_executions_total[5m])) by (workflow_id)
+
+      # Active executions
+      - record: job:workflow_active_executions:current
+        expr: sum(workflow_workflow_active_executions) by (job)
+
+  # Node execution metrics
+  - name: node_metrics
+    interval: 30s
+    rules:
+      # Node execution rate by type
+      - record: node_type:executions:rate5m
+        expr: sum(rate(workflow_node_executions_total[5m])) by (node_type)
+
+      # Node success/failure rates
+      - record: node_type:executions_success:rate5m
+        expr: sum(rate(workflow_node_executions_total{status="success"}[5m])) by (node_type)
+
+      - record: node_type:executions_error:rate5m
+        expr: sum(rate(workflow_node_executions_total{status="error"}[5m])) by (node_type)
+
+      - record: node_type:success_ratio5m
+        expr: |
+          sum(rate(workflow_node_executions_total{status="success"}[5m])) by (node_type)
+          /
+          sum(rate(workflow_node_executions_total[5m])) by (node_type)
+
+      # Node execution duration
+      - record: node_type:execution_duration_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(workflow_node_execution_duration_seconds_bucket[5m])) by (node_type, le))
+
+  # Queue metrics
+  - name: queue_metrics
+    interval: 30s
+    rules:
+      # Queue size by name
+      - record: queue:size:current
+        expr: sum(workflow_queue_size) by (queue_name)
+
+      # Processing rate
+      - record: queue:processing_rate:avg5m
+        expr: avg_over_time(workflow_queue_processing_rate[5m])
+
+      - record: queue:processing_rate:rate5m
+        expr: sum(rate(workflow_queue_processing_rate[5m])) by (queue_name)
+
+      # Queue wait time
+      - record: queue:wait_time_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(workflow_queue_wait_time_seconds_bucket[5m])) by (queue_name, le))
+
+  # Database metrics
+  - name: database_metrics
+    interval: 30s
+    rules:
+      # Query rate by operation
+      - record: db:queries:rate5m
+        expr: sum(rate(workflow_database_query_duration_seconds_count[5m])) by (operation)
+
+      # Query duration percentiles
+      - record: db:query_duration_seconds:p50
+        expr: histogram_quantile(0.50, sum(rate(workflow_database_query_duration_seconds_bucket[5m])) by (operation, le))
+
+      - record: db:query_duration_seconds:p95
+        expr: histogram_quantile(0.95, sum(rate(workflow_database_query_duration_seconds_bucket[5m])) by (operation, le))
+
+      - record: db:query_duration_seconds:p99
+        expr: histogram_quantile(0.99, sum(rate(workflow_database_query_duration_seconds_bucket[5m])) by (operation, le))
+
+      # Connection pool metrics
+      - record: db:connections_active:avg5m
+        expr: avg_over_time(workflow_database_connections_active[5m])
+
+      - record: db:connections_idle:avg5m
+        expr: avg_over_time(workflow_database_connections_idle[5m])
+
+      - record: db:connections_utilization:ratio
+        expr: |
+          workflow_database_connections_active
+          /
+          (workflow_database_connections_active + workflow_database_connections_idle)
+
+  # System resource metrics
+  - name: resource_metrics
+    interval: 30s
+    rules:
+      # CPU usage
+      - record: instance:cpu_usage:ratio
+        expr: |
+          workflow_nodejs_process_cpu_usage
+          /
+          1000000
+
+      # Memory usage
+      - record: instance:memory_heap_usage:ratio
+        expr: |
+          workflow_nodejs_process_memory_heap_used_bytes
+          /
+          workflow_nodejs_process_memory_heap_total_bytes
+
+      - record: instance:memory_heap_used:bytes
+        expr: workflow_nodejs_process_memory_heap_used_bytes
+
+      - record: instance:memory_heap_total:bytes
+        expr: workflow_nodejs_process_memory_heap_total_bytes
+
+      # Event loop lag
+      - record: instance:event_loop_lag_seconds:avg5m
+        expr: avg_over_time(workflow_nodejs_event_loop_lag_seconds[5m])
+
+      # Active handles and requests
+      - record: instance:active_handles:current
+        expr: workflow_nodejs_active_handles
+
+      - record: instance:active_requests:current
+        expr: workflow_nodejs_active_requests
+
+  # SLA metrics
+  - name: sla_metrics
+    interval: 1m
+    rules:
+      # Availability (uptime)
+      - record: sla:availability:5m
+        expr: avg_over_time(up{job="workflow-platform"}[5m])
+
+      - record: sla:availability:1h
+        expr: avg_over_time(up{job="workflow-platform"}[1h])
+
+      - record: sla:availability:24h
+        expr: avg_over_time(up{job="workflow-platform"}[24h])
+
+      # Success rate SLI
+      - record: sla:success_rate:5m
+        expr: |
+          sum(rate(workflow_http_requests_total{status=~"2.."}[5m]))
+          /
+          sum(rate(workflow_http_requests_total[5m]))
+
+      - record: sla:success_rate:1h
+        expr: |
+          sum(rate(workflow_http_requests_total{status=~"2.."}[1h]))
+          /
+          sum(rate(workflow_http_requests_total[1h]))
+
+      - record: sla:success_rate:24h
+        expr: |
+          sum(rate(workflow_http_requests_total{status=~"2.."}[24h]))
+          /
+          sum(rate(workflow_http_requests_total[24h]))
+
+      # Response time SLI (percentage meeting SLO)
+      - record: sla:response_time_meeting_slo:5m
+        expr: |
+          sum(rate(workflow_http_request_duration_seconds_bucket{le="1.0"}[5m]))
+          /
+          sum(rate(workflow_http_request_duration_seconds_count[5m]))
+
+      - record: sla:response_time_meeting_slo:1h
+        expr: |
+          sum(rate(workflow_http_request_duration_seconds_bucket{le="1.0"}[1h]))
+          /
+          sum(rate(workflow_http_request_duration_seconds_count[1h]))
+
+      # Workflow execution SLI
+      - record: sla:workflow_success_rate:5m
+        expr: |
+          sum(rate(workflow_workflow_executions_total{status="success"}[5m]))
+          /
+          sum(rate(workflow_workflow_executions_total[5m]))
+
+      - record: sla:workflow_success_rate:1h
+        expr: |
+          sum(rate(workflow_workflow_executions_total{status="success"}[1h]))
+          /
+          sum(rate(workflow_workflow_executions_total[1h]))
+
+  # Business metrics
+  - name: business_metrics
+    interval: 1m
+    rules:
+      # Total executions
+      - record: business:total_executions:1h
+        expr: sum(increase(workflow_workflow_executions_total[1h]))
+
+      - record: business:total_executions:24h
+        expr: sum(increase(workflow_workflow_executions_total[24h]))
+
+      # Active users (approximation based on unique user IDs in last hour)
+      - record: business:active_users:1h
+        expr: count(count by (user_id) (workflow_workflow_executions_total offset 1h))
+
+      # Cost metrics (if available)
+      - record: business:cost_per_execution:avg1h
+        expr: |
+          sum(increase(workflow_execution_cost_total[1h]))
+          /
+          sum(increase(workflow_workflow_executions_total[1h]))
+
+      # Throughput (executions per minute)
+      - record: business:throughput:rate1m
+        expr: sum(rate(workflow_workflow_executions_total[1m])) * 60
+
+      - record: business:throughput:rate5m
+        expr: sum(rate(workflow_workflow_executions_total[5m])) * 60
+
+  # Error tracking
+  - name: error_metrics
+    interval: 30s
+    rules:
+      # Total error rate
+      - record: errors:total:rate5m
+        expr: sum(rate(workflow_errors_total[5m])) by (type, component)
+
+      # Error rate by component
+      - record: component:errors:rate5m
+        expr: sum(rate(workflow_errors_total[5m])) by (component)
+
+      # Error rate by type
+      - record: type:errors:rate5m
+        expr: sum(rate(workflow_errors_total[5m])) by (type)
+
+      # Critical errors
+      - record: errors:critical:rate5m
+        expr: sum(rate(workflow_errors_total{severity="critical"}[5m]))
+
+  # Capacity planning
+  - name: capacity_metrics
+    interval: 5m
+    rules:
+      # Peak request rate in last 24 hours
+      - record: capacity:http_requests:peak24h
+        expr: max_over_time(sum(rate(workflow_http_requests_total[1m]))[24h:])
+
+      # Peak workflow execution rate in last 24 hours
+      - record: capacity:workflow_executions:peak24h
+        expr: max_over_time(sum(rate(workflow_workflow_executions_total[1m]))[24h:])
+
+      # Average resource utilization
+      - record: capacity:cpu_usage:avg24h
+        expr: avg_over_time(workflow_nodejs_process_cpu_usage[24h])
+
+      - record: capacity:memory_usage:avg24h
+        expr: avg_over_time(workflow_nodejs_process_memory_heap_used_bytes[24h])
+
+      # Queue depth trend
+      - record: capacity:queue_size:avg1h
+        expr: avg_over_time(workflow_queue_size[1h])
+
+      - record: capacity:queue_size:max1h
+        expr: max_over_time(workflow_queue_size[1h])

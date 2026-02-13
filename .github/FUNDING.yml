@@ -1,0 +1,44 @@
+# GitHub Sponsors Configuration
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# GitHub Sponsors (replace with your username)
+github: [patrice]
+
+# Open Collective (replace with your organization name)
+# open_collective: workflow-automation
+
+# Patreon (replace with your username)
+# patreon: workflow_platform
+
+# Tidelift (replace with package name)
+# tidelift: npm/workflow-automation
+
+# Community Bridge (replace with project name)
+# community_bridge: workflow-automation
+
+# Ko-fi (replace with your username)
+# ko_fi: workflow_dev
+
+# Liberapay (replace with your username)
+# liberapay: workflow
+
+# IssueHunt (replace with your username)
+# issuehunt: workflow
+
+# Buy Me a Coffee (replace with your username)
+# buy_me_a_coffee: workflow_dev
+
+# Custom sponsors (up to 4)
+# custom: ['https://paypal.me/yourname', 'https://www.yourwebsite.com/donate']
+
+# Instructions:
+# 1. Uncomment the lines for the platforms you use
+# 2. Replace placeholder values with your actual usernames/organization names
+# 3. Remove or comment out platforms you don't use
+# 4. Commit and push this file to enable the "Sponsor" button on your repository
+#
+# Note: GitHub will display a "Sponsor" button in your repository only if you have
+# at least one funding platform configured.
+#
+# For more information, visit:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository

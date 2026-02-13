@@ -1,0 +1,341 @@
+name: Test Coverage & Quality Reports
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run every day at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  comprehensive-test-coverage:
+    runs-on: ubuntu-latest
+    name: Comprehensive Test Coverage
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: workflow_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for better coverage comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Prisma
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workflow_test
+
+      - name: Run all unit tests with coverage
+        run: npm run test:coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workflow_test
+          REDIS_URL: redis://localhost:6379
+          CI: true
+
+      - name: Run integration tests with coverage
+        run: npm run test:integration -- --coverage
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workflow_test
+          REDIS_URL: redis://localhost:6379
+          CI: true
+
+      - name: Merge coverage reports
+        run: |
+          npx nyc merge coverage coverage/merged-coverage.json
+          npx nyc report --reporter=lcov --reporter=json --reporter=html --reporter=text-summary
+
+      - name: Generate coverage badges
+        uses: cicirello/jacoco-badge-generator@v2
+        with:
+          coverage-badge-filename: coverage.svg
+          branches-badge-filename: branches.svg
+          jacoco-csv-file: coverage/lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info,./coverage/integration/lcov.info
+          flags: comprehensive
+          name: comprehensive-coverage
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: Upload coverage to Code Climate
+        uses: paambaati/codeclimate-action@v5
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageLocations: |
+            ${{github.workspace}}/coverage/lcov.info:lcov
+            ${{github.workspace}}/coverage/integration/lcov.info:lcov
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=workflow-automation-platform
+            -Dsonar.organization=your-org
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,coverage/integration/lcov.info
+            -Dsonar.typescript.lcov.reportPaths=coverage/lcov.info,coverage/integration/lcov.info
+            -Dsonar.coverage.exclusions=**/*.test.ts,**/*.spec.ts,**/__tests__/**,**/__mocks__/**
+
+      - name: Check coverage thresholds
+        run: |
+          node -e "
+            const coverage = require('./coverage/coverage-summary.json');
+            const total = coverage.total;
+
+            const thresholds = {
+              statements: 80,
+              branches: 75,
+              functions: 80,
+              lines: 80
+            };
+
+            let failed = false;
+            Object.keys(thresholds).forEach(key => {
+              const actual = total[key].pct;
+              const required = thresholds[key];
+              console.log(\`\${key}: \${actual}% (required: \${required}%)\`);
+              if (actual < required) {
+                console.error(\`❌ Coverage for \${key} is below threshold: \${actual}% < \${required}%\`);
+                failed = true;
+              } else {
+                console.log(\`✅ Coverage for \${key} meets threshold\`);
+              }
+            });
+
+            if (failed) {
+              process.exit(1);
+            }
+          "
+
+      - name: Upload coverage reports as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage/
+            coverage/integration/
+            test-results/
+          retention-days: 30
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: romeovs/lcov-reporter-action@v0.3.1
+        with:
+          lcov-file: ./coverage/lcov.info
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Store coverage for comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-${{ github.sha }}
+          path: coverage/coverage-summary.json
+
+  performance-benchmarks:
+    runs-on: ubuntu-latest
+    name: Performance Benchmarks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start application stack
+        run: docker-compose --profile development up -d
+
+      - name: Wait for services
+        run: |
+          timeout 300 bash -c 'until curl -f http://localhost:3000/health; do sleep 5; done'
+          timeout 300 bash -c 'until curl -f http://localhost:3001/health; do sleep 5; done'
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run k6 performance tests
+        run: k6 run tests/load/k6-workflow-load.js --out json=test-results/k6-results.json
+        env:
+          API_URL: http://localhost:3001
+
+      - name: Generate performance report
+        run: |
+          node -e "
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('test-results/k6-results.json', 'utf8'));
+
+            // Extract key metrics
+            const metrics = results.metrics;
+            const report = {
+              timestamp: new Date().toISOString(),
+              summary: {
+                http_reqs: metrics.http_reqs.values.count,
+                http_req_duration_avg: metrics.http_req_duration.values.avg,
+                http_req_duration_p95: metrics.http_req_duration.values['p(95)'],
+                http_req_duration_p99: metrics.http_req_duration.values['p(99)'],
+                http_req_failed_rate: metrics.http_req_failed.values.rate,
+                iterations: metrics.iterations.values.count,
+                vus_max: metrics.vus_max.values.max
+              }
+            };
+
+            fs.writeFileSync('test-results/performance-summary.json', JSON.stringify(report, null, 2));
+
+            console.log('Performance Summary:');
+            console.log(JSON.stringify(report.summary, null, 2));
+          "
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: test-results/
+
+      - name: Compare with baseline
+        if: github.event_name == 'pull_request'
+        run: |
+          # Download baseline from main branch
+          # Compare and comment on PR if regression detected
+          echo "Performance comparison would run here"
+
+      - name: Stop application stack
+        if: always()
+        run: docker-compose down
+
+  mutation-testing:
+    runs-on: ubuntu-latest
+    name: Mutation Testing
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Stryker mutation tests
+        run: npx stryker run
+        continue-on-error: true
+
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: reports/mutation/
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    name: Dependency Security Audit
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run npm audit
+        run: |
+          npm audit --json > audit-report.json || true
+          npm audit --audit-level=high
+
+      - name: Check for outdated packages
+        run: npm outdated --json > outdated-report.json || true
+
+      - name: Upload audit reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-reports
+          path: |
+            audit-report.json
+            outdated-report.json
+
+  test-matrix:
+    name: Test on ${{ matrix.os }} with Node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: ['18', '20', '21']
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-node${{ matrix.node }}
+          path: test-results/

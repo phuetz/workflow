@@ -3,10 +3,10 @@
  * Centralized HTTP client for all backend communication
  */
 
-import { authManager } from '../backend/auth/AuthManager';
-import { securityManager } from '../backend/security/SecurityManager';
+import { authService } from '../../services/auth';
+import { securityManager } from '../../backend/security/SecurityManager';
 
-interface ApiResponse<T = any> {
+interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   success: boolean;
@@ -34,31 +34,55 @@ export class ApiClient {
   private maxRetries = 3;
   private retryDelay = 1000;
 
+  // Rate limiting state
+  private requestCounts: Map<string, { count: number; resetTime: number }> = new Map();
+  private readonly RATE_LIMIT_WINDOW = 60000; // 1 minute window
+  private readonly RATE_LIMIT_MAX_REQUESTS = 100; // Max 100 requests per minute
+
   constructor() {
     this.baseURL = process.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+  }
+
+  private checkRateLimit(endpoint: string): boolean {
+    const now = Date.now();
+    const key = endpoint.split('?')[0]; // Normalize endpoint
+    const current = this.requestCounts.get(key);
+
+    if (!current || now > current.resetTime) {
+      // Reset or create new window
+      this.requestCounts.set(key, { count: 1, resetTime: now + this.RATE_LIMIT_WINDOW });
+      return true;
+    }
+
+    if (current.count >= this.RATE_LIMIT_MAX_REQUESTS) {
+      return false;
+    }
+
+    current.count++;
+    return true;
   }
 
   // ================================
   // HTTP METHODS
   // ================================
 
-  async get<T = any>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+  async get<T = unknown>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
     return this.request<T>('GET', endpoint, undefined, config);
   }
 
-  async post<T = any>(endpoint: string, data?: any, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+  async post<T = unknown>(endpoint: string, data?: unknown, config: RequestConfig = {}): Promise<ApiResponse<T>> {
     return this.request<T>('POST', endpoint, data, config);
   }
 
-  async put<T = any>(endpoint: string, data?: any, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+  async put<T = unknown>(endpoint: string, data?: unknown, config: RequestConfig = {}): Promise<ApiResponse<T>> {
     return this.request<T>('PUT', endpoint, data, config);
   }
 
-  async patch<T = any>(endpoint: string, data?: any, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+  async patch<T = unknown>(endpoint: string, data?: unknown, config: RequestConfig = {}): Promise<ApiResponse<T>> {
     return this.request<T>('PATCH', endpoint, data, config);
   }
 
-  async delete<T = any>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+  async delete<T = unknown>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
     return this.request<T>('DELETE', endpoint, undefined, config);
   }
 
@@ -69,28 +93,28 @@ export class ApiClient {
   private async request<T>(
     method: string,
     endpoint: string,
-    data?: any,
+    data?: unknown,
     config: RequestConfig = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
-    const timeout = config.timeout || this.defaultTimeout;
-    const maxRetries = config.retry !== undefined ? config.retry : this.maxRetries;
-    
+
     // Rate limiting check
     if (!config.skipRateLimit) {
-      const rateLimitKey = `api:${method}:${endpoint}`;
-      const allowed = await securityManager.checkRateLimit(rateLimitKey, 1000);
+      const allowed = this.checkRateLimit(endpoint);
       if (!allowed) {
-        throw new ApiError('Rate limit exceeded', 429);
+        throw new ApiError('Rate limit exceeded. Please wait before making more requests.', 429);
       }
     }
 
     let lastError: Error | null = null;
+    const maxRetries = config.retry ?? this.maxRetries;
+    const delay = config.retryDelay ?? this.retryDelay;
+    const timeout = config.timeout ?? this.defaultTimeout;
+    const url = `${this.baseURL}${endpoint}`;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const response = await this.makeRequest<T>(method, url, data, config, timeout);
-        
+
         // Log successful API call
         await securityManager.logAction({
           action: `api_${method.toLowerCase()}`,
@@ -103,7 +127,7 @@ export class ApiClient {
 
       } catch (error) {
         lastError = error as Error;
-        
+
         // Don't retry for certain error types
         if (error instanceof ApiError) {
           if ([400, 401, 403, 404, 422].includes(error.status)) {
@@ -113,7 +137,6 @@ export class ApiClient {
 
         // Wait before retry
         if (attempt < maxRetries) {
-          const delay = this.retryDelay * Math.pow(2, attempt) + Math.random() * 1000;
           await this.delay(delay);
         }
       }
@@ -124,8 +147,8 @@ export class ApiClient {
       action: `api_${method.toLowerCase()}_failed`,
       resourceType: 'api',
       severity: 'medium',
-      newValues: { 
-        endpoint, 
+      newValues: {
+        endpoint,
         error: lastError?.message,
         attempts: maxRetries + 1
       }
@@ -137,12 +160,13 @@ export class ApiClient {
   private async makeRequest<T>(
     method: string,
     url: string,
-    data: any,
+    data: unknown,
     config: RequestConfig,
     timeout: number
   ): Promise<ApiResponse<T>> {
+
     const headers = this.buildHeaders(config);
-    
+
     const requestInit: RequestInit = {
       method,
       headers,
@@ -156,14 +180,14 @@ export class ApiClient {
 
     // Make the request
     const response = await fetch(url, requestInit);
-    
-    // Handle non-JSON responses
     const contentType = response.headers.get('content-type');
+
+    // Handle non-JSON responses
     if (!contentType?.includes('application/json')) {
       throw new ApiError('Invalid response format', response.status);
     }
 
-    const responseData = await response.json();
+    const responseData = await response.json() as ApiResponse<T>;
 
     // Handle error responses
     if (!response.ok) {
@@ -191,8 +215,8 @@ export class ApiClient {
     };
 
     // Add authentication header
-    if (!config.skipAuth && authManager.isAuthenticated()) {
-      headers['Authorization'] = authManager.getAuthHeader();
+    if (!config.skipAuth && authService.isAuthenticated()) {
+      headers['Authorization'] = authService.getAuthHeader();
     }
 
     // Add CSRF protection
@@ -212,7 +236,10 @@ export class ApiClient {
   }
 
   private generateRequestId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use crypto.getRandomValues() for secure random generation
+    const array = new Uint8Array(8);
+    crypto.getRandomValues(array);
+    return `req_${Date.now()}_${Array.from(array, num => num.toString(36)).join('')}`;
   }
 
   // ================================
@@ -220,15 +247,16 @@ export class ApiClient {
   // ================================
 
   // Workflows API
-  async getWorkflows(params: any = {}) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getWorkflows(_params: unknown = {}) {
     return this.get('/workflows', { headers: { 'X-Resource': 'workflows' } });
   }
 
-  async createWorkflow(workflow: any) {
+  async createWorkflow(workflow: unknown) {
     return this.post('/workflows', workflow);
   }
 
-  async updateWorkflow(id: string, updates: any) {
+  async updateWorkflow(id: string, updates: unknown) {
     return this.put(`/workflows/${id}`, updates);
   }
 
@@ -236,13 +264,14 @@ export class ApiClient {
     return this.delete(`/workflows/${id}`);
   }
 
-  async executeWorkflow(id: string, input?: any) {
+  async executeWorkflow(id: string, input?: unknown) {
     return this.post(`/workflows/${id}/execute`, { input });
   }
 
   // Executions API
-  async getExecutions(workflowId?: string, params: any = {}) {
-    const endpoint = workflowId ? `/workflows/${workflowId}/executions` : '/executions';
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getExecutions(workflowId?: string, _params: unknown = {}) {
+    const endpoint = workflowId ? `/executions?workflowId=${workflowId}` : '/executions';
     return this.get(endpoint, { headers: { 'X-Resource': 'executions' } });
   }
 
@@ -263,11 +292,11 @@ export class ApiClient {
     return this.get('/credentials', { headers: { 'X-Resource': 'credentials' } });
   }
 
-  async createCredential(credential: any) {
+  async createCredential(credential: unknown) {
     return this.post('/credentials', credential);
   }
 
-  async updateCredential(id: string, updates: any) {
+  async updateCredential(id: string, updates: unknown) {
     return this.put(`/credentials/${id}`, updates);
   }
 
@@ -284,11 +313,11 @@ export class ApiClient {
     return this.get('/webhooks');
   }
 
-  async createWebhook(webhook: any) {
+  async createWebhook(webhook: unknown) {
     return this.post('/webhooks', webhook);
   }
 
-  async updateWebhook(id: string, updates: any) {
+  async updateWebhook(id: string, updates: unknown) {
     return this.put(`/webhooks/${id}`, updates);
   }
 
@@ -297,15 +326,16 @@ export class ApiClient {
   }
 
   // Users API (Admin only)
-  async getUsers(params: any = {}) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getUsers(_params: unknown = {}) {
     return this.get('/users', { headers: { 'X-Admin-Required': 'true' } });
   }
 
-  async createUser(user: any) {
+  async createUser(user: unknown) {
     return this.post('/users', user, { headers: { 'X-Admin-Required': 'true' } });
   }
 
-  async updateUser(id: string, updates: any) {
+  async updateUser(id: string, updates: unknown) {
     return this.put(`/users/${id}`, updates);
   }
 
@@ -314,7 +344,8 @@ export class ApiClient {
   }
 
   // Analytics API
-  async getAnalytics(params: any = {}) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getAnalytics(_params: unknown = {}) {
     return this.get('/analytics', { headers: { 'X-Resource': 'analytics' } });
   }
 
@@ -343,7 +374,7 @@ export class ApiClient {
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      
+
       // Upload progress
       if (onProgress) {
         xhr.upload.onprogress = (event) => {
@@ -363,14 +394,14 @@ export class ApiClient {
       };
 
       xhr.onerror = () => reject(new ApiError('Upload failed', 0));
-      
+
       xhr.open('POST', `${this.baseURL}${endpoint}`);
-      
+
       // Add auth header
-      if (authManager.isAuthenticated()) {
-        xhr.setRequestHeader('Authorization', authManager.getAuthHeader());
+      if (authService.isAuthenticated()) {
+        xhr.setRequestHeader('Authorization', authService.getAuthHeader());
       }
-      
+
       xhr.send(formData);
     });
   }
@@ -439,18 +470,28 @@ export const apiClient = new ApiClient();
 
 // React hook for API calls
 export function useApi() {
+  // Import React dynamically for hook compatibility
+  const React = require('react');
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<ApiError | null>(null);
+  const [error, setError] = React.useState(null) as [ApiError | null, (error: ApiError | null) => void];
 
-  const makeRequest = async <T>(requestFn: () => Promise<T>): Promise<T | null> => {
+  const makeRequest = async <T,>(
+    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+    endpoint: string,
+    data?: unknown
+  ): Promise<T | null> => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await requestFn();
-      return result;
+      const client = new ApiClient();
+      const result = await client[method.toLowerCase() as 'get' | 'post' | 'put' | 'delete' | 'patch']<T>(endpoint, data as never);
+      return result.data;
     } catch (err) {
-      const apiError = err instanceof ApiError ? err : new ApiError('Unknown error', 0);
+      const apiError = err instanceof ApiError ? err : new ApiError(
+        err instanceof Error ? err.message : 'Unknown error',
+        0
+      );
       setError(apiError);
       return null;
     } finally {

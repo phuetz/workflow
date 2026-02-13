@@ -1,0 +1,179 @@
+{
+  "validationLoop": {
+    "enabled": true,
+    "interval": 60000,
+    "healthCheckTimeout": 5000,
+    "rollbackThreshold": 3,
+    "learningEnabled": true,
+    "monitoringDuration": 300000,
+    "maxHistorySize": 1000,
+    "alerting": {
+      "enabled": true,
+      "channels": ["slack", "email", "pagerduty"],
+      "cooldown": 3600000,
+      "grouping": true,
+      "groupingWindow": 300000,
+      "channelConfig": {
+        "slack": {
+          "webhookUrl": "${SLACK_WEBHOOK_URL}",
+          "channel": "#monitoring-alerts",
+          "username": "Validation Bot",
+          "iconEmoji": ":robot_face:"
+        },
+        "email": {
+          "to": "${ALERT_EMAIL}",
+          "from": "alerts@workflow-platform.com",
+          "subject": "[Alert] Validation System Notification"
+        },
+        "pagerduty": {
+          "serviceKey": "${PAGERDUTY_SERVICE_KEY}",
+          "severity": "critical"
+        }
+      }
+    },
+    "metrics": {
+      "retention": "30d",
+      "aggregation": "5m",
+      "exportEnabled": true,
+      "exportInterval": 3600000,
+      "exportPath": "/var/log/validation-metrics"
+    },
+    "preChecks": [
+      {
+        "id": "system-health",
+        "name": "System Health Check",
+        "enabled": true,
+        "timeout": 10000,
+        "critical": true
+      },
+      {
+        "id": "database-connectivity",
+        "name": "Database Connectivity",
+        "enabled": true,
+        "timeout": 5000,
+        "critical": true
+      },
+      {
+        "id": "cache-availability",
+        "name": "Cache Availability",
+        "enabled": true,
+        "timeout": 3000,
+        "critical": false
+      },
+      {
+        "id": "resource-availability",
+        "name": "Resource Availability",
+        "enabled": true,
+        "timeout": 5000,
+        "critical": true
+      }
+    ],
+    "postChecks": [
+      {
+        "id": "api-health",
+        "name": "API Endpoints Health",
+        "enabled": true,
+        "timeout": 15000,
+        "critical": true
+      },
+      {
+        "id": "error-rate",
+        "name": "Error Rate Check",
+        "enabled": true,
+        "timeout": 5000,
+        "critical": false
+      },
+      {
+        "id": "performance-regression",
+        "name": "Performance Regression Check",
+        "enabled": true,
+        "timeout": 10000,
+        "critical": false
+      },
+      {
+        "id": "data-integrity",
+        "name": "Data Integrity Check",
+        "enabled": true,
+        "timeout": 10000,
+        "critical": true
+      }
+    ],
+    "regressionTests": {
+      "enabled": true,
+      "parallel": true,
+      "timeout": 120000,
+      "criticalEndpoints": [
+        "/api/health",
+        "/api/workflows",
+        "/api/executions",
+        "/api/nodes",
+        "/api/templates"
+      ],
+      "unitTests": {
+        "enabled": true,
+        "pattern": "critical",
+        "timeout": 60000
+      }
+    },
+    "learning": {
+      "enabled": true,
+      "minDataForTraining": 50,
+      "maxTrainingData": 10000,
+      "retrainingInterval": 3600000,
+      "decisionTreeMaxDepth": 5,
+      "features": [
+        "errorType",
+        "timeOfDay",
+        "dayOfWeek",
+        "systemLoad",
+        "previousFailures",
+        "correctionMethod",
+        "systemHealth",
+        "activeUsers"
+      ],
+      "strategies": [
+        {
+          "errorType": "NETWORK_ERROR",
+          "methods": ["retry_with_backoff", "switch_endpoint", "use_cache"],
+          "defaultPriority": 8
+        },
+        {
+          "errorType": "DATABASE_ERROR",
+          "methods": ["reconnect_and_retry", "use_replica", "fallback_cache"],
+          "defaultPriority": 9
+        },
+        {
+          "errorType": "AUTH_ERROR",
+          "methods": ["refresh_token", "reauth", "use_backup_credentials"],
+          "defaultPriority": 7
+        },
+        {
+          "errorType": "TIMEOUT_ERROR",
+          "methods": ["increase_timeout", "optimize_query", "use_cache"],
+          "defaultPriority": 6
+        }
+      ]
+    },
+    "autoFix": {
+      "enabled": true,
+      "maxConcurrent": 5,
+      "retryLimit": 3,
+      "backoffMultiplier": 2,
+      "initialBackoffMs": 1000,
+      "safeMode": true,
+      "requireApproval": {
+        "critical": true,
+        "highImpact": true,
+        "productionOnly": true
+      }
+    },
+    "rollback": {
+      "enabled": true,
+      "automatic": true,
+      "threshold": 3,
+      "gracePeriod": 60000,
+      "preserveState": true,
+      "notifyOnRollback": true
+    }
+  }
+}

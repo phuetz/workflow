@@ -1,0 +1,36 @@
+{
+  "nodeVersion": "v18.20.8",
+  "npmVersion": "10.8.2",
+  "dependencies": {
+    "vite": "^7.0.6",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.3"
+  },
+  "viteConfig": {
+    "exists": true,
+    "path": "/home/patrice/claude/workflow/vite.config.ts",
+    "size": 6714
+  },
+  "tsConfig": {
+    "exists": true
+  },
+  "entryPoints": {
+    "index.html": {
+      "exists": true,
+      "size": 2789
+    },
+    "src/main.tsx": {
+      "exists": true,
+      "size": 801
+    },
+    "src/App.tsx": {
+      "exists": true,
+      "size": 39944
+    }
+  },
+  "errors": [
+    "ERREUR CRITIQUE: Vite 7.0 requiert Node.js 20.19+ ou 22.12+. Version actuelle: v18.20.8"
+  ],
+  "warnings": []
+}

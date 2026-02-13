@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmitOnError": true,
+    "sourceMap": false
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "**/__tests__/**",
+    "tests/**",
+    "**/*.tsx",
+    "src/backend/database/ConnectionPool.ts",
+    "src/backend/database/testingRepository.ts",
+    "src/backend/services/executionService.ts",
+    "src/backend/services/analyticsService.ts",
+    "src/services/TestingService.ts"
+  ],
+  "include": [
+    "src/backend/**/*.ts"
+  ]
+}
+

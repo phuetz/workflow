@@ -1,0 +1,1262 @@
+<testsuites id="" name="" tests="301" failures="0" skipped="301" errors="0" time="0.06329800000000001">
+<testsuite name="workflow-creation.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Creation › should create new empty workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add node via drag and drop" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should connect two nodes" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should configure node properties" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should load existing workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should delete node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should undo/redo actions" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should duplicate node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should use keyboard shortcuts" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-execution.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Execution › should start workflow execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution progress" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should stop running execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution results" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should handle execution errors" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should retry failed execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution history" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should debug workflow step by step" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show node output data" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should execute from specific node" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-import-export.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="chromium" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Import/Export › should export workflow as JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import workflow from JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import n8n workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as PDF" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as image" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should validate imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should preserve node positions on import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should handle large workflow import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should show import preview" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should merge imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="chromium" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Workflow Creation › should display the main workflow canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open node sidebar" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should search for nodes" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add a node to canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open global search with Cmd+K" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should toggle dark mode" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should export workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should navigate between sections" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on mobile viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on tablet viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should load within acceptable time" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should have good Lighthouse scores" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-creation.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Creation › should create new empty workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add node via drag and drop" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should connect two nodes" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should configure node properties" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should load existing workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should delete node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should undo/redo actions" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should duplicate node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should use keyboard shortcuts" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-execution.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Execution › should start workflow execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution progress" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should stop running execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution results" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should handle execution errors" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should retry failed execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution history" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should debug workflow step by step" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show node output data" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should execute from specific node" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-import-export.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="firefox" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Import/Export › should export workflow as JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import workflow from JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import n8n workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as PDF" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as image" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should validate imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should preserve node positions on import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should handle large workflow import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should show import preview" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should merge imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="firefox" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Workflow Creation › should display the main workflow canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open node sidebar" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should search for nodes" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add a node to canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open global search with Cmd+K" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should toggle dark mode" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should export workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should navigate between sections" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on mobile viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on tablet viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should load within acceptable time" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should have good Lighthouse scores" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-creation.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Creation › should create new empty workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add node via drag and drop" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should connect two nodes" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should configure node properties" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should load existing workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should delete node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should undo/redo actions" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should duplicate node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should use keyboard shortcuts" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-execution.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Execution › should start workflow execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution progress" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should stop running execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution results" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should handle execution errors" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should retry failed execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution history" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should debug workflow step by step" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show node output data" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should execute from specific node" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-import-export.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="webkit" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Import/Export › should export workflow as JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import workflow from JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import n8n workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as PDF" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as image" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should validate imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should preserve node positions on import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should handle large workflow import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should show import preview" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should merge imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="webkit" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Workflow Creation › should display the main workflow canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open node sidebar" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should search for nodes" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add a node to canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open global search with Cmd+K" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should toggle dark mode" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should export workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should navigate between sections" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on mobile viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on tablet viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should load within acceptable time" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should have good Lighthouse scores" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-creation.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Creation › should create new empty workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add node via drag and drop" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should connect two nodes" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should configure node properties" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should load existing workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should delete node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should undo/redo actions" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should duplicate node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should use keyboard shortcuts" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-execution.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Execution › should start workflow execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution progress" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should stop running execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution results" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should handle execution errors" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should retry failed execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution history" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should debug workflow step by step" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show node output data" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should execute from specific node" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-import-export.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Import/Export › should export workflow as JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import workflow from JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import n8n workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as PDF" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as image" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should validate imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should preserve node positions on import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should handle large workflow import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should show import preview" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should merge imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Chrome" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Workflow Creation › should display the main workflow canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open node sidebar" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should search for nodes" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add a node to canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open global search with Cmd+K" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should toggle dark mode" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should export workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should navigate between sections" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on mobile viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on tablet viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should load within acceptable time" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should have good Lighthouse scores" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-creation.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Safari" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Creation › should create new empty workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add node via drag and drop" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should connect two nodes" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should configure node properties" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should load existing workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should delete node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should undo/redo actions" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should duplicate node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should use keyboard shortcuts" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-execution.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Safari" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Execution › should start workflow execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution progress" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should stop running execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution results" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should handle execution errors" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should retry failed execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution history" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should debug workflow step by step" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show node output data" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should execute from specific node" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-import-export.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Safari" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Import/Export › should export workflow as JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import workflow from JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import n8n workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as PDF" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as image" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should validate imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should preserve node positions on import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should handle large workflow import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should show import preview" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should merge imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Mobile Safari" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Workflow Creation › should display the main workflow canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open node sidebar" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should search for nodes" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add a node to canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open global search with Cmd+K" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should toggle dark mode" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should export workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should navigate between sections" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on mobile viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on tablet viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should load within acceptable time" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should have good Lighthouse scores" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-creation.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Microsoft Edge" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Creation › should create new empty workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add node via drag and drop" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should connect two nodes" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should configure node properties" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should load existing workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should delete node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should undo/redo actions" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should duplicate node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should use keyboard shortcuts" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-execution.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Microsoft Edge" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Execution › should start workflow execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution progress" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should stop running execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution results" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should handle execution errors" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should retry failed execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution history" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should debug workflow step by step" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show node output data" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should execute from specific node" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-import-export.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Microsoft Edge" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Import/Export › should export workflow as JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import workflow from JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import n8n workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as PDF" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as image" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should validate imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should preserve node positions on import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should handle large workflow import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should show import preview" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should merge imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Microsoft Edge" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Workflow Creation › should display the main workflow canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open node sidebar" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should search for nodes" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add a node to canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open global search with Cmd+K" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should toggle dark mode" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should export workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should navigate between sections" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on mobile viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on tablet viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should load within acceptable time" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should have good Lighthouse scores" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-creation.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Google Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Creation › should create new empty workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add node via drag and drop" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should connect two nodes" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should configure node properties" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should load existing workflow" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should delete node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should undo/redo actions" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should duplicate node" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should use keyboard shortcuts" classname="workflow-creation.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-execution.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Google Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Execution › should start workflow execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution progress" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should stop running execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution results" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should handle execution errors" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should retry failed execution" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show execution history" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should debug workflow step by step" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should show node output data" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Execution › should execute from specific node" classname="workflow-execution.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow-import-export.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Google Chrome" tests="10" failures="0" skipped="10" time="0" errors="0">
+<testcase name="Workflow Import/Export › should export workflow as JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import workflow from JSON" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should import n8n workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as PDF" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should export workflow as image" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should validate imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should preserve node positions on import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should handle large workflow import" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should show import preview" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Import/Export › should merge imported workflow" classname="workflow-import-export.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+<testsuite name="workflow.spec.ts" timestamp="2026-01-19T04:46:13.761Z" hostname="Google Chrome" tests="13" failures="0" skipped="13" time="0" errors="0">
+<testcase name="Workflow Creation › should display the main workflow canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open node sidebar" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should search for nodes" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should add a node to canvas" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should open global search with Cmd+K" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should toggle dark mode" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should save workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should export workflow" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Workflow Creation › should navigate between sections" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on mobile viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Responsive Design › should work on tablet viewport" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should load within acceptable time" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+<testcase name="Performance › should have good Lighthouse scores" classname="workflow.spec.ts" time="0">
+<skipped>
+</skipped>
+</testcase>
+</testsuite>
+</testsuites>

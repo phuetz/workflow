@@ -1,0 +1,643 @@
+// import { PluginManifest, IntegrationPlugin } from '../types/marketplace'; // Future feature
+import { logger } from './LoggingService';
+import { ConfigHelpers } from '../config/environment';
+
+export interface PluginContext {
+  workflowId: string;
+  nodeId: string;
+  userId: string;
+  environment: string;
+  credentials: Record<string, unknown>;
+  globalVariables: Record<string, unknown>;
+  logger: PluginLogger;
+  storage: PluginStorage;
+  http: PluginHttpClient;
+  events: PluginEventEmitter;
+}
+
+export interface PluginLogger {
+  debug(message: string, data?: unknown): void;
+  info(message: string, data?: unknown): void;
+  warn(message: string, data?: unknown): void;
+  error(message: string, data?: unknown): void;
+}
+
+export interface PluginStorage {
+  get(key: string): Promise<unknown>;
+  set(key: string, value: unknown): Promise<void>;
+  delete(key: string): Promise<void>;
+  clear(): Promise<void>;
+}
+
+export interface PluginHttpClient {
+  get(url: string, options?: RequestOptions): Promise<unknown>;
+  post(url: string, data?: unknown, options?: RequestOptions): Promise<unknown>;
+  put(url: string, data?: unknown, options?: RequestOptions): Promise<unknown>;
+  delete(url: string, options?: RequestOptions): Promise<unknown>;
+  request(config: RequestConfig): Promise<unknown>;
+}
+
+export interface RequestOptions {
+  headers?: Record<string, string>;
+  timeout?: number;
+  retries?: number;
+  auth?: AuthOptions;
+}
+
+export interface AuthOptions {
+  type: 'basic' | 'bearer' | 'apikey' | 'oauth2';
+  credentials: Record<string, unknown>;
+}
+
+export interface RequestConfig {
+  method: string;
+  url: string;
+  data?: unknown;
+  headers?: Record<string, string>;
+  timeout?: number;
+  retries?: number;
+  auth?: AuthOptions;
+}
+
+export interface PluginEventEmitter {
+  on(event: string, callback: (...args: unknown[]) => void): void;
+  emit(event: string, data?: unknown): void;
+  off(event: string, callback: (...args: unknown[]) => void): void;
+}
+
+export interface PluginExecutionResult {
+  success: boolean;
+  data?: unknown;
+  error?: string;
+  logs?: string[];
+  metrics?: {
+    executionTime: number;
+    memoryUsage: number;
+    requestCount: number;
+  };
+}
+
+export interface PluginDefinition {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  category: string;
+  icon?: string;
+  
+  // Execution methods
+  execute: (input: unknown, context: PluginContext) => Promise<PluginExecutionResult>;
+  validate?: (config: unknown) => ValidationResult;
+  
+  // Configuration
+  configSchema: unknown; // JSON Schema for configuration
+  inputSchema: unknown; // JSON Schema for input validation
+  outputSchema: unknown; // JSON Schema for output validation
+  
+  // Metadata
+  tags: string[];
+  author: string;
+  license: string;
+  homepage?: string;
+  repository?: string;
+  
+  // Dependencies
+  dependencies?: string[];
+  peerDependencies?: string[];
+  
+  // Lifecycle hooks
+  onInstall?: (context: PluginContext) => Promise<void>;
+  onUninstall?: (context: PluginContext) => Promise<void>;
+  onEnable?: (context: PluginContext) => Promise<void>;
+  onDisable?: (context: PluginContext) => Promise<void>;
+  
+  // Security
+  permissions: string[];
+  sandbox?: boolean;
+}
+
+export interface ValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+export class PluginEngine {
+  private plugins: Map<string, PluginDefinition> = new Map();
+  private contexts: Map<string, PluginContext> = new Map();
+  private sandboxes: Map<string, Worker> = new Map();
+  private eventEmitter: PluginEventEmitter;
+
+  constructor() {
+    this.eventEmitter = this.createEventEmitter();
+  }
+
+  // Plugin Registration
+  async registerPlugin(plugin: PluginDefinition): Promise<boolean> {
+    try {
+      // Validate plugin definition
+      if (!validation.valid) {
+        throw new Error(`Invalid plugin definition: ${validation.errors.join(', ')}`);
+      }
+
+      // Check dependencies
+      await this.checkDependencies(plugin);
+
+      // Register plugin
+      this.plugins.set(plugin.id, plugin);
+
+      // Call onInstall hook if present
+      if (plugin.onInstall) {
+        await plugin.onInstall(context);
+      }
+
+      this.eventEmitter.emit('plugin:registered', { pluginId: plugin.id });
+      return true;
+    } catch (error) {
+      logger.error('Failed to register plugin ${plugin.id}:', error);
+      return false;
+    }
+  }
+
+  async unregisterPlugin(pluginId: string): Promise<boolean> {
+    try {
+      if (!plugin) return false;
+
+      // Call onUninstall hook if present
+      if (plugin.onUninstall) {
+        await plugin.onUninstall(context);
+      }
+
+      // Clean up sandbox if exists
+      if (sandbox) {
+        sandbox.terminate();
+        this.sandboxes.delete(pluginId);
+      }
+
+      // Remove plugin
+      this.plugins.delete(pluginId);
+      this.contexts.delete(pluginId);
+
+      this.eventEmitter.emit('plugin:unregistered', { pluginId });
+      return true;
+    } catch (error) {
+      logger.error('Failed to unregister plugin ${pluginId}:', error);
+      return false;
+    }
+  }
+
+  // Plugin Execution
+  async executePlugin(
+    pluginId: string,
+    input: unknown,
+    config: unknown,
+    context: Partial<PluginContext> = {}
+  ): Promise<PluginExecutionResult> {
+    
+    if (!plugin) {
+      return {
+        success: false,
+        error: `Plugin ${pluginId} not found`
+      };
+    }
+
+    try {
+      // Validate input
+      if (plugin.inputSchema) {
+        if (!inputValidation.valid) {
+          return {
+            success: false,
+            error: `Invalid input: ${inputValidation.errors.join(', ')}`
+          };
+        }
+      }
+
+      // Validate configuration
+      if (plugin.validate) {
+        if (!configValidation.valid) {
+          return {
+            success: false,
+            error: `Invalid configuration: ${configValidation.errors.join(', ')}`
+          };
+        }
+      }
+
+      // Create execution context
+
+      // Execute plugin
+      let result: PluginExecutionResult;
+      
+      if (plugin.sandbox) {
+        result = await this.executeSandboxed(plugin, input, executionContext);
+      } else {
+        result = await plugin.execute(input, executionContext);
+      }
+
+      // Validate output
+      if (result.success && plugin.outputSchema) {
+        if (!outputValidation.valid) {
+          result.success = false;
+          result.error = `Invalid output: ${outputValidation.errors.join(', ')}`;
+        }
+      }
+
+      // Add metrics
+      result.metrics = {
+        executionTime,
+        memoryUsage: this.getMemoryUsage(),
+        requestCount: executionContext.http.requestCount || 0
+      };
+
+      this.eventEmitter.emit('plugin:executed', {
+        pluginId,
+        success: result.success,
+        executionTime,
+        error: result.error
+      });
+
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+        metrics: {
+          executionTime: Date.now() - startTime,
+          memoryUsage: this.getMemoryUsage(),
+          requestCount: 0
+        }
+      };
+    }
+  }
+
+  // Sandboxed Execution
+  private async executeSandboxed(
+    plugin: PluginDefinition,
+    input: unknown,
+    context: PluginContext
+  ): Promise<PluginExecutionResult> {
+    return new Promise((resolve, reject) => {
+      
+      if (!sandbox) {
+        // Create sandbox worker
+        
+        sandbox = new Worker(workerUrl);
+        this.sandboxes.set(plugin.id, sandbox);
+        
+        // Cleanup
+        sandbox.onerror = (error) => {
+          logger.error('Sandbox error:', error);
+          reject(new Error('Sandbox execution failed'));
+        };
+      }
+
+      // Setup message handler
+        reject(new Error('Plugin execution timeout'));
+      }, 30000); // 30 second timeout
+
+      sandbox.onmessage = (event) => {
+        clearTimeout(timeoutId);
+        const { _type, data } = event.data;
+        
+        if (type === 'result') {
+          resolve(data);
+        } else if (type === 'error') {
+          reject(new Error(data.message));
+        }
+      };
+
+      // Send execution request
+      sandbox.postMessage({
+        type: 'execute',
+        input,
+        context: this.serializeContext(context)
+      });
+    });
+  }
+
+  private generateSandboxCode(plugin: PluginDefinition): string {
+    return `
+      // Sandbox environment for plugin execution
+      
+      // Restricted global scope
+      
+      // Message handler
+      self.onmessage = async function(event) {
+        const { _type, input, context } = event.data;
+        
+        if (type === 'execute') {
+          try {
+            // Deserialize context
+            
+            // Execute plugin
+            
+            // Send result back
+            self.postMessage({
+              type: 'result',
+              data: result
+            });
+          } catch (error) {
+            self.postMessage({
+              type: 'error',
+              data: { message: error.message }
+            });
+          }
+        }
+      };
+      
+      function deserializeContext(context) {
+        // Reconstruct context with limited capabilities
+        return {
+          ...context,
+          logger: {
+            debug: (msg, data) => logger.debug(msg, data),
+            info: (msg, data) => logger.info(msg, data),
+            warn: (msg, data) => logger.warn(msg, data),
+            error: (msg, data) => logger.error(msg, data)
+          },
+          storage: {
+            get: async (key) => {
+              // Sandboxed storage implementation
+              return null;
+            },
+            set: async (key, value) => {
+              // Sandboxed storage implementation
+            },
+            delete: async (key) => {
+              // Sandboxed storage implementation
+            },
+            clear: async () => {
+              // Sandboxed storage implementation
+            }
+          },
+          http: {
+            get: async (url, options) => {
+              return this.safeHttpRequest(url, { method: 'GET', ...options });
+            },
+            post: async (url, data, options) => {
+              return this.safeHttpRequest(url, { method: 'POST', body: JSON.stringify(data), ...options });
+            },
+            put: async (url, data, options) => {
+              return this.safeHttpRequest(url, { method: 'PUT', body: JSON.stringify(data), ...options });
+            },
+            delete: async (url, options) => {
+              return this.safeHttpRequest(url, { method: 'DELETE', ...options });
+            },
+            request: async (config) => {
+              return this.safeHttpRequest(config.url, config);
+            }
+          },
+          events: {
+            on: () => {},
+            emit: () => {},
+            off: () => {}
+          }
+        };
+      }
+    `;
+  }
+
+  // Context Management
+  private createPluginContext(pluginId: string): PluginContext {
+    return {
+      workflowId: 'current',
+      nodeId: `plugin_${pluginId}`,
+      userId: authService.getCurrentUser(),
+      environment: 'development',
+      credentials: {},
+      globalVariables: {},
+      logger: this.createLogger(pluginId),
+      storage: this.createStorage(pluginId),
+      http: this.createHttpClient(),
+      events: this.eventEmitter
+    };
+  }
+
+  private createExecutionContext(pluginId: string, context: Partial<PluginContext>): PluginContext {
+    return { ...baseContext, ...context };
+  }
+
+  private createLogger(pluginId: string): PluginLogger {
+    return {
+      debug: (message, data) => logger.debug(`[${pluginId}] ${message}`, data),
+      info: (message, data) => logger.info(`[${pluginId}] ${message}`, data),
+      warn: (message, data) => logger.warn('[${pluginId}] ${message}', data),
+      error: (message, data) => logger.error('[${pluginId}] ${message}', data)
+    };
+  }
+
+  private createStorage(pluginId: string): PluginStorage {
+    
+    return {
+      get: async (key: string) => {
+        return value ? JSON.parse(value) : null;
+      },
+      set: async (key: string, value: unknown) => {
+        localStorage.setItem(fullKey, JSON.stringify(value));
+      },
+      delete: async (key: string) => {
+        localStorage.removeItem(fullKey);
+      },
+      clear: async () => {
+        keys.forEach(key => {
+          if (key.startsWith(keyPrefix)) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+    };
+  }
+
+  private createHttpClient(): PluginHttpClient {
+    
+      requestCount++;
+      
+        method: config.method,
+        headers: config.headers,
+        body: config.data ? JSON.stringify(config.data) : undefined
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      return response.json();
+    };
+    
+    return {
+      get: (url, options) => makeRequest({ method: 'GET', url, ...options }),
+      post: (url, data, options) => makeRequest({ method: 'POST', url, data, ...options }),
+      put: (url, data, options) => makeRequest({ method: 'PUT', url, data, ...options }),
+      delete: (url, options) => makeRequest({ method: 'DELETE', url, ...options }),
+      request: makeRequest,
+      requestCount
+    } as PluginHttpClient;
+  }
+
+  private createEventEmitter(): PluginEventEmitter {
+    const listeners: Map<string, ((...args: unknown[]) => void)[]> = new Map();
+    
+    return {
+      on: (event: string, callback: (...args: unknown[]) => void) => {
+        if (!listeners.has(event)) {
+          listeners.set(event, []);
+        }
+        listeners.get(event)!.push(callback);
+      },
+      emit: (event: string, data?: unknown) => {
+        if (callbacks) {
+          callbacks.forEach(callback => callback(data));
+        }
+      },
+      off: (event: string, callback: (...args: unknown[]) => void) => {
+        if (callbacks) {
+          if (index > -1) {
+            callbacks.splice(index, 1);
+          }
+        }
+      }
+    };
+  }
+
+  // Validation
+  private validatePluginDefinition(plugin: PluginDefinition): ValidationResult {
+    const errors: string[] = [];
+    
+    if (!plugin.id) errors.push('Plugin ID is required');
+    if (!plugin.name) errors.push('Plugin name is required');
+    if (!plugin.version) errors.push('Plugin version is required');
+    if (!plugin.execute) errors.push('Plugin execute function is required');
+    if (!plugin.configSchema) errors.push('Plugin config schema is required');
+    
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings: []
+    };
+  }
+
+  private validateInput(): ValidationResult {
+    // JSON Schema validation would go here
+    return { valid: true, errors: [], warnings: [] };
+  }
+
+  private validateOutput(): ValidationResult {
+    // JSON Schema validation would go here
+    return { valid: true, errors: [], warnings: [] };
+  }
+
+  private async checkDependencies(plugin: PluginDefinition): Promise<void> {
+    if (plugin.dependencies) {
+      for (const dep of plugin.dependencies) {
+        if (!this.plugins.has(dep)) {
+          throw new Error(`Missing dependency: ${dep}`);
+        }
+      }
+    }
+  }
+
+  private serializeContext(context: PluginContext): unknown {
+    return {
+      workflowId: context.workflowId,
+      nodeId: context.nodeId,
+      userId: context.userId,
+      environment: context.environment,
+      credentials: context.credentials,
+      globalVariables: context.globalVariables
+    };
+  }
+
+  private getMemoryUsage(): number {
+    if (performance && performance.memory) {
+      return performance.memory.usedJSHeapSize;
+    }
+    return 0;
+  }
+
+  // Plugin Management
+  getPlugin(pluginId: string): PluginDefinition | undefined {
+    return this.plugins.get(pluginId);
+  }
+
+  getPlugins(): PluginDefinition[] {
+    return Array.from(this.plugins.values());
+  }
+
+  getPluginsByCategory(category: string): PluginDefinition[] {
+    return this.getPlugins().filter(plugin => plugin.category === category);
+  }
+
+  isPluginRegistered(pluginId: string): boolean {
+    return this.plugins.has(pluginId);
+  }
+
+  // Secure HTTP request handler for plugins to prevent SSRF attacks
+  private async safeHttpRequest(url: string, options: unknown = {}): Promise<Response> {
+    try {
+      // Validate URL format
+      if (!url || typeof url !== 'string') {
+        throw new Error('Invalid URL: must be a non-empty string');
+      }
+
+      let parsedUrl: URL;
+      try {
+        parsedUrl = new URL(url);
+      } catch {
+        throw new Error('Invalid URL format');
+      }
+
+      // Security: Only allow HTTPS URLs (except localhost for development)
+      if (parsedUrl.protocol !== 'https:' && 
+          !(parsedUrl.protocol === 'http:' && parsedUrl.hostname === 'localhost')) {
+        throw new Error('Only HTTPS URLs are allowed (except localhost for development)');
+      }
+
+      // Prevent SSRF attacks to internal networks
+        'localhost', '127.0.0.1', '0.0.0.0',
+        '10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.',
+        '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.',
+        '172.27.', '172.28.', '172.29.', '172.30.', '172.31.',
+        '192.168.', '169.254.', '::1', 'metadata.google.internal'
+      ];
+
+      // Allow localhost only for development
+      if (hostname !== 'localhost' && blockedHosts.some(blocked => 
+        hostname === blocked || hostname.startsWith(blocked))) {
+        throw new Error('Access to internal networks is not allowed');
+      }
+
+      // Add timeout and security headers
+
+      try {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            'User-Agent': 'WorkflowBuilder-Plugin/1.0',
+            ...options.headers
+          }
+        });
+
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
+    } catch (error) {
+      logger.error('Plugin HTTP request blocked:', error.message);
+      throw new Error(`HTTP request failed: ${error.message}`);
+    }
+  }
+
+  // Event system
+  on(event: string, callback: (...args: unknown[]) => void): void {
+    this.eventEmitter.on(event, callback);
+  }
+
+  emit(event: string, data?: unknown): void {
+    this.eventEmitter.emit(event, data);
+  }
+
+  off(event: string, callback: (...args: unknown[]) => void): void {
+    this.eventEmitter.off(event, callback);
+  }
+}

@@ -3,7 +3,7 @@
  * Git-like versioning system for workflows
  */
 
-import type { Node, Edge } from 'reactflow';
+import type { Node, Edge } from '@xyflow/react';
 
 export interface WorkflowVersion {
   id: string;

@@ -1,0 +1,4 @@
+
+> workflow-automation-platform@2.0.0 lint
+> eslint src/App.tsx src/backend/server.js src/backend/api/server.ts src/backend/api/app.ts src/backend/api/middleware/*.ts src/middleware/globalErrorHandler.ts --ext ts,tsx,js,mjs,cjs --report-unused-disable-directives --no-warn-ignored --max-warnings 0
+

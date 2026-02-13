@@ -1,0 +1,35 @@
+apiVersion: v2
+name: workflow-automation
+description: Enterprise Workflow Automation Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - workflow
+  - automation
+  - n8n-alternative
+  - low-code
+home: https://github.com/yourorg/workflow-automation
+sources:
+  - https://github.com/yourorg/workflow-automation
+maintainers:
+  - name: Platform Team
+    email: platform@example.com
+icon: https://example.com/icon.png
+dependencies:
+  - name: postgresql
+    version: "12.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled
+  - name: prometheus
+    version: "15.x.x"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: prometheus.enabled
+  - name: grafana
+    version: "6.x.x"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: grafana.enabled

@@ -1,0 +1,181 @@
+# ============================================
+# WORKFLOW AUTOMATION PLATFORM
+# Docker Compose - Development Environment
+# ============================================
+
+version: '3.9'
+
+services:
+  # ===========================================
+  # Frontend & Backend Application (Development)
+  # ===========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+      args:
+        NODE_ENV: development
+    container_name: workflow-app-dev
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"          # Frontend (Vite dev server)
+      - "${API_PORT:-3001}:3001"      # Backend API
+      - "${WS_PORT:-3002}:3002"       # WebSocket server
+      - "5173:5173"                    # Vite HMR
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - API_PORT=3001
+      - WS_PORT=3002
+      - DATABASE_URL=postgresql://workflow:workflow123@postgres:5432/workflow_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-dev-jwt-secret-change-in-production}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-dev-32-char-encryption-key-123}
+      - VITE_API_BASE_URL=http://localhost:3001/api/v1
+      - VITE_GRAPHQL_URL=http://localhost:3001/api/v1/graphql
+      - VITE_WS_URL=ws://localhost:3001/ws
+      - LOG_LEVEL=debug
+      - DEBUG=*
+    volumes:
+      - .:/app:delegated
+      - /app/node_modules
+      - /app/dist
+      - app-logs:/app/logs
+      - app-uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - workflow-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: npm run dev
+
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: workflow-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: workflow_dev
+      POSTGRES_USER: workflow
+      POSTGRES_PASSWORD: workflow123
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-dev-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - workflow-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workflow -d workflow_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ===========================================
+  # Redis Cache
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: workflow-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass workflow123
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - workflow-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ===========================================
+  # Mailhog (Email testing)
+  # ===========================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: workflow-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    networks:
+      - workflow-dev
+    profiles:
+      - email-testing
+
+  # ===========================================
+  # Redis Commander (Redis GUI)
+  # ===========================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: workflow-redis-commander
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379:0:workflow123
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - workflow-dev
+    profiles:
+      - dev-tools
+
+  # ===========================================
+  # pgAdmin (PostgreSQL GUI)
+  # ===========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: workflow-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@workflow.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - workflow-dev
+    profiles:
+      - dev-tools
+
+networks:
+  workflow-dev:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+
+volumes:
+  postgres-dev-data:
+    driver: local
+  redis-dev-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+  app-logs:
+    driver: local
+  app-uploads:
+    driver: local

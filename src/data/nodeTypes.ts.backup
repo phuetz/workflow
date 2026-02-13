@@ -1,0 +1,3324 @@
+import { NodeType } from '../types/workflow';
+
+export const nodeTypes: { [key: string]: NodeType } = {
+  // Triggers
+  trigger: {
+    type: 'trigger',
+    label: 'Déclencheur HTTP',
+    icon: 'Webhook',
+    color: 'bg-blue-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Receive HTTP requests',
+    errorHandle: false
+  },
+  webhook: {
+    type: 'webhook',
+    label: 'Webhook',
+    icon: 'Link',
+    color: 'bg-green-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Webhook endpoint',
+    errorHandle: false
+  },
+  schedule: {
+    type: 'schedule',
+    label: 'Schedule / Cron',
+    icon: 'Clock',
+    color: 'bg-indigo-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Schedule execution',
+    errorHandle: false
+  },
+  rssFeed: {
+    type: 'rssFeed',
+    label: 'RSS Feed',
+    icon: 'Rss',
+    color: 'bg-orange-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Monitor RSS feeds',
+    errorHandle: false
+  },
+  
+  // Manual Trigger
+  manualTrigger: {
+    type: 'manualTrigger',
+    label: 'Manual Trigger',
+    icon: 'Play',
+    color: 'bg-orange-600',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Manual execution start'
+  },
+
+  // Form Trigger (NEW - n8n parity)
+  formTrigger: {
+    type: 'formTrigger',
+    label: 'Form Trigger',
+    icon: 'FileText',
+    color: 'bg-teal-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Start workflow when form is submitted',
+    errorHandle: false
+  },
+
+  // Chat Trigger (NEW - n8n parity)
+  chatTrigger: {
+    type: 'chatTrigger',
+    label: 'Chat Trigger',
+    icon: 'MessageCircle',
+    color: 'bg-violet-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Start workflow from chat interaction',
+    errorHandle: false
+  },
+
+  // Form Node (continue form after trigger)
+  formPage: {
+    type: 'formPage',
+    label: 'Form Page',
+    icon: 'Layers',
+    color: 'bg-teal-400',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+    description: 'Add additional form pages'
+  },
+
+  // Wait Node
+  wait: {
+    type: 'wait',
+    label: 'Wait',
+    icon: 'Clock',
+    color: 'bg-gray-500',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+    description: 'Wait for specified time or event'
+  },
+
+  // Communication
+  email: {
+    type: 'email',
+    label: 'Email (SMTP)',
+    icon: 'Mail',
+    color: 'bg-red-500',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Send emails via SMTP'
+  },
+  gmail: {
+    type: 'gmail',
+    label: 'Gmail',
+    icon: 'Mail',
+    color: 'bg-red-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Gmail integration'
+  },
+  slack: {
+    type: 'slack',
+    label: 'Slack',
+    icon: 'MessageSquare',
+    color: 'bg-purple-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Send Slack messages'
+  },
+  discord: {
+    type: 'discord',
+    label: 'Discord',
+    icon: 'MessageCircle',
+    color: 'bg-indigo-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Discord bot integration'
+  },
+  telegram: {
+    type: 'telegram',
+    label: 'Telegram',
+    icon: 'Send',
+    color: 'bg-blue-400',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Telegram bot'
+  },
+  teams: {
+    type: 'teams',
+    label: 'Microsoft Teams',
+    icon: 'Users',
+    color: 'bg-blue-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Microsoft Teams integration'
+  },
+  twilio: {
+    type: 'twilio',
+    label: 'Twilio SMS',
+    icon: 'Phone',
+    color: 'bg-red-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Send SMS via Twilio'
+  },
+  whatsapp: {
+    type: 'whatsapp',
+    label: 'WhatsApp',
+    icon: 'MessageCircle',
+    color: 'bg-green-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'WhatsApp Business API'
+  },
+  
+  // Databases
+  mysql: {
+    type: 'mysql',
+    label: 'MySQL',
+    icon: 'Database',
+    color: 'bg-blue-800',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'MySQL database operations'
+  },
+  postgres: {
+    type: 'postgres',
+    label: 'PostgreSQL',
+    icon: 'Database',
+    color: 'bg-blue-900',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'PostgreSQL operations'
+  },
+  mongodb: {
+    type: 'mongodb',
+    label: 'MongoDB',
+    icon: 'Database',
+    color: 'bg-green-700',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'MongoDB operations'
+  },
+  redis: {
+    type: 'redis',
+    label: 'Redis',
+    icon: 'Database',
+    color: 'bg-red-800',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Redis cache operations'
+  },
+  
+  // Google Services
+  googleSheets: {
+    type: 'googleSheets',
+    label: 'Google Sheets',
+    icon: 'FileSpreadsheet',
+    color: 'bg-green-500',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Sheets integration'
+  },
+  googleDrive: {
+    type: 'googleDrive',
+    label: 'Google Drive',
+    icon: 'HardDrive',
+    color: 'bg-blue-500',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Drive file operations'
+  },
+  googleCalendar: {
+    type: 'googleCalendar',
+    label: 'Google Calendar',
+    icon: 'Calendar',
+    color: 'bg-blue-600',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Calendar events'
+  },
+  googleMaps: {
+    type: 'googleMaps',
+    label: 'Google Maps',
+    icon: 'Map',
+    color: 'bg-green-600',
+    category: 'google',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Maps API'
+  },
+  
+  // Cloud Services
+  aws: {
+    type: 'aws',
+    label: 'AWS',
+    icon: 'Cloud',
+    color: 'bg-orange-600',
+    category: 'cloud',
+    inputs: 1,
+    outputs: 1,
+    description: 'AWS services'
+  },
+  s3: {
+    type: 's3',
+    label: 'AWS S3',
+    icon: 'Archive',
+    color: 'bg-orange-700',
+    category: 'cloud',
+    inputs: 1,
+    outputs: 1,
+    description: 'AWS S3 storage'
+  },
+  lambda: {
+    type: 'lambda',
+    label: 'AWS Lambda',
+    icon: 'Zap',
+    color: 'bg-orange-500',
+    category: 'cloud',
+    inputs: 1,
+    outputs: 1,
+    description: 'AWS Lambda functions'
+  },
+  
+  // Development Tools
+  github: {
+    type: 'github',
+    label: 'GitHub',
+    icon: 'Github',
+    color: 'bg-gray-800',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'GitHub API integration'
+  },
+  gitlab: {
+    type: 'gitlab',
+    label: 'GitLab',
+    icon: 'GitBranch',
+    color: 'bg-orange-800',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'GitLab integration'
+  },
+  jira: {
+    type: 'jira',
+    label: 'Jira',
+    icon: 'Bug',
+    color: 'bg-blue-700',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'Jira issue tracking'
+  },
+  confluence: {
+    type: 'confluence',
+    label: 'Confluence',
+    icon: 'BookOpen',
+    color: 'bg-blue-600',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'Confluence documentation platform',
+  },
+  linear: {
+    type: 'linear',
+    label: 'Linear',
+    icon: 'Kanban',
+    color: 'bg-gray-600',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'Linear issue tracking',
+  },
+  
+  // E-commerce
+  stripe: {
+    type: 'stripe',
+    label: 'Stripe',
+    icon: 'CreditCard',
+    color: 'bg-purple-700',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Stripe payments'
+  },
+  paypal: {
+    type: 'paypal',
+    label: 'PayPal',
+    icon: 'DollarSign',
+    color: 'bg-blue-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'PayPal payments'
+  },
+  shopify: {
+    type: 'shopify',
+    label: 'Shopify',
+    icon: 'ShoppingBag',
+    color: 'bg-green-800',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Shopify store integration'
+  },
+  
+  // AI & Analytics
+  openai: {
+    type: 'openai',
+    label: 'OpenAI / ChatGPT',
+    icon: 'Bot',
+    color: 'bg-gray-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'OpenAI GPT models'
+  },
+  anthropic: {
+    type: 'anthropic',
+    label: 'Claude AI',
+    icon: 'Brain',
+    color: 'bg-amber-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Anthropic Claude AI'
+  },
+  
+  // Productivity
+  notion: {
+    type: 'notion',
+    label: 'Notion',
+    icon: 'BookOpen',
+    color: 'bg-gray-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Notion workspace'
+  },
+  airtable: {
+    type: 'airtable',
+    label: 'Airtable',
+    icon: 'Table',
+    color: 'bg-blue-500',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Airtable database'
+  },
+  trello: {
+    type: 'trello',
+    label: 'Trello',
+    icon: 'Kanban',
+    color: 'bg-blue-700',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Trello boards'
+  },
+  
+  // Core Nodes
+  httpRequest: {
+    type: 'httpRequest',
+    label: 'Requête HTTP',
+    icon: 'Globe',
+    color: 'bg-purple-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+    description: 'Make HTTP requests'
+  },
+  transform: {
+    type: 'transform',
+    label: 'Transformer',
+    icon: 'Shuffle',
+    color: 'bg-yellow-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+    description: 'Transform data'
+  },
+  condition: {
+    type: 'condition',
+    label: 'Condition',
+    icon: 'GitBranch',
+    color: 'bg-red-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 2,
+    description: 'Conditional branching'
+  },
+  code: {
+    type: 'code',
+    label: 'Code JavaScript',
+    icon: 'Code',
+    color: 'bg-pink-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute JavaScript code'
+  },
+  python: {
+    type: 'python',
+    label: 'Code Python',
+    icon: 'FileText',
+    color: 'bg-green-700',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute Python code'
+  },
+
+  // Function nodes (n8n compatible)
+  function: {
+    type: 'function',
+    label: 'Function',
+    icon: 'Zap',
+    color: 'bg-yellow-500',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute simple JavaScript expressions with $json, $items access'
+  },
+  functionItem: {
+    type: 'functionItem',
+    label: 'Function Item',
+    icon: 'Zap',
+    color: 'bg-yellow-600',
+    category: 'core',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute JavaScript for each item individually'
+  },
+
+  // Flow Control
+  merge: {
+    type: 'merge',
+    label: 'Fusion',
+    icon: 'Merge',
+    color: 'bg-teal-500',
+    category: 'flow',
+    inputs: 2,
+    outputs: 1,
+    description: 'Merge multiple inputs'
+  },
+  split: {
+    type: 'split',
+    label: 'Diviser',
+    icon: 'Split',
+    color: 'bg-teal-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+    description: 'Split data flow'
+  },
+  loop: {
+    type: 'loop',
+    label: 'Boucle',
+    icon: 'RotateCcw',
+    color: 'bg-orange-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+    description: 'Loop through items'
+  },
+  forEach: {
+    type: 'forEach',
+    label: 'For Each',
+    icon: 'List',
+    color: 'bg-orange-500',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+    description: 'Iterate over a list of items'
+  },
+  whileLoop: {
+    type: 'whileLoop',
+    label: 'While Loop',
+    icon: 'RepeatIcon',
+    color: 'bg-orange-400',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+    description: 'Loop while condition is true'
+  },
+  switchCase: {
+    type: 'switchCase',
+    label: 'Switch/Case',
+    icon: 'GitBranch',
+    color: 'bg-purple-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 5,
+    description: 'Multi-branch conditional routing'
+  },
+  tryCatch: {
+    type: 'tryCatch',
+    label: 'Try/Catch',
+    icon: 'Shield',
+    color: 'bg-red-500',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+    description: 'Error handling with retry logic',
+    errorHandle: true
+  },
+  delay: {
+    type: 'delay',
+    label: 'Délai',
+    icon: 'Timer',
+    color: 'bg-gray-500',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+    description: 'Add delay'
+  },
+  approval: {
+    type: 'approval',
+    label: 'Wait for Approval',
+    icon: 'CheckCircle',
+    color: 'bg-yellow-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+    description: 'Pause workflow for human approval',
+    errorHandle: false
+  },
+
+  // Data Processing
+  set: {
+    type: 'set',
+    label: 'Set',
+    icon: 'Edit',
+    color: 'bg-blue-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Set or modify data fields'
+  },
+  filter: {
+    type: 'filter',
+    label: 'Filtrer',
+    icon: 'Filter',
+    color: 'bg-purple-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Filter data'
+  },
+  sort: {
+    type: 'sort',
+    label: 'Trier',
+    icon: 'ArrowUpDown',
+    color: 'bg-indigo-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Sort data'
+  },
+  aggregate: {
+    type: 'aggregate',
+    label: 'Aggregate',
+    icon: 'Sigma',
+    color: 'bg-teal-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Group and aggregate data'
+  },
+  limit: {
+    type: 'limit',
+    label: 'Limit',
+    icon: 'Minimize',
+    color: 'bg-gray-600',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Limit number of items'
+  },
+  etl: {
+    type: 'etl',
+    label: 'ETL Pipeline',
+    icon: 'Database',
+    color: 'bg-orange-700',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Extract, transform and load data'
+  },
+
+  // SaaS Platforms
+  salesforce: {
+    type: 'salesforce',
+    label: 'Salesforce',
+    icon: 'Cloud',
+    color: 'bg-blue-600',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Salesforce CRM integration'
+  },
+  hubspot: {
+    type: 'hubspot',
+    label: 'HubSpot',
+    icon: 'Users',
+    color: 'bg-orange-500',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'HubSpot CRM integration'
+  },
+  monday: {
+    type: 'monday',
+    label: 'Monday.com',
+    icon: 'CalendarClock',
+    color: 'bg-teal-500',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Monday.com project management'
+  },
+  asana: {
+    type: 'asana',
+    label: 'Asana',
+    icon: 'ListTodo',
+    color: 'bg-orange-400',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Asana project management',
+  },
+  clickup: {
+    type: 'clickup',
+    label: 'ClickUp',
+    icon: 'CheckSquare',
+    color: 'bg-purple-500',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'ClickUp project management',
+  },
+  pipedrive: {
+    type: 'pipedrive',
+    label: 'Pipedrive',
+    icon: 'Handshake',
+    color: 'bg-green-600',
+    category: 'saas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Pipedrive CRM integration'
+  },
+  zendesk: {
+    type: 'zendesk',
+    label: 'Zendesk',
+    icon: 'MessageSquare',
+    color: 'bg-green-700',
+    category: 'support',
+    inputs: 1,
+    outputs: 1,
+    description: 'Zendesk support platform'
+  },
+  intercom: {
+    type: 'intercom',
+    label: 'Intercom',
+    icon: 'MessageCircle',
+    color: 'bg-blue-500',
+    category: 'support',
+    inputs: 1,
+    outputs: 1,
+    description: 'Intercom customer messaging'
+  },
+  
+  // Social Media
+  facebook: {
+    type: 'facebook',
+    label: 'Facebook',
+    icon: 'Facebook',
+    color: 'bg-blue-700',
+    category: 'social',
+    inputs: 1,
+    outputs: 1,
+    description: 'Facebook social platform'
+  },
+  instagram: {
+    type: 'instagram',
+    label: 'Instagram',
+    icon: 'Camera',
+    color: 'bg-pink-500',
+    category: 'social',
+    inputs: 1,
+    outputs: 1,
+    description: 'Instagram social platform'
+  },
+  linkedin: {
+    type: 'linkedin',
+    label: 'LinkedIn',
+    icon: 'Linkedin',
+    color: 'bg-blue-800',
+    category: 'social',
+    inputs: 1,
+    outputs: 1,
+    description: 'LinkedIn professional network'
+  },
+  twitter: {
+    type: 'twitter',
+    label: 'Twitter/X',
+    icon: 'Twitter',
+    color: 'bg-black',
+    category: 'social',
+    inputs: 1,
+    outputs: 1,
+    description: 'Twitter/X social platform'
+  },
+  youtube: {
+    type: 'youtube',
+    label: 'YouTube',
+    icon: 'Youtube',
+    color: 'bg-red-600',
+    category: 'social',
+    inputs: 1,
+    outputs: 1,
+    description: 'YouTube video platform'
+  },
+  
+  // Marketing & Email
+  mailchimp: {
+    type: 'mailchimp',
+    label: 'Mailchimp',
+    icon: 'Mail',
+    color: 'bg-yellow-500',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'Mailchimp email marketing'
+  },
+  sendgrid: {
+    type: 'sendgrid',
+    label: 'SendGrid',
+    icon: 'Send',
+    color: 'bg-blue-600',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'SendGrid email service'
+  },
+  convertkit: {
+    type: 'convertkit',
+    label: 'ConvertKit',
+    icon: 'Mail',
+    color: 'bg-pink-500',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'ConvertKit email marketing'
+  },
+  
+  // File Storage
+  dropbox: {
+    type: 'dropbox',
+    label: 'Dropbox',
+    icon: 'Cloud',
+    color: 'bg-blue-500',
+    category: 'storage',
+    inputs: 1,
+    outputs: 1,
+    description: 'Dropbox cloud storage'
+  },
+  onedrive: {
+    type: 'onedrive',
+    label: 'OneDrive',
+    icon: 'HardDrive',
+    color: 'bg-blue-600',
+    category: 'storage',
+    inputs: 1,
+    outputs: 1,
+    description: 'Microsoft OneDrive'
+  },
+  box: {
+    type: 'box',
+    label: 'Box',
+    icon: 'Package',
+    color: 'bg-blue-700',
+    category: 'storage',
+    inputs: 1,
+    outputs: 1,
+    description: 'Box cloud storage'
+  },
+  
+  // Advanced Triggers
+  fileWatcher: {
+    type: 'fileWatcher',
+    label: 'File Watcher',
+    icon: 'Eye',
+    color: 'bg-purple-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Watch file system changes'
+  },
+  databaseTrigger: {
+    type: 'databaseTrigger',
+    label: 'Database Trigger',
+    icon: 'Database',
+    color: 'bg-green-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Database change trigger'
+  },
+  emailTrigger: {
+    type: 'emailTrigger',
+    label: 'Email Trigger',
+    icon: 'MailOpen',
+    color: 'bg-red-500',
+    category: 'trigger',
+    inputs: 0,
+    outputs: 1,
+    description: 'Monitor email inbox'
+  },
+  
+  // Advanced Flow Control
+  subWorkflow: {
+    type: 'subWorkflow',
+    label: 'Sub-workflow',
+    icon: 'Workflow',
+    color: 'bg-purple-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute sub-workflow'
+  },
+  errorWorkflow: {
+    type: 'errorWorkflow',
+    label: 'Error Workflow',
+    icon: 'AlertTriangle',
+    color: 'bg-red-600',
+    category: 'flow',
+    inputs: 1,
+    outputs: 1,
+    description: 'Error handling workflow'
+  },
+  retry: {
+    type: 'retry',
+    label: 'Retry',
+    icon: 'RotateCcw',
+    color: 'bg-orange-500',
+    category: 'flow',
+    inputs: 1,
+    outputs: 2,
+    description: 'Retry failed operations'
+  },
+  
+  errorGenerator: {
+    type: 'errorGenerator',
+    label: 'Error Generator',
+    icon: 'AlertTriangle',
+    color: 'bg-red-500',
+    category: 'dev',
+    inputs: 1,
+    outputs: 1,
+    description: 'Generate an error for testing',
+  },
+  // Data Processing
+  jsonParser: {
+    type: 'jsonParser',
+    label: 'JSON Parser',
+    icon: 'Braces',
+    color: 'bg-indigo-500',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Parse and manipulate JSON'
+  },
+  csvParser: {
+    type: 'csvParser',
+    label: 'CSV Parser',
+    icon: 'FileText',
+    color: 'bg-green-500',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Parse CSV files'
+  },
+  xmlParser: {
+    type: 'xmlParser',
+    label: 'XML Parser',
+    icon: 'Code',
+    color: 'bg-blue-500',
+    category: 'data',
+    inputs: 1,
+    outputs: 1,
+    description: 'Parse XML documents'
+  },
+  
+  // Analytics
+  googleAnalytics: {
+    type: 'googleAnalytics',
+    label: 'Google Analytics',
+    icon: 'BarChart3',
+    color: 'bg-orange-500',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Analytics integration'
+  },
+  mixpanel: {
+    type: 'mixpanel',
+    label: 'Mixpanel',
+    icon: 'TrendingUp',
+    color: 'bg-purple-600',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Mixpanel analytics'
+  },
+
+  // Crypto & Finance
+  coinbase: {
+    type: 'coinbase',
+    label: 'Coinbase',
+    icon: 'DollarSign',
+    color: 'bg-blue-600',
+    category: 'crypto',
+    inputs: 1,
+    outputs: 1,
+    description: 'Coinbase cryptocurrency'
+  },
+  binance: {
+    type: 'binance',
+    label: 'Binance',
+    icon: 'TrendingUp',
+    color: 'bg-yellow-500',
+    category: 'crypto',
+    inputs: 1,
+    outputs: 1,
+    description: 'Binance exchange'
+  },
+  
+  // Microsoft Ecosystem
+  excel365: {
+    type: 'excel365',
+    label: 'Microsoft Excel 365',
+    icon: 'FileSpreadsheet',
+    color: 'bg-green-700',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Excel 365 spreadsheet operations'
+  },
+  sharepoint: {
+    type: 'sharepoint',
+    label: 'Microsoft SharePoint',
+    icon: 'Folders',
+    color: 'bg-blue-800',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'SharePoint document management'
+  },
+  powerbi: {
+    type: 'powerbi',
+    label: 'Microsoft Power BI',
+    icon: 'BarChart3',
+    color: 'bg-yellow-600',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Power BI analytics and reporting'
+  },
+  dynamics365: {
+    type: 'dynamics365',
+    label: 'Microsoft Dynamics 365',
+    icon: 'Building2',
+    color: 'bg-blue-700',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Dynamics 365 CRM/ERP'
+  },
+  powerAutomate: {
+    type: 'powerAutomate',
+    label: 'Microsoft Power Automate',
+    icon: 'Workflow',
+    color: 'bg-purple-700',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Power Automate workflow integration'
+  },
+  outlook: {
+    type: 'outlook',
+    label: 'Microsoft Outlook',
+    icon: 'Mail',
+    color: 'bg-blue-600',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Outlook email and calendar'
+  },
+  planner: {
+    type: 'planner',
+    label: 'Microsoft Planner',
+    icon: 'ListChecks',
+    color: 'bg-purple-600',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Microsoft Planner project management'
+  },
+  word365: {
+    type: 'word365',
+    label: 'Microsoft Word 365',
+    icon: 'FileText',
+    color: 'bg-blue-700',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Word 365 document automation'
+  },
+  azureAI: {
+    type: 'azureAI',
+    label: 'Azure OpenAI',
+    icon: 'Brain',
+    color: 'bg-blue-800',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Azure OpenAI services'
+  },
+  azureDevOps: {
+    type: 'azureDevOps',
+    label: 'Azure DevOps',
+    icon: 'GitMerge',
+    color: 'bg-blue-900',
+    category: 'microsoft',
+    inputs: 1,
+    outputs: 1,
+    description: 'Azure DevOps integration'
+  },
+  
+  // Enterprise Databases
+  oracle: {
+    type: 'oracle',
+    label: 'Oracle Database',
+    icon: 'Database',
+    color: 'bg-red-700',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Oracle database operations'
+  },
+  sqlserver: {
+    type: 'sqlserver',
+    label: 'Microsoft SQL Server',
+    icon: 'Database',
+    color: 'bg-blue-800',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'SQL Server database operations'
+  },
+  snowflake: {
+    type: 'snowflake',
+    label: 'Snowflake',
+    icon: 'Snowflake',
+    color: 'bg-cyan-600',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Snowflake cloud data warehouse'
+  },
+  bigquery: {
+    type: 'bigquery',
+    label: 'Google BigQuery',
+    icon: 'Database',
+    color: 'bg-blue-600',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'BigQuery analytics database'
+  },
+  elasticsearch: {
+    type: 'elasticsearch',
+    label: 'Elasticsearch',
+    icon: 'Search',
+    color: 'bg-yellow-500',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Elasticsearch search and analytics'
+  },
+  amazonRDS: {
+    type: 'amazonRDS',
+    label: 'Amazon RDS',
+    icon: 'Database',
+    color: 'bg-orange-600',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Amazon RDS managed databases'
+  },
+  cassandra: {
+    type: 'cassandra',
+    label: 'Apache Cassandra',
+    icon: 'Database',
+    color: 'bg-gray-700',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Cassandra NoSQL database'
+  },
+  
+  // AI/ML Advanced
+  pinecone: {
+    type: 'pinecone',
+    label: 'Pinecone',
+    icon: 'Cpu',
+    color: 'bg-green-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Pinecone vector database'
+  },
+  weaviate: {
+    type: 'weaviate',
+    label: 'Weaviate',
+    icon: 'Network',
+    color: 'bg-orange-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Weaviate vector search'
+  },
+  chroma: {
+    type: 'chroma',
+    label: 'Chroma',
+    icon: 'Database',
+    color: 'bg-purple-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Chroma vector store'
+  },
+  langchain: {
+    type: 'langchain',
+    label: 'LangChain',
+    icon: 'Link',
+    color: 'bg-blue-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'LangChain AI orchestration'
+  },
+  vertexAI: {
+    type: 'vertexAI',
+    label: 'Google Vertex AI',
+    icon: 'Brain',
+    color: 'bg-blue-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Vertex AI platform'
+  },
+  bedrock: {
+    type: 'bedrock',
+    label: 'Amazon Bedrock',
+    icon: 'Bot',
+    color: 'bg-orange-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Amazon Bedrock AI models'
+  },
+  huggingface: {
+    type: 'huggingface',
+    label: 'Hugging Face',
+    icon: 'Smile',
+    color: 'bg-yellow-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Hugging Face AI models'
+  },
+  cohere: {
+    type: 'cohere',
+    label: 'Cohere',
+    icon: 'MessageSquare',
+    color: 'bg-purple-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Cohere AI language models'
+  },
+  
+  // E-commerce Extended
+  woocommerce: {
+    type: 'woocommerce',
+    label: 'WooCommerce',
+    icon: 'ShoppingCart',
+    color: 'bg-purple-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'WooCommerce WordPress integration'
+  },
+  magento: {
+    type: 'magento',
+    label: 'Magento',
+    icon: 'Store',
+    color: 'bg-orange-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Magento e-commerce platform'
+  },
+  bigcommerce: {
+    type: 'bigcommerce',
+    label: 'BigCommerce',
+    icon: 'ShoppingBag',
+    color: 'bg-blue-700',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'BigCommerce e-commerce'
+  },
+  amazonSeller: {
+    type: 'amazonSeller',
+    label: 'Amazon Seller',
+    icon: 'Package',
+    color: 'bg-orange-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Amazon Seller Central'
+  },
+  ebay: {
+    type: 'ebay',
+    label: 'eBay',
+    icon: 'Gavel',
+    color: 'bg-red-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'eBay marketplace integration'
+  },
+  etsy: {
+    type: 'etsy',
+    label: 'Etsy',
+    icon: 'Heart',
+    color: 'bg-orange-500',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Etsy marketplace integration'
+  },
+  square: {
+    type: 'square',
+    label: 'Square',
+    icon: 'Square',
+    color: 'bg-gray-800',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Square payment processing'
+  },
+  
+  // Marketing Automation
+  marketo: {
+    type: 'marketo',
+    label: 'Marketo',
+    icon: 'Target',
+    color: 'bg-purple-700',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'Marketo marketing automation'
+  },
+  activecampaign: {
+    type: 'activecampaign',
+    label: 'ActiveCampaign',
+    icon: 'Zap',
+    color: 'bg-blue-600',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'ActiveCampaign automation'
+  },
+  pardot: {
+    type: 'pardot',
+    label: 'Pardot',
+    icon: 'TrendingUp',
+    color: 'bg-orange-600',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'Pardot B2B marketing'
+  },
+  constantcontact: {
+    type: 'constantcontact',
+    label: 'Constant Contact',
+    icon: 'Mail',
+    color: 'bg-blue-700',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'Constant Contact email marketing'
+  },
+  campaignmonitor: {
+    type: 'campaignmonitor',
+    label: 'Campaign Monitor',
+    icon: 'BarChart',
+    color: 'bg-red-600',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'Campaign Monitor email'
+  },
+  klaviyo: {
+    type: 'klaviyo',
+    label: 'Klaviyo',
+    icon: 'ShoppingBag',
+    color: 'bg-purple-600',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'Klaviyo e-commerce marketing'
+  },
+  brevo: {
+    type: 'brevo',
+    label: 'Brevo (Sendinblue)',
+    icon: 'Send',
+    color: 'bg-blue-600',
+    category: 'marketing',
+    inputs: 1,
+    outputs: 1,
+    description: 'Brevo marketing platform'
+  },
+  
+  // Communication Advanced
+  zoom: {
+    type: 'zoom',
+    label: 'Zoom',
+    icon: 'Video',
+    color: 'bg-blue-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Zoom video conferencing'
+  },
+  googlemeet: {
+    type: 'googlemeet',
+    label: 'Google Meet',
+    icon: 'VideoConference',
+    color: 'bg-green-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Meet video calls'
+  },
+  webex: {
+    type: 'webex',
+    label: 'Cisco Webex',
+    icon: 'Users',
+    color: 'bg-blue-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Webex video conferencing'
+  },
+  rocketchat: {
+    type: 'rocketchat',
+    label: 'Rocket.Chat',
+    icon: 'Rocket',
+    color: 'bg-red-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Rocket.Chat team messaging'
+  },
+  mattermost: {
+    type: 'mattermost',
+    label: 'Mattermost',
+    icon: 'MessageSquare',
+    color: 'bg-blue-800',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Mattermost team collaboration'
+  },
+  signal: {
+    type: 'signal',
+    label: 'Signal',
+    icon: 'Shield',
+    color: 'bg-blue-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Signal secure messaging'
+  },
+  
+  // Analytics Extended
+  adobeAnalytics: {
+    type: 'adobeAnalytics',
+    label: 'Adobe Analytics',
+    icon: 'LineChart',
+    color: 'bg-red-600',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Adobe Analytics integration'
+  },
+  amplitude: {
+    type: 'amplitude',
+    label: 'Amplitude',
+    icon: 'Activity',
+    color: 'bg-purple-600',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Amplitude product analytics'
+  },
+  segment: {
+    type: 'segment',
+    label: 'Segment',
+    icon: 'GitBranch',
+    color: 'bg-green-600',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Segment customer data platform'
+  },
+  hotjar: {
+    type: 'hotjar',
+    label: 'Hotjar',
+    icon: 'MousePointer',
+    color: 'bg-red-500',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Hotjar user behavior analytics'
+  },
+  tableau: {
+    type: 'tableau',
+    label: 'Tableau',
+    icon: 'BarChart2',
+    color: 'bg-blue-700',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Tableau data visualization'
+  },
+  looker: {
+    type: 'looker',
+    label: 'Looker',
+    icon: 'Eye',
+    color: 'bg-purple-700',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Looker business intelligence'
+  },
+  datadog: {
+    type: 'datadog',
+    label: 'Datadog',
+    icon: 'Activity',
+    color: 'bg-purple-600',
+    category: 'analytics',
+    inputs: 1,
+    outputs: 1,
+    description: 'Datadog monitoring and analytics'
+  },
+  
+  // CRM Extended
+  zohocrm: {
+    type: 'zohocrm',
+    label: 'Zoho CRM',
+    icon: 'Users',
+    color: 'bg-red-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Zoho CRM platform'
+  },
+  freshsales: {
+    type: 'freshsales',
+    label: 'Freshsales',
+    icon: 'UserCheck',
+    color: 'bg-green-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Freshsales CRM'
+  },
+  copper: {
+    type: 'copper',
+    label: 'Copper',
+    icon: 'Users',
+    color: 'bg-orange-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Copper CRM for Google Workspace'
+  },
+  close: {
+    type: 'close',
+    label: 'Close',
+    icon: 'Phone',
+    color: 'bg-blue-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Close sales CRM'
+  },
+  
+  // DevOps Extended
+  jenkins: {
+    type: 'jenkins',
+    label: 'Jenkins',
+    icon: 'Settings',
+    color: 'bg-red-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Jenkins CI/CD automation'
+  },
+  bitbucket: {
+    type: 'bitbucket',
+    label: 'Bitbucket',
+    icon: 'GitBranch',
+    color: 'bg-blue-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Bitbucket repository management'
+  },
+  circleci: {
+    type: 'circleci',
+    label: 'CircleCI',
+    icon: 'Circle',
+    color: 'bg-gray-800',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'CircleCI continuous integration'
+  },
+  dockerhub: {
+    type: 'dockerhub',
+    label: 'Docker Hub',
+    icon: 'Package',
+    color: 'bg-blue-600',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Docker Hub registry'
+  },
+  kubernetes: {
+    type: 'kubernetes',
+    label: 'Kubernetes',
+    icon: 'Anchor',
+    color: 'bg-blue-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Kubernetes orchestration'
+  },
+  terraform: {
+    type: 'terraform',
+    label: 'Terraform',
+    icon: 'Layers',
+    color: 'bg-purple-600',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Terraform infrastructure as code'
+  },
+  ansible: {
+    type: 'ansible',
+    label: 'Ansible',
+    icon: 'Terminal',
+    color: 'bg-red-600',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Ansible automation'
+  },
+  
+  // Project Management Extended
+  smartsheet: {
+    type: 'smartsheet',
+    label: 'Smartsheet',
+    icon: 'Grid',
+    color: 'bg-blue-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Smartsheet work management'
+  },
+  wrike: {
+    type: 'wrike',
+    label: 'Wrike',
+    icon: 'Folder',
+    color: 'bg-green-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Wrike project management'
+  },
+  basecamp: {
+    type: 'basecamp',
+    label: 'Basecamp',
+    icon: 'Mountain',
+    color: 'bg-red-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Basecamp project collaboration'
+  },
+  microsoftproject: {
+    type: 'microsoftproject',
+    label: 'Microsoft Project',
+    icon: 'Gantt',
+    color: 'bg-green-700',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Microsoft Project management'
+  },
+  
+  // Customer Support Extended
+  freshdesk: {
+    type: 'freshdesk',
+    label: 'Freshdesk',
+    icon: 'Headphones',
+    color: 'bg-green-600',
+    category: 'support',
+    inputs: 1,
+    outputs: 1,
+    description: 'Freshdesk support platform'
+  },
+  servicenow: {
+    type: 'servicenow',
+    label: 'ServiceNow',
+    icon: 'Settings',
+    color: 'bg-blue-800',
+    category: 'support',
+    inputs: 1,
+    outputs: 1,
+    description: 'ServiceNow IT service management'
+  },
+  atlassianservice: {
+    type: 'atlassianservice',
+    label: 'Atlassian Service Desk',
+    icon: 'HelpCircle',
+    color: 'bg-blue-700',
+    category: 'support',
+    inputs: 1,
+    outputs: 1,
+    description: 'Atlassian service management'
+  },
+  helpscout: {
+    type: 'helpscout',
+    label: 'Help Scout',
+    icon: 'LifeBuoy',
+    color: 'bg-blue-600',
+    category: 'support',
+    inputs: 1,
+    outputs: 1,
+    description: 'Help Scout customer support'
+  },
+  crisp: {
+    type: 'crisp',
+    label: 'Crisp',
+    icon: 'MessageCircle',
+    color: 'bg-purple-600',
+    category: 'support',
+    inputs: 1,
+    outputs: 1,
+    description: 'Crisp customer messaging'
+  },
+
+  // ========================================
+  // 🆕 NOUVELLES INTÉGRATIONS - PHASE 1
+  // ========================================
+
+  // Accounting & Finance (4)
+  quickbooks: {
+    type: 'quickbooks',
+    label: 'QuickBooks Online',
+    icon: 'DollarSign',
+    color: 'bg-green-600',
+    category: 'accounting',
+    inputs: 1,
+    outputs: 1,
+    description: 'QuickBooks accounting and invoicing'
+  },
+  xero: {
+    type: 'xero',
+    label: 'Xero',
+    icon: 'Calculator',
+    color: 'bg-blue-500',
+    category: 'accounting',
+    inputs: 1,
+    outputs: 1,
+    description: 'Xero accounting software'
+  },
+  freshbooks: {
+    type: 'freshbooks',
+    label: 'FreshBooks',
+    icon: 'FileText',
+    color: 'bg-orange-500',
+    category: 'accounting',
+    inputs: 1,
+    outputs: 1,
+    description: 'FreshBooks invoicing and time tracking'
+  },
+  wave: {
+    type: 'wave',
+    label: 'Wave',
+    icon: 'TrendingUp',
+    color: 'bg-teal-500',
+    category: 'accounting',
+    inputs: 1,
+    outputs: 1,
+    description: 'Wave accounting software'
+  },
+
+  // E-Signature (3)
+  docusign: {
+    type: 'docusign',
+    label: 'DocuSign',
+    icon: 'Edit',
+    color: 'bg-yellow-500',
+    category: 'signature',
+    inputs: 1,
+    outputs: 1,
+    description: 'DocuSign electronic signature'
+  },
+  hellosign: {
+    type: 'hellosign',
+    label: 'HelloSign',
+    icon: 'PenTool',
+    color: 'bg-blue-700',
+    category: 'signature',
+    inputs: 1,
+    outputs: 1,
+    description: 'HelloSign/Dropbox Sign'
+  },
+  pandadoc: {
+    type: 'pandadoc',
+    label: 'PandaDoc',
+    icon: 'FileSignature',
+    color: 'bg-purple-500',
+    category: 'signature',
+    inputs: 1,
+    outputs: 1,
+    description: 'PandaDoc document automation'
+  },
+
+  // Forms & Surveys (3)
+  typeform: {
+    type: 'typeform',
+    label: 'Typeform',
+    icon: 'List',
+    color: 'bg-gray-800',
+    category: 'forms',
+    inputs: 1,
+    outputs: 1,
+    description: 'Typeform online forms'
+  },
+  jotform: {
+    type: 'jotform',
+    label: 'JotForm',
+    icon: 'Clipboard',
+    color: 'bg-orange-600',
+    category: 'forms',
+    inputs: 1,
+    outputs: 1,
+    description: 'JotForm form builder'
+  },
+  surveymonkey: {
+    type: 'surveymonkey',
+    label: 'SurveyMonkey',
+    icon: 'BarChart',
+    color: 'bg-green-500',
+    category: 'forms',
+    inputs: 1,
+    outputs: 1,
+    description: 'SurveyMonkey online surveys'
+  },
+
+  // Scheduling (2)
+  calendly: {
+    type: 'calendly',
+    label: 'Calendly',
+    icon: 'Calendar',
+    color: 'bg-blue-600',
+    category: 'scheduling',
+    inputs: 1,
+    outputs: 1,
+    description: 'Calendly meeting scheduling'
+  },
+  calcom: {
+    type: 'calcom',
+    label: 'Cal.com',
+    icon: 'CalendarCheck',
+    color: 'bg-indigo-600',
+    category: 'scheduling',
+    inputs: 1,
+    outputs: 1,
+    description: 'Cal.com open source scheduling'
+  },
+
+  // Backend as Service (4)
+  supabase: {
+    type: 'supabase',
+    label: 'Supabase',
+    icon: 'Database',
+    color: 'bg-green-600',
+    category: 'baas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Supabase backend platform'
+  },
+  firebase: {
+    type: 'firebase',
+    label: 'Firebase',
+    icon: 'Flame',
+    color: 'bg-yellow-600',
+    category: 'baas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Firebase backend services'
+  },
+  hasura: {
+    type: 'hasura',
+    label: 'Hasura',
+    icon: 'Zap',
+    color: 'bg-blue-400',
+    category: 'baas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Hasura GraphQL engine'
+  },
+  strapiCMS: {
+    type: 'strapiCMS',
+    label: 'Strapi',
+    icon: 'Layout',
+    color: 'bg-purple-700',
+    category: 'baas',
+    inputs: 1,
+    outputs: 1,
+    description: 'Strapi headless CMS'
+  },
+
+  // Advanced Databases (4)
+  kafka: {
+    type: 'kafka',
+    label: 'Apache Kafka',
+    icon: 'Layers',
+    color: 'bg-gray-900',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Apache Kafka event streaming'
+  },
+  clickhouse: {
+    type: 'clickhouse',
+    label: 'ClickHouse',
+    icon: 'Database',
+    color: 'bg-yellow-500',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'ClickHouse analytics database'
+  },
+  databricks: {
+    type: 'databricks',
+    label: 'Databricks',
+    icon: 'Cpu',
+    color: 'bg-red-600',
+    category: 'database',
+    inputs: 1,
+    outputs: 1,
+    description: 'Databricks data platform'
+  },
+
+  // Code Execution (2)
+  pythonCode: {
+    type: 'pythonCode',
+    label: 'Python Code',
+    icon: 'Code',
+    color: 'bg-blue-600',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute Python code'
+  },
+  javaCode: {
+    type: 'javaCode',
+    label: 'Java Code',
+    icon: 'Coffee',
+    color: 'bg-orange-600',
+    category: 'development',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute Java code'
+  },
+
+  // Multi-Model AI
+  multiModelAI: {
+    type: 'multiModelAI',
+    label: 'Multi-Model AI',
+    icon: 'Brain',
+    color: 'bg-purple-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'AI with multiple providers (GPT, Claude, Gemini)'
+  },
+
+  // ========================================
+  // 🆕 LANGCHAIN AI NODES - PHASE 3
+  // ========================================
+
+  // LangChain Core Nodes
+  llmChain: {
+    type: 'llmChain',
+    label: 'LLM Chain',
+    icon: 'Link',
+    color: 'bg-indigo-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'LangChain LLM chain for text generation'
+  },
+  promptTemplate: {
+    type: 'promptTemplate',
+    label: 'Prompt Template',
+    icon: 'FileText',
+    color: 'bg-blue-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Dynamic prompt template with variables'
+  },
+  chatPromptTemplate: {
+    type: 'chatPromptTemplate',
+    label: 'Chat Prompt Template',
+    icon: 'MessageSquare',
+    color: 'bg-green-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Chat-based prompt template'
+  },
+
+  // Document Processing
+  documentLoader: {
+    type: 'documentLoader',
+    label: 'Document Loader',
+    icon: 'FileInput',
+    color: 'bg-purple-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Load documents from various sources (PDF, txt, web)'
+  },
+  textSplitter: {
+    type: 'textSplitter',
+    label: 'Text Splitter',
+    icon: 'Split',
+    color: 'bg-yellow-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Split text into chunks for processing'
+  },
+  documentTransformer: {
+    type: 'documentTransformer',
+    label: 'Document Transformer',
+    icon: 'Shuffle',
+    color: 'bg-orange-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Transform and enrich documents'
+  },
+
+  // Embeddings & Vector Store
+  embeddings: {
+    type: 'embeddings',
+    label: 'Text Embeddings',
+    icon: 'Binary',
+    color: 'bg-cyan-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Generate text embeddings (OpenAI, Cohere, HuggingFace)'
+  },
+  vectorStore: {
+    type: 'vectorStore',
+    label: 'Vector Store',
+    icon: 'Database',
+    color: 'bg-teal-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Store and query vector embeddings'
+  },
+  vectorStoreRetriever: {
+    type: 'vectorStoreRetriever',
+    label: 'Vector Retriever',
+    icon: 'Search',
+    color: 'bg-emerald-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Retrieve relevant documents from vector store'
+  },
+
+  // Memory
+  conversationMemory: {
+    type: 'conversationMemory',
+    label: 'Conversation Memory',
+    icon: 'Brain',
+    color: 'bg-pink-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Maintain conversation history'
+  },
+  bufferMemory: {
+    type: 'bufferMemory',
+    label: 'Buffer Memory',
+    icon: 'History',
+    color: 'bg-rose-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Simple conversation buffer memory'
+  },
+  summaryMemory: {
+    type: 'summaryMemory',
+    label: 'Summary Memory',
+    icon: 'FileText',
+    color: 'bg-fuchsia-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Summarize conversation history'
+  },
+
+  // Agents & Tools
+  aiAgent: {
+    type: 'aiAgent',
+    label: 'AI Agent',
+    icon: 'Bot',
+    color: 'bg-violet-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'LangChain agent with tool usage'
+  },
+  agentExecutor: {
+    type: 'agentExecutor',
+    label: 'Agent Executor',
+    icon: 'Play',
+    color: 'bg-purple-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Execute agent with tools'
+  },
+  customTool: {
+    type: 'customTool',
+    label: 'Custom Tool',
+    icon: 'Wrench',
+    color: 'bg-gray-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Define custom tool for agent'
+  },
+
+  // Chains
+  ragChain: {
+    type: 'ragChain',
+    label: 'RAG Chain',
+    icon: 'GitMerge',
+    color: 'bg-indigo-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Retrieval Augmented Generation chain'
+  },
+  stuffDocumentsChain: {
+    type: 'stuffDocumentsChain',
+    label: 'Stuff Documents Chain',
+    icon: 'Files',
+    color: 'bg-blue-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Chain to stuff documents into prompt'
+  },
+  mapReduceChain: {
+    type: 'mapReduceChain',
+    label: 'Map Reduce Chain',
+    icon: 'GitBranch',
+    color: 'bg-green-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Map-reduce over documents'
+  },
+  refineChain: {
+    type: 'refineChain',
+    label: 'Refine Chain',
+    icon: 'RefreshCcw',
+    color: 'bg-yellow-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Iteratively refine output'
+  },
+
+  // Output Parsers
+  structuredOutputParser: {
+    type: 'structuredOutputParser',
+    label: 'Structured Output Parser',
+    icon: 'Braces',
+    color: 'bg-amber-600',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Parse LLM output into structured format'
+  },
+  jsonOutputParser: {
+    type: 'jsonOutputParser',
+    label: 'JSON Output Parser',
+    icon: 'Code',
+    color: 'bg-orange-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Parse LLM output as JSON'
+  },
+
+  // Specialized Chains
+  summarizationChain: {
+    type: 'summarizationChain',
+    label: 'Summarization Chain',
+    icon: 'FileText',
+    color: 'bg-teal-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Summarize long documents'
+  },
+  qaChain: {
+    type: 'qaChain',
+    label: 'Q&A Chain',
+    icon: 'HelpCircle',
+    color: 'bg-cyan-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Question answering over documents'
+  },
+  conversationalChain: {
+    type: 'conversationalChain',
+    label: 'Conversational Chain',
+    icon: 'MessageCircle',
+    color: 'bg-sky-700',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Conversational chain with memory'
+  },
+  translationChain: {
+    type: 'translationChain',
+    label: 'Translation Chain',
+    icon: 'Languages',
+    color: 'bg-blue-800',
+    category: 'langchain',
+    inputs: 1,
+    outputs: 1,
+    description: 'Translate text between languages'
+  },
+
+  // Vector Database Integrations
+  pineconeVectorStore: {
+    type: 'pineconeVectorStore',
+    label: 'Pinecone Vector Store',
+    icon: 'Database',
+    color: 'bg-green-700',
+    category: 'vectordb',
+    inputs: 1,
+    outputs: 1,
+    description: 'Pinecone vector database operations'
+  },
+  chromaVectorStore: {
+    type: 'chromaVectorStore',
+    label: 'Chroma Vector Store',
+    icon: 'Database',
+    color: 'bg-purple-700',
+    category: 'vectordb',
+    inputs: 1,
+    outputs: 1,
+    description: 'Chroma vector database operations'
+  },
+  weaviateVectorStore: {
+    type: 'weaviateVectorStore',
+    label: 'Weaviate Vector Store',
+    icon: 'Network',
+    color: 'bg-orange-700',
+    category: 'vectordb',
+    inputs: 1,
+    outputs: 1,
+    description: 'Weaviate vector search operations'
+  },
+  qdrantVectorStore: {
+    type: 'qdrantVectorStore',
+    label: 'Qdrant Vector Store',
+    icon: 'Database',
+    color: 'bg-red-700',
+    category: 'vectordb',
+    inputs: 1,
+    outputs: 1,
+    description: 'Qdrant vector database'
+  },
+  faissVectorStore: {
+    type: 'faissVectorStore',
+    label: 'FAISS Vector Store',
+    icon: 'Cpu',
+    color: 'bg-blue-800',
+    category: 'vectordb',
+    inputs: 1,
+    outputs: 1,
+    description: 'Facebook AI Similarity Search (FAISS)'
+  },
+
+  // ========================================
+  // 🆕 AGENT 17: NODE LIBRARY EXPANSION (80+ NEW NODES)
+  // ========================================
+
+  // AI & ML (15 nodes)
+  stabilityAI: {
+    type: 'stabilityAI',
+    label: 'Stability AI',
+    icon: 'Image',
+    color: 'bg-purple-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Stability AI image generation (Stable Diffusion)'
+  },
+  replicate: {
+    type: 'replicate',
+    label: 'Replicate',
+    icon: 'Zap',
+    color: 'bg-green-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Run ML models via Replicate API'
+  },
+  claudeVision: {
+    type: 'claudeVision',
+    label: 'Claude Vision',
+    icon: 'Eye',
+    color: 'bg-amber-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Anthropic Claude vision capabilities'
+  },
+  gpt4Vision: {
+    type: 'gpt4Vision',
+    label: 'GPT-4 Vision',
+    icon: 'Camera',
+    color: 'bg-gray-800',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'OpenAI GPT-4 Vision image understanding'
+  },
+  googleAI: {
+    type: 'googleAI',
+    label: 'Google AI (PaLM/Gemini)',
+    icon: 'Brain',
+    color: 'bg-blue-500',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google AI models (PaLM, Gemini)'
+  },
+  ai21Labs: {
+    type: 'ai21Labs',
+    label: 'AI21 Labs',
+    icon: 'MessageSquare',
+    color: 'bg-indigo-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'AI21 Jurassic language models'
+  },
+  midjourney: {
+    type: 'midjourney',
+    label: 'Midjourney',
+    icon: 'Palette',
+    color: 'bg-pink-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Midjourney AI image generation'
+  },
+  dalle: {
+    type: 'dalle',
+    label: 'DALL-E',
+    icon: 'Image',
+    color: 'bg-green-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'OpenAI DALL-E image generation'
+  },
+  whisper: {
+    type: 'whisper',
+    label: 'Whisper AI',
+    icon: 'Mic',
+    color: 'bg-blue-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'OpenAI Whisper audio transcription'
+  },
+  elevenlabs: {
+    type: 'elevenlabs',
+    label: 'ElevenLabs',
+    icon: 'Volume2',
+    color: 'bg-purple-700',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'ElevenLabs text-to-speech'
+  },
+  azureOpenAI: {
+    type: 'azureOpenAI',
+    label: 'Azure OpenAI',
+    icon: 'Brain',
+    color: 'bg-blue-800',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Azure OpenAI Service (GPT-4, embeddings)'
+  },
+  googleGemini: {
+    type: 'googleGemini',
+    label: 'Google Gemini',
+    icon: 'Sparkles',
+    color: 'bg-blue-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Gemini multimodal AI'
+  },
+  anthropicClaude3: {
+    type: 'anthropicClaude3',
+    label: 'Claude 3',
+    icon: 'Cpu',
+    color: 'bg-orange-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Anthropic Claude 3 (Opus/Sonnet/Haiku)'
+  },
+  openaiEmbeddings: {
+    type: 'openaiEmbeddings',
+    label: 'OpenAI Embeddings',
+    icon: 'Binary',
+    color: 'bg-teal-600',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Generate text embeddings with OpenAI'
+  },
+  cohereEmbed: {
+    type: 'cohereEmbed',
+    label: 'Cohere Embeddings',
+    icon: 'Binary',
+    color: 'bg-purple-800',
+    category: 'ai',
+    inputs: 1,
+    outputs: 1,
+    description: 'Cohere text embeddings'
+  },
+
+  // Communication & Messaging (15 nodes)
+  rabbitmq: {
+    type: 'rabbitmq',
+    label: 'RabbitMQ',
+    icon: 'MessageSquare',
+    color: 'bg-orange-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'RabbitMQ message queue'
+  },
+  amazonSQS: {
+    type: 'amazonSQS',
+    label: 'Amazon SQS',
+    icon: 'Queue',
+    color: 'bg-orange-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Amazon Simple Queue Service'
+  },
+  amazonSNS: {
+    type: 'amazonSNS',
+    label: 'Amazon SNS',
+    icon: 'Bell',
+    color: 'bg-orange-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Amazon Simple Notification Service'
+  },
+  googlePubSub: {
+    type: 'googlePubSub',
+    label: 'Google Pub/Sub',
+    icon: 'Radio',
+    color: 'bg-blue-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Google Cloud Pub/Sub messaging'
+  },
+  azureServiceBus: {
+    type: 'azureServiceBus',
+    label: 'Azure Service Bus',
+    icon: 'Bus',
+    color: 'bg-blue-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Azure Service Bus enterprise messaging'
+  },
+  twilioSendGrid: {
+    type: 'twilioSendGrid',
+    label: 'Twilio SendGrid',
+    icon: 'Send',
+    color: 'bg-blue-500',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'SendGrid transactional email'
+  },
+  postmark: {
+    type: 'postmark',
+    label: 'Postmark',
+    icon: 'Mail',
+    color: 'bg-yellow-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Postmark transactional email'
+  },
+  mailgunEmail: {
+    type: 'mailgunEmail',
+    label: 'Mailgun Email',
+    icon: 'Mail',
+    color: 'bg-red-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Mailgun email API'
+  },
+  discordBot: {
+    type: 'discordBot',
+    label: 'Discord Bot',
+    icon: 'Bot',
+    color: 'bg-indigo-700',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Discord bot integration'
+  },
+  mattermostChat: {
+    type: 'mattermostChat',
+    label: 'Mattermost',
+    icon: 'MessageSquare',
+    color: 'bg-blue-800',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Mattermost team chat'
+  },
+  rocketChat: {
+    type: 'rocketChat',
+    label: 'Rocket.Chat',
+    icon: 'Rocket',
+    color: 'bg-red-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Rocket.Chat messaging platform'
+  },
+  signalMessenger: {
+    type: 'signalMessenger',
+    label: 'Signal Messenger',
+    icon: 'Shield',
+    color: 'bg-blue-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Signal secure messaging'
+  },
+  whatsappBusiness: {
+    type: 'whatsappBusiness',
+    label: 'WhatsApp Business',
+    icon: 'MessageCircle',
+    color: 'bg-green-600',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'WhatsApp Business API'
+  },
+  telegramBot: {
+    type: 'telegramBot',
+    label: 'Telegram Bot',
+    icon: 'Send',
+    color: 'bg-blue-500',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Telegram Bot API'
+  },
+  apacheKafka: {
+    type: 'apacheKafka',
+    label: 'Apache Kafka',
+    icon: 'Layers',
+    color: 'bg-gray-900',
+    category: 'communication',
+    inputs: 1,
+    outputs: 1,
+    description: 'Apache Kafka event streaming'
+  },
+
+  // CRM & Sales (10 nodes)
+  hubspotCRM: {
+    type: 'hubspotCRM',
+    label: 'HubSpot CRM',
+    icon: 'Users',
+    color: 'bg-orange-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'HubSpot CRM (deals, contacts, companies)'
+  },
+  pipedriveCRM: {
+    type: 'pipedriveCRM',
+    label: 'Pipedrive CRM',
+    icon: 'Handshake',
+    color: 'bg-green-700',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Pipedrive sales CRM'
+  },
+  salesforceCRM: {
+    type: 'salesforceCRM',
+    label: 'Salesforce CRM',
+    icon: 'Cloud',
+    color: 'bg-blue-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Salesforce CRM (opportunities, campaigns)'
+  },
+  zohoCRM: {
+    type: 'zohoCRM',
+    label: 'Zoho CRM',
+    icon: 'Users',
+    color: 'bg-red-700',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Zoho CRM platform'
+  },
+  freshsalesCRM: {
+    type: 'freshsalesCRM',
+    label: 'Freshsales',
+    icon: 'UserCheck',
+    color: 'bg-green-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Freshsales CRM by Freshworks'
+  },
+  closeCRM: {
+    type: 'closeCRM',
+    label: 'Close CRM',
+    icon: 'Phone',
+    color: 'bg-blue-700',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Close sales CRM'
+  },
+  copperCRM: {
+    type: 'copperCRM',
+    label: 'Copper CRM',
+    icon: 'Users',
+    color: 'bg-orange-700',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Copper CRM for Google Workspace'
+  },
+  insightlyCRM: {
+    type: 'insightlyCRM',
+    label: 'Insightly',
+    icon: 'BarChart',
+    color: 'bg-purple-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Insightly CRM and project management'
+  },
+  nimbleCRM: {
+    type: 'nimbleCRM',
+    label: 'Nimble CRM',
+    icon: 'Users',
+    color: 'bg-blue-500',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'Nimble social CRM'
+  },
+  sugarCRM: {
+    type: 'sugarCRM',
+    label: 'SugarCRM',
+    icon: 'Briefcase',
+    color: 'bg-red-600',
+    category: 'crm',
+    inputs: 1,
+    outputs: 1,
+    description: 'SugarCRM platform'
+  },
+
+  // E-commerce (10 nodes)
+  shopifyStore: {
+    type: 'shopifyStore',
+    label: 'Shopify Store',
+    icon: 'ShoppingBag',
+    color: 'bg-green-800',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Shopify (products, orders, customers)'
+  },
+  wooCommerceStore: {
+    type: 'wooCommerceStore',
+    label: 'WooCommerce',
+    icon: 'ShoppingCart',
+    color: 'bg-purple-700',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'WooCommerce (variations, coupons)'
+  },
+  magentoStore: {
+    type: 'magentoStore',
+    label: 'Magento',
+    icon: 'Store',
+    color: 'bg-orange-700',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Magento e-commerce platform'
+  },
+  bigCommerceStore: {
+    type: 'bigCommerceStore',
+    label: 'BigCommerce',
+    icon: 'ShoppingBag',
+    color: 'bg-blue-800',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'BigCommerce catalog and orders'
+  },
+  prestashop: {
+    type: 'prestashop',
+    label: 'PrestaShop',
+    icon: 'Store',
+    color: 'bg-pink-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'PrestaShop e-commerce'
+  },
+  opencart: {
+    type: 'opencart',
+    label: 'OpenCart',
+    icon: 'ShoppingCart',
+    color: 'bg-blue-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'OpenCart platform'
+  },
+  ecwid: {
+    type: 'ecwid',
+    label: 'Ecwid',
+    icon: 'Store',
+    color: 'bg-orange-600',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Ecwid store management'
+  },
+  squareCommerce: {
+    type: 'squareCommerce',
+    label: 'Square Commerce',
+    icon: 'Square',
+    color: 'bg-gray-800',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Square payments and catalog'
+  },
+  chargebee: {
+    type: 'chargebee',
+    label: 'Chargebee',
+    icon: 'CreditCard',
+    color: 'bg-orange-500',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Chargebee subscription billing'
+  },
+  recurly: {
+    type: 'recurly',
+    label: 'Recurly',
+    icon: 'RefreshCw',
+    color: 'bg-blue-700',
+    category: 'ecommerce',
+    inputs: 1,
+    outputs: 1,
+    description: 'Recurly recurring billing'
+  },
+
+  // Finance & Payments (10 nodes)
+  stripePayments: {
+    type: 'stripePayments',
+    label: 'Stripe Payments',
+    icon: 'CreditCard',
+    color: 'bg-purple-700',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Stripe (subscriptions, invoices)'
+  },
+  paypalPayments: {
+    type: 'paypalPayments',
+    label: 'PayPal Payments',
+    icon: 'DollarSign',
+    color: 'bg-blue-700',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'PayPal (payouts, disputes)'
+  },
+  braintree: {
+    type: 'braintree',
+    label: 'Braintree',
+    icon: 'CreditCard',
+    color: 'bg-blue-800',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Braintree payment processing'
+  },
+  adyen: {
+    type: 'adyen',
+    label: 'Adyen',
+    icon: 'CreditCard',
+    color: 'bg-green-700',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Adyen payment platform'
+  },
+  squarePayments: {
+    type: 'squarePayments',
+    label: 'Square Payments',
+    icon: 'Square',
+    color: 'bg-gray-900',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Square payment transactions'
+  },
+  klarna: {
+    type: 'klarna',
+    label: 'Klarna',
+    icon: 'ShoppingBag',
+    color: 'bg-pink-600',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Klarna buy now pay later'
+  },
+  plaid: {
+    type: 'plaid',
+    label: 'Plaid',
+    icon: 'Building',
+    color: 'bg-gray-800',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Plaid banking data API'
+  },
+  dwolla: {
+    type: 'dwolla',
+    label: 'Dwolla',
+    icon: 'ArrowRightLeft',
+    color: 'bg-orange-600',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Dwolla ACH transfers'
+  },
+  mollie: {
+    type: 'mollie',
+    label: 'Mollie',
+    icon: 'CreditCard',
+    color: 'bg-blue-600',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: 'Mollie European payments'
+  },
+  twocheckout: {
+    type: 'twocheckout',
+    label: '2Checkout',
+    icon: 'Globe',
+    color: 'bg-green-600',
+    category: 'finance',
+    inputs: 1,
+    outputs: 1,
+    description: '2Checkout global payments'
+  },
+
+  // Productivity & Project Management (10 nodes)
+  notionDatabase: {
+    type: 'notionDatabase',
+    label: 'Notion Database',
+    icon: 'Database',
+    color: 'bg-gray-700',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Notion (databases, pages)'
+  },
+  airtableBase: {
+    type: 'airtableBase',
+    label: 'Airtable Base',
+    icon: 'Table',
+    color: 'bg-yellow-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Airtable (attachments, formulas)'
+  },
+  mondayBoards: {
+    type: 'mondayBoards',
+    label: 'Monday.com Boards',
+    icon: 'Kanban',
+    color: 'bg-red-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Monday.com (boards, items)'
+  },
+  clickupTasks: {
+    type: 'clickupTasks',
+    label: 'ClickUp Tasks',
+    icon: 'CheckSquare',
+    color: 'bg-purple-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'ClickUp (tasks, lists)'
+  },
+  basecampProject: {
+    type: 'basecampProject',
+    label: 'Basecamp',
+    icon: 'Mountain',
+    color: 'bg-green-700',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Basecamp (projects, todos)'
+  },
+  wrikeProject: {
+    type: 'wrikeProject',
+    label: 'Wrike',
+    icon: 'Folder',
+    color: 'bg-green-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Wrike (folders, tasks)'
+  },
+  smartsheetGrid: {
+    type: 'smartsheetGrid',
+    label: 'Smartsheet',
+    icon: 'Grid',
+    color: 'bg-blue-700',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Smartsheet (sheets, rows)'
+  },
+  codaDocs: {
+    type: 'codaDocs',
+    label: 'Coda',
+    icon: 'FileText',
+    color: 'bg-orange-600',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Coda (docs, tables)'
+  },
+  fiberyApp: {
+    type: 'fiberyApp',
+    label: 'Fibery',
+    icon: 'Network',
+    color: 'bg-purple-700',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Fibery (entities, types)'
+  },
+  heightApp: {
+    type: 'heightApp',
+    label: 'Height',
+    icon: 'ListTodo',
+    color: 'bg-gray-800',
+    category: 'productivity',
+    inputs: 1,
+    outputs: 1,
+    description: 'Height (tasks, lists)'
+  },
+
+  // Developer Tools & DevOps (10 nodes)
+  githubAdvanced: {
+    type: 'githubAdvanced',
+    label: 'GitHub Advanced',
+    icon: 'Github',
+    color: 'bg-gray-900',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'GitHub (releases, deployments)'
+  },
+  gitlabAdvanced: {
+    type: 'gitlabAdvanced',
+    label: 'GitLab Advanced',
+    icon: 'GitBranch',
+    color: 'bg-orange-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'GitLab (pipelines, merge requests)'
+  },
+  bitbucketRepo: {
+    type: 'bitbucketRepo',
+    label: 'Bitbucket',
+    icon: 'GitBranch',
+    color: 'bg-blue-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Bitbucket (repos, pull requests)'
+  },
+  jenkinsCI: {
+    type: 'jenkinsCI',
+    label: 'Jenkins CI',
+    icon: 'Settings',
+    color: 'bg-red-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Jenkins (jobs, builds)'
+  },
+  circleCIBuild: {
+    type: 'circleCIBuild',
+    label: 'CircleCI',
+    icon: 'Circle',
+    color: 'bg-gray-800',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'CircleCI (pipelines, workflows)'
+  },
+  travisCI: {
+    type: 'travisCI',
+    label: 'Travis CI',
+    icon: 'Box',
+    color: 'bg-yellow-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Travis CI builds'
+  },
+  azureDevOpsCI: {
+    type: 'azureDevOpsCI',
+    label: 'Azure DevOps',
+    icon: 'Cloud',
+    color: 'bg-blue-800',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Azure DevOps (repos, pipelines)'
+  },
+  jiraAdvanced: {
+    type: 'jiraAdvanced',
+    label: 'Jira Advanced',
+    icon: 'Bug',
+    color: 'bg-blue-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Jira (sprints, epics)'
+  },
+  linearAdvanced: {
+    type: 'linearAdvanced',
+    label: 'Linear Advanced',
+    icon: 'Kanban',
+    color: 'bg-purple-700',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Linear (projects, cycles)'
+  },
+  sentryMonitoring: {
+    type: 'sentryMonitoring',
+    label: 'Sentry',
+    icon: 'AlertTriangle',
+    color: 'bg-purple-800',
+    category: 'devops',
+    inputs: 1,
+    outputs: 1,
+    description: 'Sentry (error tracking, releases)'
+  },
+
+  // ========================================
+  // AGENT 19: Complete Node Library Expansion (120+ nodes)
+  // Database & Data Warehouses
+  // ========================================
+
+  redshift: { type: 'redshift', label: 'Amazon Redshift', icon: 'Database', color: 'bg-red-600', category: 'database', inputs: 1, outputs: 1, description: 'AWS data warehouse' },
+  timescaledb: { type: 'timescaledb', label: 'TimescaleDB', icon: 'Database', color: 'bg-green-600', category: 'database', inputs: 1, outputs: 1, description: 'Time-series DB' },
+  influxdb: { type: 'influxdb', label: 'InfluxDB', icon: 'Database', color: 'bg-purple-600', category: 'database', inputs: 1, outputs: 1, description: 'Time-series DB' },
+  prometheus: { type: 'prometheus', label: 'Prometheus', icon: 'Activity', color: 'bg-orange-600', category: 'database', inputs: 1, outputs: 1, description: 'Metrics monitoring' },
+  neo4j: { type: 'neo4j', label: 'Neo4j', icon: 'Network', color: 'bg-green-600', category: 'database', inputs: 1, outputs: 1, description: 'Graph database' },
+  arangodb: { type: 'arangodb', label: 'ArangoDB', icon: 'Database', color: 'bg-purple-600', category: 'database', inputs: 1, outputs: 1, description: 'Multi-model DB' },
+  cockroachdb: { type: 'cockroachdb', label: 'CockroachDB', icon: 'Database', color: 'bg-blue-600', category: 'database', inputs: 1, outputs: 1, description: 'Distributed SQL' },
+  scylladb: { type: 'scylladb', label: 'ScyllaDB', icon: 'Database', color: 'bg-teal-600', category: 'database', inputs: 1, outputs: 1, description: 'NoSQL database' },
+  yugabytedb: { type: 'yugabytedb', label: 'YugabyteDB', icon: 'Database', color: 'bg-orange-600', category: 'database', inputs: 1, outputs: 1, description: 'Distributed SQL' },
+  faunadb: { type: 'faunadb', label: 'FaunaDB', icon: 'Database', color: 'bg-violet-600', category: 'database', inputs: 1, outputs: 1, description: 'Serverless DB' },
+  planetscale: { type: 'planetscale', label: 'PlanetScale', icon: 'Database', color: 'bg-black', category: 'database', inputs: 1, outputs: 1, description: 'MySQL serverless' },
+  neon: { type: 'neon', label: 'Neon', icon: 'Database', color: 'bg-green-600', category: 'database', inputs: 1, outputs: 1, description: 'Serverless Postgres' },
+  cloudspanner: { type: 'cloudspanner', label: 'Cloud Spanner', icon: 'Database', color: 'bg-blue-600', category: 'database', inputs: 1, outputs: 1, description: 'Google distributed SQL' },
+  orientdb: { type: 'orientdb', label: 'OrientDB', icon: 'Database', color: 'bg-pink-600', category: 'database', inputs: 1, outputs: 1, description: 'Multi-model DB' },
+  vectorstore: { type: 'vectorstore', label: 'Vector Store', icon: 'Brain', color: 'bg-purple-600', category: 'vectordb', inputs: 1, outputs: 1, description: 'Vector embeddings' },
+  graphqldatabase: { type: 'graphqldatabase', label: 'GraphQL DB', icon: 'Share2', color: 'bg-pink-600', category: 'database', inputs: 1, outputs: 1, description: 'GraphQL database' },
+  surrealdb: { type: 'surrealdb', label: 'SurrealDB', icon: 'Database', color: 'bg-cyan-600', category: 'database', inputs: 1, outputs: 1, description: 'Multi-model DB' },
+
+  // Marketing & SEO (15 nodes)
+  semrush: { type: 'semrush', label: 'Semrush', icon: 'TrendingUp', color: 'bg-blue-600', category: 'marketing', inputs: 1, outputs: 1, description: 'SEO analytics' },
+  ahrefs: { type: 'ahrefs', label: 'Ahrefs', icon: 'TrendingUp', color: 'bg-orange-600', category: 'marketing', inputs: 1, outputs: 1, description: 'SEO toolset' },
+  moz: { type: 'moz', label: 'Moz', icon: 'TrendingUp', color: 'bg-indigo-600', category: 'marketing', inputs: 1, outputs: 1, description: 'SEO software' },
+  googlesearchconsole: { type: 'googlesearchconsole', label: 'Google Search Console', icon: 'Search', color: 'bg-blue-600', category: 'marketing', inputs: 1, outputs: 1, description: 'Search performance' },
+  googletagmanager: { type: 'googletagmanager', label: 'Google Tag Manager', icon: 'Tag', color: 'bg-green-600', category: 'marketing', inputs: 1, outputs: 1, description: 'Tag management' },
+  linkedinads: { type: 'linkedinads', label: 'LinkedIn Ads', icon: 'Linkedin', color: 'bg-blue-700', category: 'marketing', inputs: 1, outputs: 1, description: 'LinkedIn advertising' },
+  twitterads: { type: 'twitterads', label: 'Twitter Ads', icon: 'Twitter', color: 'bg-sky-500', category: 'marketing', inputs: 1, outputs: 1, description: 'Twitter advertising' },
+  tiktokads: { type: 'tiktokads', label: 'TikTok Ads', icon: 'Video', color: 'bg-pink-600', category: 'marketing', inputs: 1, outputs: 1, description: 'TikTok advertising' },
+  pinterestads: { type: 'pinterestads', label: 'Pinterest Ads', icon: 'Image', color: 'bg-red-600', category: 'marketing', inputs: 1, outputs: 1, description: 'Pinterest advertising' },
+  bingwebmaster: { type: 'bingwebmaster', label: 'Bing Webmaster', icon: 'Search', color: 'bg-teal-600', category: 'marketing', inputs: 1, outputs: 1, description: 'Bing SEO tools' },
+  ga4: { type: 'ga4', label: 'Google Analytics 4', icon: 'BarChart', color: 'bg-orange-600', category: 'analytics', inputs: 1, outputs: 1, description: 'GA4 analytics' },
+  mailerlite: { type: 'mailerlite', label: 'MailerLite', icon: 'Mail', color: 'bg-emerald-600', category: 'marketing', inputs: 1, outputs: 1, description: 'Email marketing' },
+  getresponse: { type: 'getresponse', label: 'GetResponse', icon: 'Mail', color: 'bg-blue-700', category: 'marketing', inputs: 1, outputs: 1, description: 'Email marketing' },
+
+  // Accounting & ERP (10 nodes)
+  sage: { type: 'sage', label: 'Sage', icon: 'FileText', color: 'bg-green-600', category: 'accounting', inputs: 1, outputs: 1, description: 'Accounting software' },
+  netsuite: { type: 'netsuite', label: 'NetSuite', icon: 'Briefcase', color: 'bg-orange-600', category: 'accounting', inputs: 1, outputs: 1, description: 'ERP system' },
+  sap: { type: 'sap', label: 'SAP', icon: 'Layers', color: 'bg-blue-600', category: 'accounting', inputs: 1, outputs: 1, description: 'Enterprise software' },
+  oracleerp: { type: 'oracleerp', label: 'Oracle ERP', icon: 'Database', color: 'bg-red-600', category: 'accounting', inputs: 1, outputs: 1, description: 'Oracle ERP Cloud' },
+  odoo: { type: 'odoo', label: 'Odoo', icon: 'Package', color: 'bg-purple-600', category: 'accounting', inputs: 1, outputs: 1, description: 'Open-source ERP' },
+  microsoftdynamics: { type: 'microsoftdynamics', label: 'Microsoft Dynamics', icon: 'Grid', color: 'bg-blue-700', category: 'accounting', inputs: 1, outputs: 1, description: 'Business applications' },
+  zohobooks: { type: 'zohobooks', label: 'Zoho Books', icon: 'Book', color: 'bg-orange-600', category: 'accounting', inputs: 1, outputs: 1, description: 'Accounting software' },
+  zohoinventory: { type: 'zohoinventory', label: 'Zoho Inventory', icon: 'Package', color: 'bg-orange-600', category: 'accounting', inputs: 1, outputs: 1, description: 'Inventory management' },
+  bill: { type: 'bill', label: 'Bill.com', icon: 'DollarSign', color: 'bg-cyan-600', category: 'accounting', inputs: 1, outputs: 1, description: 'AP/AR automation' },
+  expensify: { type: 'expensify', label: 'Expensify', icon: 'Receipt', color: 'bg-green-600', category: 'accounting', inputs: 1, outputs: 1, description: 'Expense management' },
+
+  // Video & Media (10 nodes)
+  vimeo: { type: 'vimeo', label: 'Vimeo', icon: 'Video', color: 'bg-blue-600', category: 'media', inputs: 1, outputs: 1, description: 'Video hosting' },
+  twitch: { type: 'twitch', label: 'Twitch', icon: 'Twitch', color: 'bg-purple-600', category: 'media', inputs: 1, outputs: 1, description: 'Live streaming' },
+  streamyard: { type: 'streamyard', label: 'StreamYard', icon: 'Radio', color: 'bg-green-600', category: 'media', inputs: 1, outputs: 1, description: 'Live streaming studio' },
+  cloudinary: { type: 'cloudinary', label: 'Cloudinary', icon: 'Cloud', color: 'bg-blue-600', category: 'media', inputs: 1, outputs: 1, description: 'Media management' },
+  imgix: { type: 'imgix', label: 'Imgix', icon: 'Image', color: 'bg-orange-600', category: 'media', inputs: 1, outputs: 1, description: 'Image processing' },
+  imagekit: { type: 'imagekit', label: 'ImageKit', icon: 'Image', color: 'bg-purple-600', category: 'media', inputs: 1, outputs: 1, description: 'Image CDN' },
+  mux: { type: 'mux', label: 'Mux', icon: 'Film', color: 'bg-pink-600', category: 'media', inputs: 1, outputs: 1, description: 'Video infrastructure' },
+  wistia: { type: 'wistia', label: 'Wistia', icon: 'Video', color: 'bg-blue-600', category: 'media', inputs: 1, outputs: 1, description: 'Video marketing' },
+  vidyard: { type: 'vidyard', label: 'Vidyard', icon: 'Video', color: 'bg-green-600', category: 'media', inputs: 1, outputs: 1, description: 'Video platform' },
+
+  // Cloud Services (15 nodes)
+  awsec2: { type: 'awsec2', label: 'AWS EC2', icon: 'Server', color: 'bg-orange-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Cloud compute' },
+  awscloudwatch: { type: 'awscloudwatch', label: 'AWS CloudWatch', icon: 'Activity', color: 'bg-orange-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Monitoring service' },
+  googlecloudfunctions: { type: 'googlecloudfunctions', label: 'Cloud Functions', icon: 'Zap', color: 'bg-blue-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Serverless functions' },
+  googlecloudrun: { type: 'googlecloudrun', label: 'Cloud Run', icon: 'Play', color: 'bg-blue-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Container platform' },
+  azurefunctions: { type: 'azurefunctions', label: 'Azure Functions', icon: 'Zap', color: 'bg-blue-700', category: 'cloud', inputs: 1, outputs: 1, description: 'Serverless compute' },
+  azureappservice: { type: 'azureappservice', label: 'Azure App Service', icon: 'Globe', color: 'bg-blue-700', category: 'cloud', inputs: 1, outputs: 1, description: 'Web apps' },
+  vercel: { type: 'vercel', label: 'Vercel', icon: 'Triangle', color: 'bg-black', category: 'cloud', inputs: 1, outputs: 1, description: 'Frontend cloud' },
+  netlify: { type: 'netlify', label: 'Netlify', icon: 'Globe', color: 'bg-teal-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Web platform' },
+  digitalocean: { type: 'digitalocean', label: 'DigitalOcean', icon: 'Droplet', color: 'bg-blue-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Cloud infrastructure' },
+  linode: { type: 'linode', label: 'Linode', icon: 'Server', color: 'bg-green-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Cloud platform' },
+  vultr: { type: 'vultr', label: 'Vultr', icon: 'Cloud', color: 'bg-blue-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Cloud compute' },
+  cloudflareworkers: { type: 'cloudflareworkers', label: 'Cloudflare Workers', icon: 'Zap', color: 'bg-orange-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Edge computing' },
+  heroku: { type: 'heroku', label: 'Heroku', icon: 'Box', color: 'bg-purple-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Cloud platform' },
+  render: { type: 'render', label: 'Render', icon: 'Box', color: 'bg-purple-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Cloud platform' },
+  flyio: { type: 'flyio', label: 'Fly.io', icon: 'Plane', color: 'bg-purple-600', category: 'cloud', inputs: 1, outputs: 1, description: 'Edge platform' },
+
+  // IoT & Hardware (10 nodes)
+  arduino: { type: 'arduino', label: 'Arduino', icon: 'Cpu', color: 'bg-teal-600', category: 'iot', inputs: 1, outputs: 1, description: 'Hardware platform' },
+  raspberrypi: { type: 'raspberrypi', label: 'Raspberry Pi', icon: 'Cpu', color: 'bg-red-600', category: 'iot', inputs: 1, outputs: 1, description: 'Single-board computer' },
+  particle: { type: 'particle', label: 'Particle', icon: 'Wifi', color: 'bg-blue-600', category: 'iot', inputs: 1, outputs: 1, description: 'IoT platform' },
+  adafruitio: { type: 'adafruitio', label: 'Adafruit IO', icon: 'Cpu', color: 'bg-black', category: 'iot', inputs: 1, outputs: 1, description: 'IoT platform' },
+  thingspeak: { type: 'thingspeak', label: 'ThingSpeak', icon: 'Radio', color: 'bg-blue-600', category: 'iot', inputs: 1, outputs: 1, description: 'IoT analytics' },
+  losant: { type: 'losant', label: 'Losant', icon: 'Wifi', color: 'bg-orange-600', category: 'iot', inputs: 1, outputs: 1, description: 'IoT platform' },
+  awsiot: { type: 'awsiot', label: 'AWS IoT', icon: 'Wifi', color: 'bg-orange-600', category: 'iot', inputs: 1, outputs: 1, description: 'AWS IoT Core' },
+  azureiothub: { type: 'azureiothub', label: 'Azure IoT Hub', icon: 'Wifi', color: 'bg-blue-700', category: 'iot', inputs: 1, outputs: 1, description: 'IoT messaging' },
+  googlecloudiot: { type: 'googlecloudiot', label: 'Google Cloud IoT', icon: 'Wifi', color: 'bg-blue-600', category: 'iot', inputs: 1, outputs: 1, description: 'IoT Core' },
+  ubidots: { type: 'ubidots', label: 'Ubidots', icon: 'Activity', color: 'bg-green-600', category: 'iot', inputs: 1, outputs: 1, description: 'IoT platform' },
+
+  // Blockchain & Crypto (10 nodes)
+  ethereum: { type: 'ethereum', label: 'Ethereum', icon: 'Hexagon', color: 'bg-purple-600', category: 'crypto', inputs: 1, outputs: 1, description: 'Blockchain platform' },
+  bitcoin: { type: 'bitcoin', label: 'Bitcoin', icon: 'Bitcoin', color: 'bg-orange-600', category: 'crypto', inputs: 1, outputs: 1, description: 'Cryptocurrency' },
+  polygon: { type: 'polygon', label: 'Polygon', icon: 'Triangle', color: 'bg-purple-600', category: 'crypto', inputs: 1, outputs: 1, description: 'Layer 2 scaling' },
+  solana: { type: 'solana', label: 'Solana', icon: 'Zap', color: 'bg-purple-600', category: 'crypto', inputs: 1, outputs: 1, description: 'Blockchain platform' },
+  avalanche: { type: 'avalanche', label: 'Avalanche', icon: 'Mountain', color: 'bg-red-600', category: 'crypto', inputs: 1, outputs: 1, description: 'Blockchain platform' },
+  bsc: { type: 'bsc', label: 'Binance Smart Chain', icon: 'Link', color: 'bg-yellow-500', category: 'crypto', inputs: 1, outputs: 1, description: 'BSC network' },
+  kraken: { type: 'kraken', label: 'Kraken', icon: 'TrendingUp', color: 'bg-purple-600', category: 'crypto', inputs: 1, outputs: 1, description: 'Crypto exchange' },
+  metamask: { type: 'metamask', label: 'MetaMask', icon: 'Wallet', color: 'bg-orange-600', category: 'crypto', inputs: 1, outputs: 1, description: 'Crypto wallet' },
+
+  // Miscellaneous Utilities (15 nodes)
+  rssreader: { type: 'rssreader', label: 'RSS Reader', icon: 'Rss', color: 'bg-orange-600', category: 'data', inputs: 1, outputs: 1, description: 'RSS feed parser' },
+  xmlparserv2: { type: 'xmlparserv2', label: 'XML Parser', icon: 'Code', color: 'bg-green-600', category: 'data', inputs: 1, outputs: 1, description: 'Parse XML data' },
+  jsonparserv2: { type: 'jsonparserv2', label: 'JSON Parser', icon: 'Braces', color: 'bg-blue-600', category: 'data', inputs: 1, outputs: 1, description: 'Parse JSON data' },
+  csvparserv2: { type: 'csvparserv2', label: 'CSV Parser', icon: 'Table', color: 'bg-teal-600', category: 'data', inputs: 1, outputs: 1, description: 'Parse CSV data' },
+  excelreader: { type: 'excelreader', label: 'Excel Reader', icon: 'FileSpreadsheet', color: 'bg-green-600', category: 'data', inputs: 1, outputs: 1, description: 'Read Excel files' },
+  excelwriter: { type: 'excelwriter', label: 'Excel Writer', icon: 'FileSpreadsheet', color: 'bg-green-600', category: 'data', inputs: 1, outputs: 1, description: 'Write Excel files' },
+  pdfgenerator: { type: 'pdfgenerator', label: 'PDF Generator', icon: 'FileText', color: 'bg-red-600', category: 'data', inputs: 1, outputs: 1, description: 'Generate PDF files' },
+  pdfreader: { type: 'pdfreader', label: 'PDF Reader', icon: 'FileText', color: 'bg-red-600', category: 'data', inputs: 1, outputs: 1, description: 'Extract PDF text' },
+  imageprocessing: { type: 'imageprocessing', label: 'Image Processing', icon: 'Image', color: 'bg-purple-600', category: 'data', inputs: 1, outputs: 1, description: 'Process images' },
+  barcodegenerator: { type: 'barcodegenerator', label: 'Barcode Generator', icon: 'Barcode', color: 'bg-blue-600', category: 'data', inputs: 1, outputs: 1, description: 'Generate barcodes' },
+  qrcodegenerator: { type: 'qrcodegenerator', label: 'QR Code Generator', icon: 'QrCode', color: 'bg-indigo-600', category: 'data', inputs: 1, outputs: 1, description: 'Generate QR codes' },
+  ocr: { type: 'ocr', label: 'OCR', icon: 'ScanText', color: 'bg-violet-600', category: 'data', inputs: 1, outputs: 1, description: 'Text recognition' },
+  openweather: { type: 'openweather', label: 'OpenWeather', icon: 'Cloud', color: 'bg-blue-600', category: 'data', inputs: 1, outputs: 1, description: 'Weather API' },
+  weatherapi: { type: 'weatherapi', label: 'WeatherAPI', icon: 'CloudRain', color: 'bg-cyan-600', category: 'data', inputs: 1, outputs: 1, description: 'Weather data' },
+  mapbox: { type: 'mapbox', label: 'Mapbox', icon: 'Map', color: 'bg-blue-600', category: 'data', inputs: 1, outputs: 1, description: 'Maps and location' },
+
+  // Customer Service & Support (15 nodes)
+  drift: { type: 'drift', label: 'Drift', icon: 'MessageCircle', color: 'bg-blue-600', category: 'support', inputs: 1, outputs: 1, description: 'Conversational marketing' },
+  front: { type: 'front', label: 'Front', icon: 'Mail', color: 'bg-violet-600', category: 'support', inputs: 1, outputs: 1, description: 'Shared inbox' },
+  gorgias: { type: 'gorgias', label: 'Gorgias', icon: 'Headphones', color: 'bg-purple-600', category: 'support', inputs: 1, outputs: 1, description: 'E-commerce support' },
+  kustomer: { type: 'kustomer', label: 'Kustomer', icon: 'Users', color: 'bg-pink-600', category: 'support', inputs: 1, outputs: 1, description: 'CRM platform' },
+  reamaze: { type: 'reamaze', label: 'Re:amaze', icon: 'Headphones', color: 'bg-teal-600', category: 'support', inputs: 1, outputs: 1, description: 'Customer messaging' },
+  livechat: { type: 'livechat', label: 'LiveChat', icon: 'MessageSquare', color: 'bg-orange-600', category: 'support', inputs: 1, outputs: 1, description: 'Live chat software' },
+  tawkto: { type: 'tawkto', label: 'Tawk.to', icon: 'MessageSquare', color: 'bg-green-600', category: 'support', inputs: 1, outputs: 1, description: 'Free live chat' },
+  tidio: { type: 'tidio', label: 'Tidio', icon: 'MessageCircle', color: 'bg-blue-600', category: 'support', inputs: 1, outputs: 1, description: 'Live chat' },
+  chatwoot: { type: 'chatwoot', label: 'Chatwoot', icon: 'MessageSquare', color: 'bg-emerald-600', category: 'support', inputs: 1, outputs: 1, description: 'Open-source support' },
+  olark: { type: 'olark', label: 'Olark', icon: 'MessageCircle', color: 'bg-amber-600', category: 'support', inputs: 1, outputs: 1, description: 'Live chat' },
+
+  // HR & Recruiting (10 nodes)
+  bamboohr: { type: 'bamboohr', label: 'BambooHR', icon: 'Users', color: 'bg-green-600', category: 'hr', inputs: 1, outputs: 1, description: 'HR management' },
+  workday: { type: 'workday', label: 'Workday', icon: 'Briefcase', color: 'bg-blue-600', category: 'hr', inputs: 1, outputs: 1, description: 'Enterprise HR' },
+  adp: { type: 'adp', label: 'ADP', icon: 'DollarSign', color: 'bg-red-600', category: 'hr', inputs: 1, outputs: 1, description: 'Payroll & HR' },
+  greenhouse: { type: 'greenhouse', label: 'Greenhouse', icon: 'Users', color: 'bg-emerald-600', category: 'hr', inputs: 1, outputs: 1, description: 'Recruiting software' },
+  lever: { type: 'lever', label: 'Lever', icon: 'Users', color: 'bg-purple-600', category: 'hr', inputs: 1, outputs: 1, description: 'Recruiting platform' },
+  ashby: { type: 'ashby', label: 'Ashby', icon: 'Users', color: 'bg-indigo-600', category: 'hr', inputs: 1, outputs: 1, description: 'Recruiting software' },
+  linkedintalent: { type: 'linkedintalent', label: 'LinkedIn Talent', icon: 'Linkedin', color: 'bg-blue-700', category: 'hr', inputs: 1, outputs: 1, description: 'Talent solutions' },
+  indeed: { type: 'indeed', label: 'Indeed', icon: 'Search', color: 'bg-blue-600', category: 'hr', inputs: 1, outputs: 1, description: 'Job platform' },
+  gusto: { type: 'gusto', label: 'Gusto', icon: 'DollarSign', color: 'bg-orange-600', category: 'hr', inputs: 1, outputs: 1, description: 'Payroll platform' },
+  rippling: { type: 'rippling', label: 'Rippling', icon: 'Users', color: 'bg-violet-600', category: 'hr', inputs: 1, outputs: 1, description: 'HR & IT platform' },
+};
+
+export const nodeCategories = {
+  trigger: { name: '⚡ Déclencheurs', icon: '⚡' },
+  core: { name: '🔧 Core', icon: '🔧' },
+  communication: { name: '💬 Communication', icon: '💬' },
+  database: { name: '🗄️ Base de données', icon: '🗄️' },
+  google: { name: '🔷 Google', icon: '🔷' },
+  microsoft: { name: '🪟 Microsoft', icon: '🪟' },
+  cloud: { name: '☁️ Cloud', icon: '☁️' },
+  development: { name: '👨‍💻 Développement', icon: '👨‍💻' },
+  devops: { name: '🔧 DevOps', icon: '🔧' },
+  ecommerce: { name: '🛒 E-commerce', icon: '🛒' },
+  ai: { name: '🤖 Intelligence Artificielle', icon: '🤖' },
+  productivity: { name: '📊 Productivité', icon: '📊' },
+  flow: { name: '🔀 Contrôle de flux', icon: '🔀' },
+  data: { name: '📊 Traitement de données', icon: '📊' },
+  saas: { name: '🏢 SaaS Platforms', icon: '🏢' },
+  social: { name: '📱 Social Media', icon: '📱' },
+  marketing: { name: '📧 Marketing', icon: '📧' },
+  storage: { name: '💾 File Storage', icon: '💾' },
+  support: { name: '🎧 Customer Support', icon: '🎧' },
+  analytics: { name: '📈 Analytics', icon: '📈' },
+  crypto: { name: '₿ Cryptocurrency', icon: '₿' },
+  finance: { name: '💸 Finance', icon: '💸' },
+  crm: { name: '👥 CRM', icon: '👥' },
+  accounting: { name: '📊 Accounting', icon: '📊' },
+  signature: { name: '✍️ E-Signature', icon: '✍️' },
+  forms: { name: '📝 Forms & Surveys', icon: '📝' },
+  scheduling: { name: '📅 Scheduling', icon: '📅' },
+  baas: { name: '🔥 Backend as Service', icon: '🔥' },
+  langchain: { name: '🔗 LangChain AI', icon: '🔗' },
+  vectordb: { name: '🧠 Vector Databases', icon: '🧠' },
+  hr: { name: '👥 Human Resources', icon: '👥' },
+  media: { name: '🎬 Video & Media', icon: '🎬' },
+  iot: { name: '🔌 IoT & Hardware', icon: '🔌' },
+};

@@ -1,0 +1,933 @@
+
+> workflow-automation-platform@2.0.0 build:backend
+> tsc -p tsconfig.build.json
+
+src/backend/api/app.ts(31,8): error TS1192: Module '"/home/patrice/claude/workflow/src/backend/api/routes/workflows"' has no default export.
+src/backend/api/middleware/compression.ts(76,33): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'BufferEncoding'.
+src/backend/api/middleware/compression.ts(88,31): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'BufferEncoding'.
+src/backend/api/repositories/adapters.ts(61,5): error TS2322: Type 'string' is not assignable to type 'WorkflowStatus'.
+src/backend/api/repositories/adapters.ts(80,13): error TS7053: Element implicitly has an 'any' type because expression of type '"userId"' can't be used to index type 'Partial<Workflow>'.
+  Property 'userId' does not exist on type 'Partial<Workflow>'.
+src/backend/api/routes/analytics.ts(51,51): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(63,47): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(75,48): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(90,38): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(96,38): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(104,50): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(124,37): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(143,42): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(148,43): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(154,36): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/analytics.ts(167,49): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(123,24): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(123,53): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(128,30): error TS2554: Expected 0 arguments, but got 2.
+src/backend/api/routes/auth.ts(147,19): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(147,48): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(152,33): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(152,62): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(217,37): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/auth.ts(217,66): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/credentials.ts(16,38): error TS2339: Property 'id' does not exist on type 'Promise<ApiKeyCredential | BasicCredential | BearerCredential | { id: any; name: any; kind: any; createdAt: any; updatedAt: any; }>'.
+src/backend/api/routes/credentials.ts(16,56): error TS2339: Property 'name' does not exist on type 'Promise<ApiKeyCredential | BasicCredential | BearerCredential | { id: any; name: any; kind: any; createdAt: any; updatedAt: any; }>'.
+src/backend/api/routes/credentials.ts(16,76): error TS2339: Property 'kind' does not exist on type 'Promise<ApiKeyCredential | BasicCredential | BearerCredential | { id: any; name: any; kind: any; createdAt: any; updatedAt: any; }>'.
+src/backend/api/routes/credentials.ts(16,101): error TS2339: Property 'createdAt' does not exist on type 'Promise<ApiKeyCredential | BasicCredential | BearerCredential | { id: any; name: any; kind: any; createdAt: any; updatedAt: any; }>'.
+src/backend/api/routes/credentials.ts(16,131): error TS2339: Property 'updatedAt' does not exist on type 'Promise<ApiKeyCredential | BasicCredential | BearerCredential | { id: any; name: any; kind: any; createdAt: any; updatedAt: any; }>'.
+src/backend/api/routes/credentials.ts(22,23): error TS2339: Property 'id' does not exist on type 'Promise<any>'.
+src/backend/api/routes/credentials.ts(22,38): error TS2339: Property 'name' does not exist on type 'Promise<any>'.
+src/backend/api/routes/credentials.ts(22,55): error TS2339: Property 'kind' does not exist on type 'Promise<any>'.
+src/backend/api/routes/credentials.ts(22,77): error TS2339: Property 'createdAt' does not exist on type 'Promise<any>'.
+src/backend/api/routes/credentials.ts(22,104): error TS2339: Property 'updatedAt' does not exist on type 'Promise<any>'.
+src/backend/api/routes/error-workflows.ts(29,7): error TS2322: Type 'string[] | undefined' is not assignable to type 'ErrorType[] | undefined'.
+  Type 'string[]' is not assignable to type 'ErrorType[]'.
+    Type 'string' is not assignable to type 'ErrorType'.
+src/backend/api/routes/error-workflows.ts(30,7): error TS2322: Type 'string[] | undefined' is not assignable to type 'ErrorSeverity[] | undefined'.
+  Type 'string[]' is not assignable to type 'ErrorSeverity[]'.
+    Type 'string' is not assignable to type 'ErrorSeverity'.
+src/backend/api/routes/executions.ts(39,25): error TS2339: Property 'logs' does not exist on type 'Promise<ExecutionRecord | { id: any; workflowId: any; status: string; input: any; output: any; error: any; createdAt: any; startedAt: any; finishedAt: any; durationMs: any; logs: never[]; } | null>'.
+src/backend/api/routes/health.ts(77,51): error TS2339: Property 'catch' does not exist on type '{ memoryCacheSize: number; redisAvailable: boolean; memoryUsage: number; }'.
+src/backend/api/routes/marketplace.ts(188,26): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(188,55): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(205,29): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(205,58): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(217,33): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(217,62): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(229,32): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(229,61): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(242,34): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to parameter of type 'RequestHandlerParams<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+      Type '(req: AuthRequest, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<void>' is not assignable to type 'RequestHandler<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+        Types of parameters 'req' and 'req' are incompatible.
+          Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+            Types of property 'user' are incompatible.
+              Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+                Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/marketplace.ts(242,63): error TS2345: Argument of type '(req: AuthRequest, res: Response<any, Record<string, any>>) => Promise<void>' is not assignable to parameter of type '(req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response<any, Record<string, any>>, next: NextFunction) => Promise<...>'.
+  Types of parameters 'req' and 'req' are incompatible.
+    Type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' is not assignable to type 'AuthRequest'.
+      Types of property 'user' are incompatible.
+        Type 'User | undefined' is not assignable to type '{ id: string; email: string; role: string; permissions: string[]; } | undefined'.
+          Type 'User' is missing the following properties from type '{ id: string; email: string; role: string; permissions: string[]; }': id, email, role, permissions
+src/backend/api/routes/metrics.ts(67,35): error TS2345: Argument of type 'any[]' is not assignable to parameter of type '[chunk: any, encoding: BufferEncoding, cb?: (() => void) | undefined]'.
+  Target requires 2 element(s) but source may have fewer.
+src/backend/api/routes/sso.ts(44,7): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/backend/api/routes/sso.ts(44,12): error TS7006: Parameter 'user' implicitly has an 'any' type.
+src/backend/api/routes/sso.ts(44,18): error TS7006: Parameter 'info' implicitly has an 'any' type.
+src/backend/api/routes/webhooks.ts(72,31): error TS2345: Argument of type 'Promise<Workflow | null>' is not assignable to parameter of type 'Workflow'.
+  Type 'Promise<Workflow | null>' is missing the following properties from type 'Workflow': id, name, status, nodes, and 4 more.
+src/backend/api/routes/workflows.ts(15,16): error TS2304: Cannot find name 'Workflow'.
+src/backend/api/routes/workflows.ts(22,40): error TS2304: Cannot find name 'Workflow'.
+src/backend/api/routes/workflows.ts(25,64): error TS2304: Cannot find name 'Workflow'.
+src/backend/api/routes/workflows.ts(28,75): error TS2304: Cannot find name 'Workflow'.
+src/backend/api/routes/workflows.ts(44,17): error TS2304: Cannot find name 'Execution'.
+src/backend/api/routes/workflows.ts(47,46): error TS2304: Cannot find name 'Workflow'.
+src/backend/api/routes/workflows.ts(60,10): error TS2304: Cannot find name 'WorkflowNode'.
+src/backend/api/routes/workflows.ts(61,10): error TS2304: Cannot find name 'WorkflowEdge'.
+src/backend/api/routes/workflows.ts(69,11): error TS2304: Cannot find name 'WorkflowNode'.
+src/backend/api/routes/workflows.ts(70,11): error TS2304: Cannot find name 'WorkflowEdge'.
+src/backend/api/services/queue.ts(28,29): error TS18047: 'exec' is possibly 'null'.
+src/backend/api/services/queue.ts(32,51): error TS18047: 'exec' is possibly 'null'.
+src/backend/api/services/queue.ts(40,31): error TS18047: 'exec' is possibly 'null'.
+src/backend/api/services/queue.ts(44,31): error TS18047: 'exec' is possibly 'null'.
+src/backend/api/services/scheduler.ts(14,29): error TS2339: Property 'parseExpression' does not exist on type 'typeof CronExpressionParser'.
+src/backend/api/services/scheduler.ts(41,28): error TS2345: Argument of type 'Timer' is not assignable to parameter of type 'string | number | Timeout | undefined'.
+  Type 'Timer' is missing the following properties from type 'Timeout': close, _onTimeout, [Symbol.dispose]
+src/backend/api/services/simpleExecutionService.ts(50,22): error TS2339: Property 'kind' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(51,22): error TS2339: Property 'kind' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(52,22): error TS2339: Property 'kind' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(58,9): error TS18046: 'ctx.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(63,9): error TS18046: 'ctx.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(72,9): error TS18046: 'ctx.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(86,50): error TS18046: 'ctx.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(87,9): error TS18046: 'ctx.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(97,9): error TS18046: 'ctx.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(104,12): error TS18046: 'ctx.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(144,22): error TS2339: Property 'kind' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(144,93): error TS2339: Property 'username' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(144,118): error TS2339: Property 'password' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(145,22): error TS2339: Property 'kind' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(145,92): error TS2339: Property 'token' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(146,22): error TS2339: Property 'kind' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(146,95): error TS2339: Property 'apiKey' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(146,120): error TS2339: Property 'headerName' does not exist on type 'Promise<any>'.
+src/backend/api/services/simpleExecutionService.ts(158,9): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(164,9): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(176,9): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(189,50): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(190,9): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(199,9): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(206,12): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/api/services/simpleExecutionService.ts(212,9): error TS18046: 'context.results' is of type 'unknown'.
+src/backend/audit/AuditService.ts(51,36): error TS1361: 'AuditSeverity' cannot be used as a value because it was imported using 'import type'.
+src/backend/auth/AuthManager.ts(53,23): error TS2304: Cannot find name 'window'.
+src/backend/auth/AuthManager.ts(62,23): error TS2304: Cannot find name 'window'.
+src/backend/auth/AuthManager.ts(71,23): error TS2304: Cannot find name 'window'.
+src/backend/auth/AuthManager.ts(243,7): error TS2322: Type 'AuthTokens | null' is not assignable to type 'AuthTokens'.
+  Type 'null' is not assignable to type 'AuthTokens'.
+src/backend/auth/AuthManager.ts(332,12): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{ admin: string[]; user: string[]; viewer: string[]; }'.
+  No index signature with a parameter of type 'string' was found on type '{ admin: string[]; user: string[]; viewer: string[]; }'.
+src/backend/auth/AuthManager.ts(491,27): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/backend/auth/AuthManager.ts(492,49): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/backend/auth/AuthManager.ts(494,3): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/backend/auth/OAuth2Service.ts(287,25): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(291,22): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(292,23): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(294,16): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(295,20): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(296,18): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(356,25): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(360,22): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(361,23): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(363,16): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(364,20): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(365,18): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(470,13): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(470,24): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(470,36): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(471,16): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(471,30): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(471,56): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(472,15): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(472,28): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(472,48): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(473,18): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(473,34): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/OAuth2Service.ts(473,53): error TS18046: 'data' is of type 'unknown'.
+src/backend/auth/SSOService.ts(131,29): error TS2345: Argument of type 'SSOUser' is not assignable to parameter of type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type 'SSOUser'.
+src/backend/auth/SSOService.ts(189,7): error TS2322: Type 'string | string[]' is not assignable to type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/auth/SSOService.ts(190,7): error TS2322: Type 'string | string[]' is not assignable to type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/auth/SSOService.ts(191,7): error TS2322: Type 'string | string[] | undefined' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/auth/SSOService.ts(192,7): error TS2322: Type 'string | string[] | undefined' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/auth/SSOService.ts(193,7): error TS2322: Type 'string | string[] | undefined' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/credentials/CredentialService.ts(6,34): error TS2459: Module '"../security/EncryptionService"' declares 'EncryptedData' locally, but it is not exported.
+src/backend/credentials/ExternalSecretsManager.ts(353,16): error TS18046: 'data' is of type 'unknown'.
+src/backend/credentials/ExternalSecretsManager.ts(354,18): error TS18046: 'data' is of type 'unknown'.
+src/backend/credentials/ExternalSecretsManager.ts(357,25): error TS18046: 'data' is of type 'unknown'.
+src/backend/credentials/ExternalSecretsManager.ts(359,20): error TS18046: 'data' is of type 'unknown'.
+src/backend/credentials/ExternalSecretsManager.ts(445,14): error TS18046: 'data' is of type 'unknown'.
+src/backend/database/migration-utils.ts(155,9): error TS2322: Type 'null' is not assignable to type '(Without<UserScalarRelationFilter, UserWhereInput> & UserWhereInput) | (Without<UserWhereInput, UserScalarRelationFilter> & UserScalarRelationFilter) | undefined'.
+src/backend/database/migration-utils.ts(167,9): error TS2322: Type 'null' is not assignable to type '(Without<WorkflowScalarRelationFilter, WorkflowWhereInput> & WorkflowWhereInput) | (Without<...> & WorkflowScalarRelationFilter) | undefined'.
+src/backend/database/repositories/CredentialRepository.ts(172,9): error TS2352: Conversion of type 'PrismaPromise<{ type: CredentialType; name: string; id: string; description: string | null; createdAt: Date; updatedAt: Date; userId: string; isActive: boolean; expiresAt: Date | null; lastUsedAt: Date | null; }[]>' to type '{ type: CredentialType; name: string; id: string; description: string | null; createdAt: Date; updatedAt: Date; userId: string; data: string; isActive: boolean; expiresAt: Date | null; lastUsedAt: Date | null; }[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'PrismaPromise<{ type: CredentialType; name: string; id: string; description: string | null; createdAt: Date; updatedAt: Date; userId: string; isActive: boolean; expiresAt: Date | null; lastUsedAt: Date | null; }[]>' is missing the following properties from type '{ type: CredentialType; name: string; id: string; description: string | null; createdAt: Date; updatedAt: Date; userId: string; data: string; isActive: boolean; expiresAt: Date | null; lastUsedAt: Date | null; }[]': length, pop, push, concat, and 35 more.
+src/backend/database/repositories/ExecutionRepository.ts(441,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+src/backend/database/repositories/ExecutionRepository.ts(442,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | NullableJsonNullValueInput | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | NullableJsonNullValueInput | undefined'.
+src/backend/database/repositories/WebhookRepository.ts(336,73): error TS2322: Type 'null' is not assignable to type 'JsonNullableFilter<"WebhookEvent"> | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(210,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+src/backend/database/repositories/WorkflowRepository.ts(211,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+src/backend/database/repositories/WorkflowRepository.ts(212,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(213,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(263,15): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+src/backend/database/repositories/WorkflowRepository.ts(264,15): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+src/backend/database/repositories/WorkflowRepository.ts(265,15): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(266,15): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(322,9): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(323,9): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue'.
+  Type 'null' is not assignable to type 'InputJsonValue'.
+src/backend/database/repositories/WorkflowRepository.ts(324,9): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue'.
+  Type 'null' is not assignable to type 'InputJsonValue'.
+src/backend/database/repositories/WorkflowRepository.ts(327,9): error TS2322: Type 'string | null' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(328,9): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(329,9): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(364,13): error TS2353: Object literal may only specify known properties, and 'workflowId_version' does not exist in type 'WorkflowVersionWhereUniqueInput'.
+src/backend/database/repositories/WorkflowRepository.ts(378,13): error TS2322: Type 'string | null' is not assignable to type 'string | StringFieldUpdateOperationsInput | undefined'.
+  Type 'null' is not assignable to type 'string | StringFieldUpdateOperationsInput | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(380,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(381,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(382,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(383,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(399,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+src/backend/database/repositories/WorkflowRepository.ts(400,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull'.
+src/backend/database/repositories/WorkflowRepository.ts(401,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/WorkflowRepository.ts(402,13): error TS2322: Type 'JsonValue' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+  Type 'null' is not assignable to type 'InputJsonValue | JsonNull | undefined'.
+src/backend/database/repositories/index.ts(62,19): error TS2304: Cannot find name 'userRepository'.
+src/backend/database/repositories/index.ts(63,23): error TS2304: Cannot find name 'workflowRepository'.
+src/backend/database/repositories/index.ts(64,24): error TS2304: Cannot find name 'executionRepository'.
+src/backend/database/repositories/index.ts(65,25): error TS2304: Cannot find name 'credentialRepository'.
+src/backend/database/repositories/index.ts(66,22): error TS2304: Cannot find name 'webhookRepository'.
+src/backend/database/repositories/index.ts(67,24): error TS2304: Cannot find name 'analyticsRepository'.
+src/backend/monitoring/EnhancedLogger.ts(395,33): error TS2339: Property 'id' does not exist on type 'User'.
+src/backend/monitoring/EnhancedLogger.ts(395,49): error TS2339: Property 'userId' does not exist on type 'User'.
+src/backend/monitoring/EnhancedLogger.ts(402,11): error TS2339: Property 'correlationId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+src/backend/monitoring/EnhancedLogger.ts(403,11): error TS2339: Property 'requestId' does not exist on type 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>'.
+src/backend/monitoring/EnhancedLogger.ts(406,9): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/monitoring/EnhancedLogger.ts(407,9): error TS2322: Type 'string | string[]' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/monitoring/EnhancedLogger.ts(409,9): error TS2322: Type 'string | string[] | undefined' is not assignable to type 'string | undefined'.
+  Type 'string[]' is not assignable to type 'string'.
+src/backend/monitoring/HealthCheckSystem.ts(437,41): error TS2307: Cannot find module '../../../services/CacheService' or its corresponding type declarations.
+src/backend/monitoring/OpenTelemetryTracing.ts(88,40): error TS2307: Cannot find module '@opentelemetry/sdk-node' or its corresponding type declarations.
+src/backend/monitoring/OpenTelemetryTracing.ts(97,60): error TS2307: Cannot find module '@opentelemetry/auto-instrumentations-node' or its corresponding type declarations.
+src/backend/monitoring/OpenTelemetryTracing.ts(98,47): error TS2307: Cannot find module '@opentelemetry/exporter-jaeger' or its corresponding type declarations.
+src/backend/monitoring/OpenTelemetryTracing.ts(99,50): error TS2307: Cannot find module '@opentelemetry/exporter-trace-otlp-grpc' or its corresponding type declarations.
+src/backend/monitoring/OpenTelemetryTracing.ts(100,41): error TS2307: Cannot find module '@opentelemetry/resources' or its corresponding type declarations.
+src/backend/monitoring/OpenTelemetryTracing.ts(101,59): error TS2307: Cannot find module '@opentelemetry/semantic-conventions' or its corresponding type declarations.
+src/backend/monitoring/OpenTelemetryTracing.ts(103,51): error TS2307: Cannot find module '@opentelemetry/sdk-trace-base' or its corresponding type declarations.
+src/backend/monitoring/index.ts(106,18): error TS2304: Cannot find name 'getLogger'.
+src/backend/monitoring/index.ts(119,23): error TS2304: Cannot find name 'initializeTracing'.
+src/backend/monitoring/index.ts(135,26): error TS2304: Cannot find name 'PrometheusMonitoring'.
+src/backend/monitoring/index.ts(147,24): error TS2304: Cannot find name 'getAlertingSystem'.
+src/backend/monitoring/index.ts(152,25): error TS2304: Cannot find name 'getHealthCheckSystem'.
+src/backend/monitoring/index.ts(156,17): error TS2304: Cannot find name 'getSLAMonitoring'.
+src/backend/monitoring/index.ts(160,11): error TS1389: 'debugger' is not allowed as a variable declaration name.
+src/backend/monitoring/index.ts(160,20): error TS1005: ';' expected.
+src/backend/monitoring/index.ts(160,22): error TS2304: Cannot find name 'getWorkflowDebugger'.
+src/backend/monitoring/index.ts(175,18): error TS2304: Cannot find name 'getLogger'.
+src/backend/monitoring/index.ts(181,21): error TS2304: Cannot find name 'getTracing'.
+src/backend/monitoring/index.ts(187,24): error TS2304: Cannot find name 'PrometheusMonitoring'.
+src/backend/monitoring/index.ts(193,25): error TS2304: Cannot find name 'getHealthCheckSystem'.
+src/backend/monitoring/index.ts(199,17): error TS2304: Cannot find name 'getSLAMonitoring'.
+src/backend/monitoring/index.ts(217,18): error TS2304: Cannot find name 'getLogger'.
+src/backend/monitoring/index.ts(218,19): error TS2304: Cannot find name 'getTracing'.
+src/backend/monitoring/index.ts(219,22): error TS2304: Cannot find name 'PrometheusMonitoring'.
+src/backend/monitoring/index.ts(240,23): error TS2304: Cannot find name 'getHealthCheckSystem'.
+src/backend/monitoring/index.ts(251,11): error TS2304: Cannot find name 'getLogger'.
+src/backend/monitoring/index.ts(252,12): error TS2304: Cannot find name 'getTracing'.
+src/backend/monitoring/index.ts(253,15): error TS2304: Cannot find name 'PrometheusMonitoring'.
+src/backend/monitoring/index.ts(254,13): error TS2304: Cannot find name 'getAlertingSystem'.
+src/backend/monitoring/index.ts(255,16): error TS2304: Cannot find name 'getHealthCheckSystem'.
+src/backend/monitoring/index.ts(256,8): error TS2304: Cannot find name 'getSLAMonitoring'.
+src/backend/monitoring/index.ts(257,13): error TS2304: Cannot find name 'getWorkflowDebugger'.
+src/backend/queue/QueueManager.ts(106,31): error TS7006: Parameter 'job' implicitly has an 'any' type.
+src/backend/queue/QueueManager.ts(106,36): error TS7006: Parameter 'result' implicitly has an 'any' type.
+src/backend/queue/QueueManager.ts(111,28): error TS7006: Parameter 'job' implicitly has an 'any' type.
+src/backend/queue/QueueManager.ts(111,33): error TS7006: Parameter 'error' implicitly has an 'any' type.
+src/backend/queue/WorkflowQueue.ts(261,18): error TS2339: Property 'getPausedCount' does not exist on type 'Queue<any, any, string, any, any, string>'.
+src/backend/queue/WorkflowQueue.ts(346,32): error TS2683: 'this' implicitly has type 'any' because it does not have a type annotation.
+src/backend/security/EncryptionService.ts(175,9): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Object literal may only specify known properties, and 'authTagLength' does not exist in type 'TransformOptions<Transform>'.
+src/backend/security/EncryptionService.ts(461,12): error TS2790: The operand of a 'delete' operator must be optional.
+src/backend/security/SecurityManager.ts(202,61): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/backend/services/CollaborationService.ts(700,16): error TS2341: Property 'handleJoinRoom' is private and only accessible within class 'WebSocketServerManager'.
+src/backend/services/EventBus.ts(176,10): error TS2416: Property 'on' in type 'EventBus' is not assignable to the same property in base type 'EventEmitter<DefaultEventMap>'.
+  Type '(type: EventType, callback: (event: BaseEvent) => void) => string' is not assignable to type '<K>(eventName: string | symbol, listener: (...args: any[]) => void) => this'.
+    Type 'string' is not assignable to type 'this'.
+      'this' could be instantiated with an arbitrary type which could be unrelated to 'string'.
+src/backend/services/EventBus.ts(183,10): error TS2416: Property 'once' in type 'EventBus' is not assignable to the same property in base type 'EventEmitter<DefaultEventMap>'.
+  Type '(type: EventType, callback: (event: BaseEvent) => void) => string' is not assignable to type '<K>(eventName: string | symbol, listener: (...args: any[]) => void) => this'.
+    Type 'string' is not assignable to type 'this'.
+      'this' could be instantiated with an arbitrary type which could be unrelated to 'string'.
+src/backend/services/KafkaService.ts(57,9): error TS2322: Type '{ mechanism: "plain" | "scram-sha-256" | "scram-sha-512"; username: string; password: string; } | undefined' is not assignable to type 'SASLOptions | Mechanism | undefined'.
+  Type '{ mechanism: "plain" | "scram-sha-256" | "scram-sha-512"; username: string; password: string; }' is not assignable to type 'SASLOptions | Mechanism | undefined'.
+    Type '{ mechanism: "plain" | "scram-sha-256" | "scram-sha-512"; username: string; password: string; }' is not assignable to type '({ mechanism: "plain"; } & { username: string; password: string; }) | ({ mechanism: "scram-sha-256"; } & { username: string; password: string; }) | ({ mechanism: "scram-sha-512"; } & { username: string; password: string; }) | Mechanism'.
+      Type '{ mechanism: "plain" | "scram-sha-256" | "scram-sha-512"; username: string; password: string; }' is not assignable to type '{ mechanism: "scram-sha-512"; } & { username: string; password: string; }'.
+        Type '{ mechanism: "plain" | "scram-sha-256" | "scram-sha-512"; username: string; password: string; }' is not assignable to type '{ mechanism: "scram-sha-512"; }'.
+          Types of property 'mechanism' are incompatible.
+            Type '"plain" | "scram-sha-256" | "scram-sha-512"' is not assignable to type '"scram-sha-512"'.
+              Type '"plain"' is not assignable to type '"scram-sha-512"'.
+src/backend/services/KafkaService.ts(396,63): error TS2322: Type 'string[] | undefined' is not assignable to type 'string[]'.
+  Type 'undefined' is not assignable to type 'string[]'.
+src/backend/services/PerformanceOptimizer.ts(61,20): error TS2304: Cannot find name 'Worker'.
+src/backend/services/PerformanceOptimizer.ts(602,23): error TS2344: Type 'Function' does not satisfy the constraint '(...args: any) => any'.
+  Type 'Function' provides no match for the signature '(...args: any): any'.
+src/backend/services/ServiceMigrationAdapter.ts(108,13): error TS2322: Type 'Awaited<T> | null' is not assignable to type 'T | undefined'.
+  Type 'null' is not assignable to type 'T | undefined'.
+src/backend/services/ServiceMigrationAdapter.ts(402,24): error TS2345: Argument of type '{ id: string; type: string; timestamp: Date; source: string; data: { action: string; mode: "memory-only" | "dual" | "database-only"; adapters: string[]; }; }' is not assignable to parameter of type 'string | symbol'.
+src/backend/services/ServiceMigrationAdapter.ts(482,24): error TS2345: Argument of type '{ id: string; type: string; timestamp: Date; source: string; data: { action: string; results: Record<string, number>; }; }' is not assignable to parameter of type 'string | symbol'.
+src/backend/services/emailService.ts(45,24): error TS2304: Cannot find name 'verificationUrl'.
+src/backend/services/emailService.ts(51,60): error TS2304: Cannot find name 'verificationUrl'.
+src/backend/services/emailService.ts(66,3): error TS2304: Cannot find name 'verificationUrl'.
+src/backend/services/emailService.ts(95,24): error TS2304: Cannot find name 'resetUrl'.
+src/backend/services/emailService.ts(101,60): error TS2304: Cannot find name 'resetUrl'.
+src/backend/services/emailService.ts(116,3): error TS2304: Cannot find name 'resetUrl'.
+src/backend/services/emailService.ts(205,19): error TS2304: Cannot find name 'statusEmoji'.
+src/backend/services/emailService.ts(212,48): error TS2304: Cannot find name 'statusColor'.
+src/backend/services/emailService.ts(212,65): error TS2304: Cannot find name 'statusEmoji'.
+src/backend/services/emailService.ts(237,3): error TS2304: Cannot find name 'statusEmoji'.
+src/backend/services/emailService.ts(273,11): error TS2304: Cannot find name 'emailProvider'.
+src/backend/services/emailService.ts(274,15): error TS2304: Cannot find name 'emailProvider'.
+src/backend/services/nodeExecutors/aiExecutor.ts(20,9): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/aiExecutor.ts(36,29): error TS2339: Property 'executeOpenAI' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/aiExecutor.ts(39,21): error TS2304: Cannot find name 'processedPrompt'.
+src/backend/services/nodeExecutors/aiExecutor.ts(46,29): error TS2339: Property 'executeAnthropic' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/aiExecutor.ts(49,21): error TS2304: Cannot find name 'processedPrompt'.
+src/backend/services/nodeExecutors/aiExecutor.ts(56,29): error TS2339: Property 'executeCustomAI' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/aiExecutor.ts(57,23): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/aiExecutor.ts(58,21): error TS2304: Cannot find name 'processedPrompt'.
+src/backend/services/nodeExecutors/aiExecutor.ts(67,47): error TS18046: 'error' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(74,10): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/aiExecutor.ts(78,10): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/aiExecutor.ts(82,10): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/aiExecutor.ts(90,3): error TS2353: Object literal may only specify known properties, and 'processTemplate' does not exist in type 'NodeExecutor'.
+src/backend/services/nodeExecutors/aiExecutor.ts(92,14): error TS2304: Cannot find name 'value'.
+src/backend/services/nodeExecutors/aiExecutor.ts(92,43): error TS2304: Cannot find name 'value'.
+src/backend/services/nodeExecutors/aiExecutor.ts(97,53): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/backend/services/nodeExecutors/aiExecutor.ts(103,14): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(104,21): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(110,14): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(112,34): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(114,37): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(116,36): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(126,14): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(127,21): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(133,14): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(135,38): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/aiExecutor.ts(137,36): error TS18046: 'options' is of type 'unknown'.
+src/backend/services/nodeExecutors/delayExecutor.ts(11,9): error TS2322: Type '(node: Node, context: Record<string, unknown>) => Promise<Record<string, unknown>>' is not assignable to type '(node: Node, context: unknown) => Promise<unknown>'.
+  Types of parameters 'context' and 'context' are incompatible.
+    Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+src/backend/services/nodeExecutors/delayExecutor.ts(15,9): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/delayExecutor.ts(20,9): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(23,9): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(26,9): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(31,9): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(31,19): error TS2304: Cannot find name 'maxDelay'.
+src/backend/services/nodeExecutors/delayExecutor.ts(32,67): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(35,46): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(38,54): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(42,7): error TS2698: Spread types may only be created from object types.
+src/backend/services/nodeExecutors/delayExecutor.ts(44,22): error TS2304: Cannot find name 'delayMs'.
+src/backend/services/nodeExecutors/delayExecutor.ts(51,9): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/delayExecutor.ts(51,39): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/delayExecutor.ts(55,67): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/emailExecutor.ts(37,37): error TS2339: Property 'processTemplate' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/emailExecutor.ts(38,34): error TS2339: Property 'processTemplate' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/emailExecutor.ts(41,33): error TS2339: Property 'sendEmail' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/emailExecutor.ts(68,22): error TS2339: Property 'isValidEmail' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/emailExecutor.ts(84,3): error TS2353: Object literal may only specify known properties, and 'processTemplate' does not exist in type 'NodeExecutor'.
+src/backend/services/nodeExecutors/emailExecutor.ts(87,26): error TS2339: Property 'getValueFromPath' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/emailExecutor.ts(93,53): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/backend/services/nodeExecutors/filterExecutor.ts(12,9): error TS2322: Type '(node: Node, context: WorkflowContext) => Promise<{ passed: boolean; data: unknown; count?: number | undefined; }>' is not assignable to type '(node: Node, context: unknown) => Promise<unknown>'.
+  Types of parameters 'context' and 'context' are incompatible.
+    Type 'unknown' is not assignable to type 'WorkflowContext'.
+src/backend/services/nodeExecutors/filterExecutor.ts(26,27): error TS2339: Property 'previousNodeData' does not exist on type 'WorkflowContext'.
+src/backend/services/nodeExecutors/filterExecutor.ts(31,29): error TS2339: Property 'evaluateSimpleCondition' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/filterExecutor.ts(37,29): error TS2339: Property 'evaluateAdvancedCondition' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/filterExecutor.ts(48,16): error TS2339: Property 'evaluateSimpleCondition' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/filterExecutor.ts(96,29): error TS2339: Property 'getValueFromPath' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/filterExecutor.ts(136,22): error TS2339: Property 'evaluateSimpleCondition' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/filterExecutor.ts(164,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/backend/services/nodeExecutors/filterExecutor.ts(166,14): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/backend/services/nodeExecutors/httpRequestExecutor.ts(67,13): error TS18046: 'requestHeaders' is of type 'unknown'.
+src/backend/services/nodeExecutors/httpRequestExecutor.ts(72,13): error TS18046: 'requestHeaders' is of type 'unknown'.
+src/backend/services/nodeExecutors/httpRequestExecutor.ts(77,15): error TS18046: 'requestHeaders' is of type 'unknown'.
+src/backend/services/nodeExecutors/httpRequestExecutor.ts(98,9): error TS2322: Type 'unknown' is not assignable to type 'HeadersInit | undefined'.
+src/backend/services/nodeExecutors/index.ts(47,14): error TS18046: 'context' is of type 'unknown'.
+src/backend/services/nodeExecutors/index.ts(53,26): error TS2304: Cannot find name 'items'.
+src/backend/services/nodeExecutors/index.ts(55,9): error TS2304: Cannot find name 'results'.
+src/backend/services/nodeExecutors/index.ts(58,16): error TS18004: No value exists in scope for the shorthand property 'results'. Either declare one or provide an initializer.
+src/backend/services/nodeExecutors/index.ts(66,14): error TS18046: 'context' is of type 'unknown'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(11,9): error TS2322: Type '(node: Node, context: Record<string, unknown>) => Promise<Record<string, unknown>>' is not assignable to type '(node: Node, context: unknown) => Promise<unknown>'.
+  Types of parameters 'context' and 'context' are incompatible.
+    Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(20,9): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(39,24): error TS2339: Property 'getNextCronRun' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(42,28): error TS2304: Cannot find name 'now'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(42,44): error TS2304: Cannot find name 'intervalMs'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(67,24): error TS2304: Cannot find name 'now'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(68,11): error TS2698: Spread types may only be created from object types.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(73,56): error TS18046: 'error' is of type 'unknown'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(80,9): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(81,12): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(83,33): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(86,16): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(87,12): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(87,31): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(92,9): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(92,29): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(93,20): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(93,50): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/scheduleExecutor.ts(108,21): error TS2304: Cannot find name 'now'.
+src/backend/services/nodeExecutors/transformExecutor.ts(12,9): error TS2322: Type '(node: Node, context: WorkflowContext) => Promise<unknown>' is not assignable to type '(node: Node, context: unknown) => Promise<unknown>'.
+  Types of parameters 'context' and 'context' are incompatible.
+    Type 'unknown' is not assignable to type 'WorkflowContext'.
+src/backend/services/nodeExecutors/transformExecutor.ts(26,23): error TS2339: Property 'applyMapping' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/transformExecutor.ts(29,23): error TS2339: Property 'evaluateExpression' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/transformExecutor.ts(32,23): error TS2339: Property 'applyTemplate' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/transformExecutor.ts(78,26): error TS2339: Property 'getValueFromPath' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/transformExecutor.ts(79,12): error TS2339: Property 'setValueAtPath' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/transformExecutor.ts(126,16): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/backend/services/nodeExecutors/transformExecutor.ts(128,14): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type '{}'.
+  No index signature with a parameter of type 'string' was found on type '{}'.
+src/backend/services/nodeExecutors/transformExecutor.ts(138,20): error TS18046: 'current' is of type 'unknown'.
+src/backend/services/nodeExecutors/transformExecutor.ts(139,9): error TS18046: 'current' is of type 'unknown'.
+src/backend/services/nodeExecutors/transformExecutor.ts(141,17): error TS18046: 'current' is of type 'unknown'.
+src/backend/services/nodeExecutors/transformExecutor.ts(145,7): error TS18046: 'current' is of type 'unknown'.
+src/backend/services/nodeExecutors/triggerExecutor.ts(10,9): error TS2322: Type '(node: Node, context: Record<string, unknown>) => Promise<Record<string, unknown>>' is not assignable to type '(node: Node, context: unknown) => Promise<unknown>'.
+  Types of parameters 'context' and 'context' are incompatible.
+    Type 'unknown' is not assignable to type 'Record<string, unknown>'.
+src/backend/services/nodeExecutors/triggerExecutor.ts(14,9): error TS2304: Cannot find name 'config'.
+src/backend/services/nodeExecutors/triggerExecutor.ts(19,7): error TS2698: Spread types may only be created from object types.
+src/backend/services/nodeExecutors/webhookExecutor.ts(25,36): error TS2339: Property 'validateAuthentication' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/webhookExecutor.ts(94,9): error TS2353: Object literal may only specify known properties, and 'validateAuthentication' does not exist in type 'NodeExecutor'.
+src/backend/services/nodeExecutors/webhookExecutor.ts(98,13): error TS18046: 'authConfig' is of type 'unknown'.
+src/backend/services/nodeExecutors/webhookExecutor.ts(100,21): error TS2339: Property 'validateSecretAuth' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/webhookExecutor.ts(103,21): error TS2339: Property 'validateApiKeyAuth' does not exist on type 'NodeExecutor'.
+src/backend/services/nodeExecutors/webhookExecutor.ts(106,21): error TS2339: Property 'validateSignatureAuth' does not exist on type 'NodeExecutor'.
+src/backend/webhooks/WebhookService.ts(448,39): error TS2339: Property 'statusCode' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(451,25): error TS2339: Property 'headers' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(455,28): error TS2339: Property 'mode' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(457,31): error TS2339: Property 'body' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(469,44): error TS2339: Property 'body' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(493,24): error TS2339: Property 'template' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(494,48): error TS2339: Property 'template' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(501,24): error TS2339: Property 'transformScript' does not exist on type '{}'.
+src/backend/webhooks/WebhookService.ts(507,47): error TS2339: Property 'transformScript' does not exist on type '{}'.
+src/backend/websocket/WebSocketServer.ts(6,56): error TS7016: Could not find a declaration file for module 'ws'. '/home/patrice/claude/workflow/node_modules/ws/wrapper.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/ws` if it exists or add a new declaration (.d.ts) file containing `declare module 'ws';`
+src/backend/websocket/WebSocketServer.ts(47,7): error TS2322: Type 'Server<typeof IncomingMessage, typeof ServerResponse> | undefined' is not assignable to type 'Server<typeof IncomingMessage, typeof ServerResponse>'.
+  Type 'undefined' is not assignable to type 'Server<typeof IncomingMessage, typeof ServerResponse>'.
+src/backend/websocket/WebSocketServer.ts(128,23): error TS7006: Parameter 'data' implicitly has an 'any' type.
+src/backend/websocket/WebSocketServer.ts(129,21): error TS7006: Parameter 'code' implicitly has an 'any' type.
+src/backend/websocket/WebSocketServer.ts(129,27): error TS7006: Parameter 'reason' implicitly has an 'any' type.
+src/backend/websocket/WebSocketServer.ts(130,21): error TS7006: Parameter 'error' implicitly has an 'any' type.
+src/backend/websocket/WebSocketServer.ts(527,25): error TS2339: Property 'terminate' does not exist on type 'WebSocket'.
+src/backend/websocket/WebSocketServer.ts(533,25): error TS2339: Property 'ping' does not exist on type 'WebSocket'.
+src/backend/workers/workflow-worker.ts(11,15): error TS2305: Module '"../../types/workflow"' has no exported member 'Workflow'.
+src/backend/workers/workflow-worker.ts(64,57): error TS2345: Argument of type 'Record<string, unknown>' is not assignable to parameter of type '(nodeId: string, inputData: SafeObject, result: SafeExecutionResult) => void'.
+  Type 'Record<string, unknown>' provides no match for the signature '(nodeId: string, inputData: SafeObject, result: SafeExecutionResult): void'.
+src/backend/workers/workflow-worker.ts(69,17): error TS2339: Property 'success' does not exist on type 'Map<string, LegacyExecutionResult>'.
+src/backend/workers/workflow-worker.ts(70,60): error TS2339: Property 'error' does not exist on type 'Map<string, LegacyExecutionResult>'.
+src/backend/workers/workflow-worker.ts(76,39): error TS2339: Property 'outputs' does not exist on type 'Map<string, LegacyExecutionResult>'.
+src/backend/workers/workflow-worker.ts(82,22): error TS2339: Property 'outputs' does not exist on type 'Map<string, LegacyExecutionResult>'.
+src/components/ExecutionEngine.ts(182,9): error TS2353: Object literal may only specify known properties, and 'memoryUsageMB' does not exist in type '{ executionTimeMs: number; nodesExecuted: number; errors: number; }'.
+src/components/execution/AdvancedFlowExecutor.ts(524,24): error TS2345: Argument of type 'SafeObject | undefined' is not assignable to parameter of type 'SafeObject'.
+  Type 'undefined' is not assignable to type 'SafeObject'.
+src/components/execution/AdvancedFlowExecutor.ts(526,46): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/components/execution/ExecutionCore.ts(108,52): error TS2304: Cannot find name 'executionId'.
+src/components/execution/ExecutionCore.ts(112,12): error TS2304: Cannot find name 'validationResult'.
+src/components/execution/ExecutionCore.ts(112,38): error TS2304: Cannot find name 'validationResult'.
+src/components/execution/ExecutionCore.ts(113,69): error TS2304: Cannot find name 'validationResult'.
+src/components/execution/ExecutionCore.ts(117,11): error TS2304: Cannot find name 'startNodes'.
+src/components/execution/ExecutionCore.ts(118,75): error TS2304: Cannot find name 'validationResult'.
+src/components/execution/ExecutionCore.ts(122,30): error TS2304: Cannot find name 'startNodes'.
+src/components/execution/ExecutionCore.ts(127,39): error TS2304: Cannot find name 'results'.
+src/components/execution/ExecutionCore.ts(127,48): error TS2304: Cannot find name 'validationResult'.
+src/components/execution/ExecutionCore.ts(151,12): error TS2352: Conversion of type 'ValidationResult | undefined' to type 'Promise<ValidationResult>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'ValidationResult' is missing the following properties from type 'Promise<ValidationResult>': then, catch, finally, [Symbol.toStringTag]
+src/components/execution/ExecutionCore.ts(175,35): error TS2339: Property 'processExecution' does not exist on type 'ExecutionCore'.
+src/components/execution/ExecutionCore.ts(201,8): error TS2304: Cannot find name 'nodesWithInputs'.
+src/components/execution/ExecutionCore.ts(202,7): error TS2304: Cannot find name 'triggerTypes'.
+src/components/execution/ExecutionCore.ts(217,7): error TS18004: No value exists in scope for the shorthand property 'metrics'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(218,7): error TS18004: No value exists in scope for the shorthand property 'diagnostics'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(231,7): error TS18004: No value exists in scope for the shorthand property 'results'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(233,7): error TS18004: No value exists in scope for the shorthand property 'metrics'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(234,7): error TS18004: No value exists in scope for the shorthand property 'diagnostics'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(243,67): error TS2367: This comparison appears to be unintentional because the types '"error" | "success" | "pending"' and '"skipped"' have no overlap.
+src/components/execution/ExecutionCore.ts(254,7): error TS18004: No value exists in scope for the shorthand property 'executionTimeMs'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(295,27): error TS2304: Cannot find name 'memory'.
+src/components/execution/ExecutionCore.ts(315,14): error TS18004: No value exists in scope for the shorthand property 'completed'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(315,25): error TS18004: No value exists in scope for the shorthand property 'total'. Either declare one or provide an initializer.
+src/components/execution/ExecutionCore.ts(315,32): error TS18004: No value exists in scope for the shorthand property 'percentage'. Either declare one or provide an initializer.
+src/components/execution/ExecutionQueue.ts(61,7): error TS18004: No value exists in scope for the shorthand property 'dependencies'. Either declare one or provide an initializer.
+src/components/execution/ExecutionQueue.ts(82,11): error TS2304: Cannot find name 'readyItems'.
+src/components/execution/ExecutionQueue.ts(96,26): error TS2304: Cannot find name 'itemsToProcess'.
+src/components/execution/ExecutionQueue.ts(97,32): error TS2304: Cannot find name 'results'.
+src/components/execution/ExecutionQueue.ts(109,12): error TS2304: Cannot find name 'results'.
+src/components/execution/ExecutionQueue.ts(121,53): error TS2339: Property 'id' does not exist on type 'QueueItem'.
+src/components/execution/ExecutionQueue.ts(150,20): error TS2339: Property 'add' does not exist on type 'Map<string, Promise<SafeExecutionResult>>'.
+src/components/execution/ExecutionQueue.ts(150,29): error TS2339: Property 'id' does not exist on type 'QueueItem'.
+src/components/execution/ExecutionQueue.ts(154,5): error TS2322: Type 'SafeExecutionResult' is not assignable to type 'void'.
+src/components/execution/ExecutionQueue.ts(178,33): error TS2304: Cannot find name 'executionPromise'.
+src/components/execution/ExecutionQueue.ts(222,16): error TS2304: Cannot find name 'errorMessage'.
+src/components/execution/ExecutionQueue.ts(233,14): error TS2304: Cannot find name 'errorMessage'.
+src/components/execution/ExecutionQueue.ts(243,56): error TS2304: Cannot find name 'errorMessage'.
+src/components/execution/ExecutionQueue.ts(250,24): error TS2304: Cannot find name 'outgoingEdges'.
+src/components/execution/ExecutionQueue.ts(254,11): error TS2304: Cannot find name 'targetNode'.
+src/components/execution/ExecutionQueue.ts(254,45): error TS2304: Cannot find name 'targetNode'.
+src/components/execution/ExecutionQueue.ts(254,83): error TS2304: Cannot find name 'targetNode'.
+src/components/execution/ExecutionQueue.ts(255,22): error TS2304: Cannot find name 'targetNode'.
+src/components/execution/ExecutionQueue.ts(283,9): error TS2304: Cannot find name 'insertIndex'.
+src/components/execution/ExecutionQueue.ts(286,25): error TS2304: Cannot find name 'insertIndex'.
+src/components/execution/ExecutionQueue.ts(292,9): error TS2304: Cannot find name 'index'.
+src/components/execution/ExecutionQueue.ts(293,25): error TS2304: Cannot find name 'index'.
+src/components/execution/NodeExecutor.ts(522,36): error TS2339: Property 'executeCode' does not exist on type 'PythonExecutionService'.
+src/components/execution/NodeExecutor.ts(550,36): error TS2339: Property 'executeCode' does not exist on type 'JavaExecutionService'.
+src/components/execution/NodeExecutor.ts(624,56): error TS2559: Type 'string' has no properties in common with type '{ where?: string | undefined; orderBy?: string | undefined; page?: number | undefined; }'.
+src/components/execution/NodeExecutor.ts(655,32): error TS2339: Property 'sendEnvelope' does not exist on type 'DocuSignService'.
+src/components/execution/NodeExecutor.ts(657,32): error TS2339: Property 'getEnvelopeStatus' does not exist on type 'DocuSignService'.
+src/components/execution/NodeExecutor.ts(659,40): error TS2339: Property 'downloadDocument' does not exist on type 'DocuSignService'.
+src/components/execution/NodeExecutor.ts(731,11): error TS2322: Type 'TypeformForm' is not assignable to type 'SafeObject'.
+  Index signature for type 'string' is missing in type 'TypeformForm'.
+src/components/execution/NodeExecutor.ts(733,32): error TS2339: Property 'listForms' does not exist on type 'TypeformService'.
+src/components/execution/NodeExecutor.ts(765,11): error TS2322: Type 'JotFormSubmission' is not assignable to type 'SafeObject'.
+  Index signature for type 'string' is missing in type 'JotFormSubmission'.
+src/components/execution/NodeExecutor.ts(802,32): error TS2339: Property 'getUser' does not exist on type 'CalendlyService'.
+src/components/execution/NodeExecutor.ts(804,32): error TS2551: Property 'listEventTypes' does not exist on type 'CalendlyService'. Did you mean 'getEventTypes'?
+src/components/execution/NodeExecutor.ts(806,32): error TS2551: Property 'getEventType' does not exist on type 'CalendlyService'. Did you mean 'getEventTypes'?
+src/components/execution/NodeExecutor.ts(808,32): error TS2551: Property 'listScheduledEvents' does not exist on type 'CalendlyService'. Did you mean 'getScheduledEvents'?
+src/components/execution/NodeExecutor.ts(810,11): error TS2322: Type 'CalendlyEvent' is not assignable to type 'SafeObject'.
+  Index signature for type 'string' is missing in type 'CalendlyEvent'.
+src/components/execution/NodeExecutor.ts(814,32): error TS2339: Property 'listInvitees' does not exist on type 'CalendlyService'.
+src/components/execution/NodeExecutor.ts(816,32): error TS2339: Property 'createWebhook' does not exist on type 'CalendlyService'.
+src/components/execution/NodeExecutor.ts(904,30): error TS2339: Property 'addDocument' does not exist on type 'FirebaseService'.
+src/components/execution/NodeExecutor.ts(912,43): error TS2339: Property 'queryDocuments' does not exist on type 'FirebaseService'.
+src/components/execution/NodeExecutor.ts(939,30): error TS2554: Expected 2-4 arguments, but got 1.
+src/components/execution/NodeExecutor.ts(948,9): error TS2322: Type 'any[]' is not assignable to type 'SafeObject'.
+  Index signature for type 'string' is missing in type 'any[]'.
+src/components/execution/NodeExecutor.ts(957,96): error TS2559: Type 'string' has no properties in common with type '{ contentType?: string | undefined; metadata?: any; }'.
+src/components/execution/NodeExecutor.ts(967,30): error TS2339: Property 'getSignedUrl' does not exist on type 'FirebaseService'.
+src/config/environment.ts(115,29): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/config/environment.ts(116,48): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/config/environment.ts(244,54): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/data/nodeTypes.ts(3081,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3082,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3084,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3092,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3113,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3116,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3133,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3180,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3182,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3203,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3205,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/data/nodeTypes.ts(3211,3): error TS1117: An object literal cannot have multiple properties with the same name.
+src/middleware/globalErrorHandler.ts(133,7): error TS2698: Spread types may only be created from object types.
+src/monitoring/PrometheusMonitoring.ts(388,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(393,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(398,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(403,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(408,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(413,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(418,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(427,26): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(433,28): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(440,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(446,26): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(452,28): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(460,26): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(466,28): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(474,24): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(480,24): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(487,26): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(494,28): error TS2345: Argument of type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; labels: string[]; buckets: number[] | undefined; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(501,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/monitoring/PrometheusMonitoring.ts(506,24): error TS2345: Argument of type '{ name: string; help: string; }' is not assignable to parameter of type 'MetricOptions'.
+  Property 'type' is missing in type '{ name: string; help: string; }' but required in type 'MetricOptions'.
+src/services/AnalyticsPersistence.ts(678,14): error TS18046: 'data' is of type 'unknown'.
+src/services/AnalyticsService.ts(369,47): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ workflowId?: string | undefined; status?: string | undefined; startDate?: Date | undefined; endDate?: Date | undefined; limit?: number | undefined; } | undefined'.
+src/services/AnalyticsService.ts(377,37): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ resolved?: boolean | undefined; severity?: string | undefined; ruleId?: string | undefined; } | undefined'.
+src/services/AnalyticsService.ts(386,32): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'unknown[]'.
+src/services/AnalyticsService.ts(388,34): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'unknown[]'.
+src/services/CacheService.ts(6,12): error TS2304: Cannot find name 'window'.
+src/services/CacheService.ts(36,16): error TS2304: Cannot find name 'window'.
+src/services/CacheService.ts(58,25): error TS7006: Parameter 'times' implicitly has an 'any' type.
+src/services/CacheService.ts(76,31): error TS7006: Parameter 'err' implicitly has an 'any' type.
+src/services/EventNotificationService.ts(101,30): error TS18046: 'data.percentage' is of type 'unknown'.
+src/services/EventNotificationService.ts(133,30): error TS18046: 'data.duration' is of type 'unknown'.
+src/services/EventNotificationService.ts(136,71): error TS18046: 'data.duration' is of type 'unknown'.
+src/services/EventNotificationService.ts(144,30): error TS18046: 'data.remainingRequests' is of type 'unknown'.
+src/services/EventNotificationService.ts(226,45): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Record<string, unknown>'.
+src/services/EventNotificationService.ts(247,22): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'Record<string, unknown>'.
+src/services/EventNotificationService.ts(271,9): error TS2304: Cannot find name 'actions'.
+src/services/EventNotificationService.ts(276,27): error TS18046: 'eventData.data' is of type 'unknown'.
+src/services/EventNotificationService.ts(280,9): error TS2304: Cannot find name 'actions'.
+src/services/EventNotificationService.ts(285,27): error TS18046: 'eventData.data' is of type 'unknown'.
+src/services/EventNotificationService.ts(292,9): error TS2304: Cannot find name 'actions'.
+src/services/EventNotificationService.ts(297,23): error TS18046: 'eventData.data' is of type 'unknown'.
+src/services/EventNotificationService.ts(304,9): error TS2304: Cannot find name 'actions'.
+src/services/EventNotificationService.ts(309,26): error TS18046: 'eventData.data' is of type 'unknown'.
+src/services/EventNotificationService.ts(316,9): error TS2304: Cannot find name 'actions'.
+src/services/EventNotificationService.ts(321,31): error TS18046: 'eventData.data' is of type 'unknown'.
+src/services/EventNotificationService.ts(328,9): error TS2304: Cannot find name 'actions'.
+src/services/EventNotificationService.ts(333,24): error TS18046: 'eventData.data' is of type 'unknown'.
+src/services/EventNotificationService.ts(340,12): error TS2304: Cannot find name 'actions'.
+src/services/EventNotificationService.ts(356,9): error TS2304: Cannot find name 'rule'.
+src/services/EventNotificationService.ts(357,7): error TS2304: Cannot find name 'rule'.
+src/services/EventNotificationService.ts(395,30): error TS2304: Cannot find name 'tenMinutesAgo'.
+src/services/EventNotificationService.ts(396,9): error TS2304: Cannot find name 'recentEvents'.
+src/services/EventNotificationService.ts(404,24): error TS2304: Cannot find name 'recentEvents'.
+src/services/EventNotificationService.ts(495,12): error TS2304: Cannot find name 'window'.
+src/services/LoggingService.ts(7,10): error TS2395: Individual declarations in merged declaration 'logger' must be all exported or all local.
+src/services/LoggingService.ts(7,10): error TS2440: Import declaration conflicts with local declaration of 'logger'.
+src/services/LoggingService.ts(74,16): error TS2304: Cannot find name 'window'.
+src/services/LoggingService.ts(75,7): error TS2304: Cannot find name 'window'.
+src/services/LoggingService.ts(75,41): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/services/LoggingService.ts(85,7): error TS2304: Cannot find name 'window'.
+src/services/LoggingService.ts(85,54): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/services/LoggingService.ts(287,13): error TS2322: Type 'never[] | {}' is not assignable to type 'Record<string, unknown>'.
+  Type 'never[]' is not assignable to type 'Record<string, unknown>'.
+    Index signature for type 'string' is missing in type 'never[]'.
+src/services/LoggingService.ts(348,16): error TS2304: Cannot find name 'window'.
+src/services/LoggingService.ts(349,7): error TS2304: Cannot find name 'window'.
+src/services/LoggingService.ts(446,7): error TS2698: Spread types may only be created from object types.
+src/services/LoggingService.ts(459,14): error TS2395: Individual declarations in merged declaration 'logger' must be all exported or all local.
+src/services/NotificationService.ts(71,9): error TS18048: 'notification.duration' is possibly 'undefined'.
+src/services/NotificationService.ts(90,51): error TS2304: Cannot find name 'NotificationOptions'.
+src/services/NotificationService.ts(98,49): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ duration?: number | undefined; actions?: NotificationAction[] | undefined; metadata?: Record<string, unknown> | undefined; } | undefined'.
+src/services/NotificationService.ts(102,46): error TS2345: Argument of type 'unknown' is not assignable to parameter of type '{ duration?: number | undefined; actions?: NotificationAction[] | undefined; metadata?: Record<string, unknown> | undefined; } | undefined'.
+src/services/NotificationService.ts(169,23): error TS2339: Property 'stack' does not exist on type '{}'.
+src/services/NotificationService.ts(219,28): error TS2345: Argument of type '"confirmation"' is not assignable to parameter of type 'NotificationType'.
+src/services/NotificationService.ts(266,12): error TS2304: Cannot find name 'window'.
+src/services/NotificationService.ts(267,3): error TS2304: Cannot find name 'window'.
+src/services/NotificationService.ts(267,50): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/services/NotificationService.ts(271,3): error TS2304: Cannot find name 'window'.
+src/services/NotificationService.ts(271,37): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/services/SubWorkflowService.ts(41,29): error TS2554: Expected 2-3 arguments, but got 0.
+src/services/SubWorkflowService.ts(256,11): error TS2322: Type '"continue"' is not assignable to type 'ErrorStrategy'.
+src/services/SubWorkflowService.ts(291,10): error TS2339: Property 'logger' does not exist on type 'SubWorkflowService'.
+src/services/SubWorkflowService.ts(431,10): error TS2339: Property 'logger' does not exist on type 'SubWorkflowService'.
+src/services/SubWorkflowService.ts(487,62): error TS2345: Argument of type 'WorkflowNode[]' is not assignable to parameter of type '(nodeId: string) => void'.
+  Type 'WorkflowNode[]' provides no match for the signature '(nodeId: string): void'.
+src/services/SubWorkflowService.ts(500,13): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'NodeData'.
+  No index signature with a parameter of type 'string' was found on type 'NodeData'.
+src/services/SubWorkflowService.ts(501,34): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'NodeData'.
+  No index signature with a parameter of type 'string' was found on type 'NodeData'.
+src/services/SubWorkflowService.ts(545,7): error TS2740: Type '{ label: string; }' is missing the following properties from type 'NodeData': id, type, position, icon, and 3 more.
+src/services/SubWorkflowService.ts(557,40): error TS2345: Argument of type 'NodeData' is not assignable to parameter of type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type 'NodeData'.
+src/services/SubWorkflowService.ts(591,16): error TS2339: Property 'logger' does not exist on type 'SubWorkflowService'.
+src/services/SubWorkflowService.ts(600,11): error TS2322: Type '{}' is not assignable to type 'Record<string, unknown>'.
+  Index signature for type 'string' is missing in type '{}'.
+src/services/SubWorkflowService.ts(623,12): error TS2339: Property 'logger' does not exist on type 'SubWorkflowService'.
+src/services/SubWorkflowService.ts(728,10): error TS2339: Property 'logger' does not exist on type 'SubWorkflowService'.
+src/services/SubWorkflowService.ts(845,10): error TS2339: Property 'logger' does not exist on type 'SubWorkflowService'.
+src/services/SubWorkflowService.ts(853,39): error TS2339: Property 'isPublic' does not exist on type 'SubWorkflowMetadata'.
+src/services/SubWorkflowService.ts(1295,59): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/services/TemplateService.ts(853,5): error TS2740: Type 'ServiceResult<TemplateInstallation>' is missing the following properties from type 'TemplateInstallation': templateId, workflowId, customizations, installedAt, and 2 more.
+src/services/TemplateService.ts(888,5): error TS2322: Type 'ServiceResult<void>' is not assignable to type 'void'.
+src/services/TemplateService.ts(907,5): error TS2322: Type 'ServiceResult<void>' is not assignable to type 'void'.
+src/services/TemplateService.ts(921,5): error TS2740: Type 'ServiceResult<WorkflowTemplate>' is missing the following properties from type 'WorkflowTemplate': id, name, description, category, and 19 more.
+src/services/TemplateService.ts(926,15): error TS18046: 'workflow' is of type 'unknown'.
+src/services/TemplateService.ts(927,22): error TS18046: 'workflow' is of type 'unknown'.
+src/services/TemplateService.ts(928,9): error TS2322: Type '"custom"' is not assignable to type 'TemplateCategory'.
+src/services/TemplateService.ts(933,9): error TS2322: Type 'unknown' is not assignable to type 'TemplateWorkflow'.
+src/services/TemplateService.ts(961,5): error TS2322: Type 'ServiceResult<void>' is not assignable to type 'void'.
+src/services/VariablesService.ts(68,23): error TS2304: Cannot find name 'window'.
+src/services/VariablesService.ts(68,48): error TS2304: Cannot find name 'window'.
+src/services/VariablesService.ts(114,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(246,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(331,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(361,42): error TS2345: Argument of type 'string | number | boolean | object' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/services/VariablesService.ts(378,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(395,14): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(412,14): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(469,68): error TS2345: Argument of type 'string | number | boolean | object' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/services/VariablesService.ts(554,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(567,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(654,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(669,13): error TS2322: Type 'unknown' is not assignable to type 'string | number | boolean | object | undefined'.
+src/services/VariablesService.ts(685,14): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/VariablesService.ts(719,10): error TS2339: Property 'logger' does not exist on type 'VariablesService'.
+src/services/core/PerformanceMonitoringHub.ts(389,13): error TS2339: Property 'timerId' does not exist on type 'Profile'.
+src/services/core/PerformanceMonitoringHub.ts(410,17): error TS2339: Property 'timerId' does not exist on type 'Profile'.
+src/services/core/PerformanceMonitoringHub.ts(411,29): error TS2339: Property 'timerId' does not exist on type 'Profile'.
+src/services/core/UnifiedNotificationService.ts(10,44): error TS7016: Could not find a declaration file for module 'ws'. '/home/patrice/claude/workflow/node_modules/ws/wrapper.mjs' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/ws` if it exists or add a new declaration (.d.ts) file containing `declare module 'ws';`
+src/services/core/UnifiedNotificationService.ts(513,12): error TS2678: Type '"console"' is not comparable to type '"email" | "custom" | "slack" | "webhook" | "sms" | "discord" | "teams" | "websocket"'.
+src/services/core/UnifiedNotificationService.ts(639,16): error TS2304: Cannot find name 'window'.
+src/services/core/UnifiedNotificationService.ts(643,39): error TS7006: Parameter 'ws' implicitly has an 'any' type.
+src/services/core/UnifiedNotificationService.ts(643,43): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/types/subworkflows.ts(124,18): error TS2430: Interface 'SubWorkflowNode' incorrectly extends interface 'WorkflowNode'.
+  Types of property 'data' are incompatible.
+    Type 'SubWorkflowNodeData' is missing the following properties from type 'NodeData': id, type, label, position, and 2 more.
+src/types/websocket.ts(155,26): error TS2304: Cannot find name 'CloseEvent'.
+src/types/websocket.ts(185,25): error TS2304: Cannot find name 'CloseEvent'.
+src/utils/SecureExpressionEvaluator.ts(174,54): error TS18046: 'error' is of type 'unknown'.
+src/utils/SecureExpressionEvaluator.ts(616,11): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'unknown'.
+  No index signature with a parameter of type 'string' was found on type 'unknown'.
+src/utils/SecureExpressionEvaluator.ts(617,19): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'unknown'.
+  No index signature with a parameter of type 'string' was found on type 'unknown'.
+src/utils/SecureExpressionEvaluator.ts(617,52): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'unknown'.
+  No index signature with a parameter of type 'string' was found on type 'unknown'.
+src/utils/SecureExpressionEvaluator.ts(618,28): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'unknown'.
+  No index signature with a parameter of type 'string' was found on type 'unknown'.
+src/utils/SecureExpressionEvaluator.ts(619,25): error TS7053: Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'unknown'.
+  No index signature with a parameter of type 'string' was found on type 'unknown'.
+src/utils/SecureSandbox.ts(6,30): error TS2307: Cannot find module 'vm2' or its corresponding type declarations.
+src/utils/SecureSandbox.ts(332,9): error TS2561: Object literal may only specify known properties, but 'ExportDeclaration' does not exist in type 'SimpleVisitors<unknown>'. Did you mean to write 'ExportAllDeclaration'?
+src/utils/SecureSandbox.ts(503,25): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+src/utils/SecureSandbox.ts(505,19): error TS2556: A spread argument must either have a tuple type or be passed to a rest parameter.
+src/utils/SharedPatterns.ts(98,85): error TS2345: Argument of type 'ErrorContext' is not assignable to parameter of type 'string'.
+src/utils/SharedPatterns.ts(127,85): error TS2345: Argument of type 'ErrorContext' is not assignable to parameter of type 'string'.
+src/utils/SharedPatterns.ts(220,44): error TS2345: Argument of type '{ ttl: number; compress: boolean; }' is not assignable to parameter of type 'number'.
+src/utils/SharedPatterns.ts(415,11): error TS18046: 'aVal' is of type 'unknown'.
+src/utils/SharedPatterns.ts(415,18): error TS18046: 'bVal' is of type 'unknown'.
+src/utils/SharedPatterns.ts(416,11): error TS18046: 'aVal' is of type 'unknown'.
+src/utils/SharedPatterns.ts(416,18): error TS18046: 'bVal' is of type 'unknown'.
+src/utils/SharedPatterns.ts(679,20): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'ReturnType<T>'.
+src/utils/SharedPatterns.ts(681,5): error TS2322: Type 'unknown' is not assignable to type 'ReturnType<T>'.
+src/utils/TypeSafetyUtils.ts(137,18): error TS2304: Cannot find name 'parsed'.
+src/utils/TypeSafetyUtils.ts(137,32): error TS2304: Cannot find name 'parsed'.
+src/utils/intervalManager.ts(97,21): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'string'.
+src/utils/intervalManager.ts(117,21): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'string'.
+src/utils/intervalManager.ts(134,23): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'string'.
+src/utils/intervalManager.ts(186,21): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'string'.
+src/utils/intervalManager.ts(213,21): error TS2345: Argument of type 'Timeout' is not assignable to parameter of type 'string'.
+src/utils/intervalManager.ts(251,16): error TS2304: Cannot find name 'window'.
+src/utils/intervalManager.ts(253,7): error TS2304: Cannot find name 'window'.
+src/utils/intervalManager.ts(258,7): error TS2584: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+src/utils/intervalManager.ts(259,13): error TS2584: Cannot find name 'document'. Do you need to change your target library? Try changing the 'lib' compiler option to include 'dom'.
+src/utils/logger.ts(1,10): error TS2395: Individual declarations in merged declaration 'logger' must be all exported or all local.
+src/utils/logger.ts(1,10): error TS2440: Import declaration conflicts with local declaration of 'logger'.
+src/utils/logger.ts(372,14): error TS2395: Individual declarations in merged declaration 'logger' must be all exported or all local.
+src/utils/security.ts(340,28): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/utils/security.ts(364,47): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.
+src/utils/security.ts(398,31): error TS2345: Argument of type '{}' is not assignable to parameter of type 'string'.

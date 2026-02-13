@@ -1,0 +1,448 @@
+/**
+ * Reliability Patterns (10 patterns)
+ * Error handling and resilience patterns
+ */
+
+import type { PatternDefinition } from '../../types/patterns';
+import {
+  createPatternDefinition,
+  createPatternStructure,
+  createEdgePattern,
+  PatternConstraints,
+} from '../PatternDefinition';
+
+export const RETRY: PatternDefinition = createPatternDefinition({
+  id: 'retry',
+  name: 'Retry Pattern',
+  category: 'reliability',
+  complexity: 'beginner',
+  description: 'Automatically retry failed operations with exponential backoff',
+  problem: 'Transient failures can cause operations to fail unnecessarily',
+  solution: 'Retry failed operations with increasing delays between attempts',
+  benefits: [
+    'Handles transient failures',
+    'Improved reliability',
+    'Simple to implement',
+    'Configurable',
+  ],
+  tradeoffs: [
+    'Increased latency',
+    'Can amplify problems',
+    'Not suitable for all errors',
+    'Resource consumption',
+  ],
+  useCases: [
+    'Network requests',
+    'Database connections',
+    'External API calls',
+    'Message processing',
+  ],
+  tags: ['reliability', 'resilience', 'error-handling', 'transient'],
+  structure: createPatternStructure({
+    minNodes: 2,
+    requiredNodeTypes: ['http-request'],
+    optionalNodeTypes: ['delay', 'loop'],
+    requiredEdges: [
+      createEdgePattern('request', 'retry', 'error'),
+      createEdgePattern('retry', 'request', 'conditional'),
+    ],
+    topology: 'loop',
+    constraints: [PatternConstraints.nodeCount(2)],
+  }),
+  examples: [],
+  antiPatterns: ['infinite-retry', 'no-backoff'],
+  relatedPatterns: ['circuit-breaker', 'timeout'],
+  documentation: 'Retries failed operations with exponential backoff.',
+});
+
+export const CIRCUIT_BREAKER: PatternDefinition = createPatternDefinition({
+  id: 'circuit-breaker',
+  name: 'Circuit Breaker',
+  category: 'reliability',
+  complexity: 'advanced',
+  description: 'Prevent cascading failures by stopping calls to failing services',
+  problem: 'Failing service can cause cascading failures across the system',
+  solution:
+    'Monitor failures and open circuit to prevent calls, allowing service to recover',
+  benefits: [
+    'Prevents cascading failures',
+    'Fast failure detection',
+    'Automatic recovery',
+    'System resilience',
+  ],
+  tradeoffs: [
+    'Complex implementation',
+    'State management',
+    'Threshold tuning',
+    'False positives',
+  ],
+  useCases: [
+    'Microservices',
+    'External API calls',
+    'Database connections',
+    'Distributed systems',
+  ],
+  tags: ['reliability', 'resilience', 'failure', 'protection'],
+  structure: createPatternStructure({
+    minNodes: 3,
+    requiredNodeTypes: ['http-request', 'switch'],
+    optionalNodeTypes: ['function'],
+    requiredEdges: [createEdgePattern('check', 'call-or-fail', 'conditional')],
+    topology: 'branching',
+    constraints: [PatternConstraints.nodeCount(3)],
+  }),
+  examples: [],
+  antiPatterns: ['no-failure-handling', 'always-retry'],
+  relatedPatterns: ['retry', 'bulkhead', 'timeout'],
+  documentation: 'Stops calls to failing services to prevent cascading failures.',
+});
+
+export const BULKHEAD: PatternDefinition = createPatternDefinition({
+  id: 'bulkhead',
+  name: 'Bulkhead Pattern',
+  category: 'reliability',
+  complexity: 'advanced',
+  description: 'Isolate resources to prevent total system failure',
+  problem: 'Failure in one part of system can exhaust all resources',
+  solution: 'Partition resources into isolated pools for different services',
+  benefits: [
+    'Fault isolation',
+    'Resource protection',
+    'Partial availability',
+    'Failure containment',
+  ],
+  tradeoffs: [
+    'Resource overhead',
+    'Complex configuration',
+    'Underutilization',
+    'Management complexity',
+  ],
+  useCases: [
+    'Multi-tenant systems',
+    'Thread pool isolation',
+    'Connection pool isolation',
+    'Queue isolation',
+  ],
+  tags: ['reliability', 'isolation', 'resource', 'containment'],
+  structure: createPatternStructure({
+    minNodes: 3,
+    requiredNodeTypes: ['switch', 'http-request'],
+    optionalNodeTypes: ['queue'],
+    requiredEdges: [createEdgePattern('partition', 'isolated-resource', 'conditional')],
+    topology: 'branching',
+    constraints: [PatternConstraints.nodeCount(3)],
+  }),
+  examples: [],
+  antiPatterns: ['shared-everything', 'no-resource-limits'],
+  relatedPatterns: ['circuit-breaker', 'rate-limiting'],
+  documentation: 'Isolates resources to prevent cascading failures.',
+});
+
+export const RATE_LIMITING: PatternDefinition = createPatternDefinition({
+  id: 'rate-limiting',
+  name: 'Rate Limiting',
+  category: 'reliability',
+  complexity: 'intermediate',
+  description: 'Control rate of requests to prevent overload',
+  problem: 'Excessive requests can overwhelm system and cause failures',
+  solution: 'Limit number of requests per time window using various algorithms',
+  benefits: [
+    'System protection',
+    'Fair resource allocation',
+    'DoS prevention',
+    'Cost control',
+  ],
+  tradeoffs: [
+    'Legitimate requests may be rejected',
+    'Configuration complexity',
+    'State management',
+    'User experience impact',
+  ],
+  useCases: [
+    'API throttling',
+    'DDoS protection',
+    'Resource management',
+    'Cost control',
+  ],
+  tags: ['reliability', 'throttling', 'protection', 'control'],
+  structure: createPatternStructure({
+    minNodes: 2,
+    requiredNodeTypes: ['switch', 'http-request'],
+    optionalNodeTypes: ['redis', 'counter'],
+    requiredEdges: [createEdgePattern('check-limit', 'allow-reject', 'conditional')],
+    topology: 'branching',
+    constraints: [PatternConstraints.nodeCount(2)],
+  }),
+  examples: [],
+  antiPatterns: ['no-rate-limiting', 'unfair-limiting'],
+  relatedPatterns: ['throttling', 'bulkhead'],
+  documentation: 'Controls request rate to prevent system overload.',
+});
+
+export const TIMEOUT: PatternDefinition = createPatternDefinition({
+  id: 'timeout',
+  name: 'Timeout Pattern',
+  category: 'reliability',
+  complexity: 'beginner',
+  description: 'Set maximum time limit for operations to prevent hanging',
+  problem: 'Operations can hang indefinitely consuming resources',
+  solution: 'Set timeout for all operations and fail fast if exceeded',
+  benefits: [
+    'Prevents hanging',
+    'Resource protection',
+    'Faster failure detection',
+    'Improved user experience',
+  ],
+  tradeoffs: [
+    'May fail legitimate slow operations',
+    'Timeout tuning needed',
+    'Partial results handling',
+    'Complexity',
+  ],
+  useCases: [
+    'HTTP requests',
+    'Database queries',
+    'External API calls',
+    'Long-running operations',
+  ],
+  tags: ['reliability', 'timeout', 'failure', 'protection'],
+  structure: createPatternStructure({
+    minNodes: 2,
+    requiredNodeTypes: ['http-request'],
+    optionalNodeTypes: ['delay'],
+    requiredEdges: [createEdgePattern('operation', 'timeout-handler', 'error')],
+    topology: 'linear',
+    constraints: [PatternConstraints.nodeCount(2)],
+  }),
+  examples: [],
+  antiPatterns: ['no-timeout', 'infinite-wait'],
+  relatedPatterns: ['retry', 'circuit-breaker'],
+  documentation: 'Sets time limits on operations to prevent hanging.',
+});
+
+export const FALLBACK: PatternDefinition = createPatternDefinition({
+  id: 'fallback',
+  name: 'Fallback Pattern',
+  category: 'reliability',
+  complexity: 'intermediate',
+  description: 'Provide alternative response when primary operation fails',
+  problem: 'Need to maintain service availability despite failures',
+  solution: 'Define fallback behavior to use when primary operation fails',
+  benefits: [
+    'Graceful degradation',
+    'Improved availability',
+    'Better user experience',
+    'Service continuity',
+  ],
+  tradeoffs: [
+    'Complexity',
+    'Fallback maintenance',
+    'Reduced functionality',
+    'Consistency challenges',
+  ],
+  useCases: [
+    'Cache fallback',
+    'Default values',
+    'Alternative service',
+    'Cached responses',
+  ],
+  tags: ['reliability', 'fallback', 'degradation', 'alternative'],
+  structure: createPatternStructure({
+    minNodes: 3,
+    requiredNodeTypes: ['http-request', 'switch'],
+    optionalNodeTypes: ['cache', 'set'],
+    requiredEdges: [
+      createEdgePattern('primary', 'fallback', 'error'),
+      createEdgePattern('fallback', 'response', 'sequential'),
+    ],
+    topology: 'branching',
+    constraints: [PatternConstraints.nodeCount(3)],
+  }),
+  examples: [],
+  antiPatterns: ['no-fallback', 'silent-failure'],
+  relatedPatterns: ['circuit-breaker', 'cache-aside'],
+  documentation: 'Provides alternative response when primary fails.',
+});
+
+export const HEALTH_CHECK: PatternDefinition = createPatternDefinition({
+  id: 'health-check',
+  name: 'Health Check',
+  category: 'reliability',
+  complexity: 'beginner',
+  description: 'Regularly verify system health and availability',
+  problem: 'Need to know if system is healthy and available',
+  solution: 'Implement health check endpoint that verifies critical dependencies',
+  benefits: [
+    'Early problem detection',
+    'Monitoring integration',
+    'Load balancer integration',
+    'Automated recovery',
+  ],
+  tradeoffs: [
+    'Resource overhead',
+    'False positives/negatives',
+    'Check design complexity',
+    'Frequency tuning',
+  ],
+  useCases: [
+    'Load balancer health checks',
+    'Service monitoring',
+    'Orchestrator integration',
+    'Auto-scaling',
+  ],
+  tags: ['reliability', 'monitoring', 'availability', 'health'],
+  structure: createPatternStructure({
+    minNodes: 2,
+    requiredNodeTypes: ['webhook', 'http-request'],
+    optionalNodeTypes: ['database', 'cache'],
+    requiredEdges: [createEdgePattern('check', 'respond', 'sequential')],
+    topology: 'linear',
+    constraints: [PatternConstraints.nodeCount(2)],
+  }),
+  examples: [],
+  antiPatterns: ['no-health-check', 'fake-health-check'],
+  relatedPatterns: ['monitoring', 'circuit-breaker'],
+  documentation: 'Verifies system health and dependency availability.',
+});
+
+export const IDEMPOTENCY: PatternDefinition = createPatternDefinition({
+  id: 'idempotency',
+  name: 'Idempotency Pattern',
+  category: 'reliability',
+  complexity: 'intermediate',
+  description: 'Ensure operations can be safely retried without side effects',
+  problem: 'Retrying operations can cause duplicate effects',
+  solution: 'Design operations to be idempotent using idempotency keys',
+  benefits: [
+    'Safe retries',
+    'Duplicate prevention',
+    'Consistency',
+    'Reliability',
+  ],
+  tradeoffs: [
+    'Implementation complexity',
+    'State storage needed',
+    'Key management',
+    'Performance overhead',
+  ],
+  useCases: [
+    'Payment processing',
+    'Order creation',
+    'API endpoints',
+    'Message processing',
+  ],
+  tags: ['reliability', 'idempotency', 'retry', 'consistency'],
+  structure: createPatternStructure({
+    minNodes: 3,
+    requiredNodeTypes: ['function', 'http-request'],
+    optionalNodeTypes: ['database', 'cache'],
+    requiredEdges: [createEdgePattern('check-key', 'execute-or-skip', 'conditional')],
+    topology: 'branching',
+    constraints: [PatternConstraints.nodeCount(3)],
+  }),
+  examples: [],
+  antiPatterns: ['non-idempotent-operations', 'duplicate-processing'],
+  relatedPatterns: ['retry', 'correlation-identifier'],
+  documentation: 'Makes operations safe to retry without duplicate effects.',
+});
+
+export const COMPENSATING_TRANSACTION: PatternDefinition = createPatternDefinition({
+  id: 'compensating-transaction',
+  name: 'Compensating Transaction',
+  category: 'reliability',
+  complexity: 'advanced',
+  description: 'Undo effects of completed operations when failure occurs',
+  problem: 'Distributed transactions can fail partway through',
+  solution: 'Execute compensating operations to undo completed steps',
+  benefits: [
+    'Eventual consistency',
+    'Distributed transaction support',
+    'Failure recovery',
+    'Data integrity',
+  ],
+  tradeoffs: [
+    'Complex compensation logic',
+    'Partial compensation failures',
+    'State management',
+    'Testing complexity',
+  ],
+  useCases: [
+    'Distributed transactions',
+    'Multi-step workflows',
+    'Saga pattern',
+    'Booking systems',
+  ],
+  tags: ['reliability', 'transaction', 'compensation', 'undo'],
+  structure: createPatternStructure({
+    minNodes: 4,
+    requiredNodeTypes: ['http-request', 'switch'],
+    optionalNodeTypes: ['function'],
+    requiredEdges: [
+      createEdgePattern('operation', 'compensate', 'error'),
+      createEdgePattern('compensate', 'undo', 'sequential'),
+    ],
+    topology: 'branching',
+    constraints: [PatternConstraints.nodeCount(4)],
+  }),
+  examples: [],
+  antiPatterns: ['no-compensation', 'inconsistent-state'],
+  relatedPatterns: ['saga', 'two-phase-commit'],
+  documentation: 'Undoes completed operations when failures occur.',
+});
+
+export const DEAD_LETTER_QUEUE: PatternDefinition = createPatternDefinition({
+  id: 'dead-letter-queue',
+  name: 'Dead Letter Queue',
+  category: 'reliability',
+  complexity: 'intermediate',
+  description: 'Store messages that cannot be processed for later analysis',
+  problem: 'Failed messages can block queue and cause data loss',
+  solution: 'Move failed messages to dead letter queue after retry limit',
+  benefits: [
+    'No message loss',
+    'Queue unblocking',
+    'Failure analysis',
+    'Manual recovery',
+  ],
+  tradeoffs: [
+    'Additional storage',
+    'DLQ monitoring needed',
+    'Manual intervention',
+    'Complexity',
+  ],
+  useCases: [
+    'Message queue failures',
+    'Poison messages',
+    'Processing errors',
+    'Invalid data',
+  ],
+  tags: ['reliability', 'queue', 'error-handling', 'recovery'],
+  structure: createPatternStructure({
+    minNodes: 3,
+    requiredNodeTypes: ['webhook', 'http-request'],
+    optionalNodeTypes: ['sqs', 'database'],
+    requiredEdges: [createEdgePattern('process', 'dlq', 'error')],
+    topology: 'branching',
+    constraints: [PatternConstraints.nodeCount(3)],
+  }),
+  examples: [],
+  antiPatterns: ['silent-failure', 'infinite-retry'],
+  relatedPatterns: ['retry', 'message-queue'],
+  documentation: 'Stores failed messages for later analysis and recovery.',
+});
+
+/**
+ * All reliability patterns
+ */
+export const RELIABILITY_PATTERNS: PatternDefinition[] = [
+  RETRY,
+  CIRCUIT_BREAKER,
+  BULKHEAD,
+  RATE_LIMITING,
+  TIMEOUT,
+  FALLBACK,
+  HEALTH_CHECK,
+  IDEMPOTENCY,
+  COMPENSATING_TRANSACTION,
+  DEAD_LETTER_QUEUE,
+];

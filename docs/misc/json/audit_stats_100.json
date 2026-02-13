@@ -1,0 +1,50 @@
+{
+  "score": {
+    "current": 99,
+    "target": 100,
+    "gap": 1
+  },
+  "react_performance": {
+    "total_components": 210,
+    "optimized": 2,
+    "target": 27,
+    "remaining": 25,
+    "percentage_current": 0.95,
+    "percentage_target": 12.86
+  },
+  "eslint_warnings": {
+    "total": 16,
+    "app_tsx": 3,
+    "middleware": 13,
+    "automated_fix": 13,
+    "manual_fix": 3
+  },
+  "any_types": {
+    "total": 2500,
+    "critical_middleware": 13,
+    "types_folder": 25,
+    "services_folder": 146,
+    "priority_fix": 200
+  },
+  "circular_dependencies": {
+    "total": 32,
+    "critical": 3,
+    "agentic": 9,
+    "logging": 6,
+    "others": 14
+  },
+  "effort": {
+    "react_optimization_hours": 3,
+    "eslint_fixes_hours": 1,
+    "validation_hours": 1,
+    "total_hours": 5,
+    "components_per_hour": 8.3
+  },
+  "impact": {
+    "react_score_gain": 4,
+    "react_weighted_gain": 1.32,
+    "quality_score_gain": 3,
+    "quality_weighted_gain": 0.39,
+    "total_gain": 1.71
+  }
+}

@@ -3,8 +3,6 @@
  * CSRF, XSS, Rate Limiting, and Security Headers
  */
 
-import { SupabaseAuthManager } from '../auth/SupabaseAuthManager';
-
 interface RateLimitEntry {
   count: number;
   resetTime: number;

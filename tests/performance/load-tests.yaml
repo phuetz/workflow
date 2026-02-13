@@ -1,0 +1,232 @@
+# Artillery Load Testing Configuration
+# Run with: artillery run tests/performance/load-tests.yaml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Warm-up phase
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm-up"
+
+    # Ramp-up phase
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp-up to 50 users"
+
+    # Sustained load
+    - duration: 300
+      arrivalRate: 100
+      name: "Sustained load - 100 concurrent users"
+
+    # Peak load
+    - duration: 120
+      arrivalRate: 150
+      name: "Peak load"
+
+    # Ramp-down
+    - duration: 60
+      arrivalRate: 150
+      rampTo: 10
+      name: "Ramp-down"
+
+  processor: "./tests/performance/processor.js"
+
+  # Performance thresholds
+  ensure:
+    maxErrorRate: 1              # Max 1% error rate
+    p95: 200                     # 95th percentile < 200ms
+    p99: 500                     # 99th percentile < 500ms
+
+  # HTTP configuration
+  http:
+    timeout: 10
+    pool: 50                     # Connection pool size
+
+  # Plugins
+  plugins:
+    expect: {}
+    metrics-by-endpoint:
+      stripQueryString: true
+
+  # Variables
+  variables:
+    apiUrl: "http://localhost:3000/api"
+    wsUrl: "ws://localhost:3000"
+
+scenarios:
+  # Scenario 1: View Dashboard
+  - name: "View Dashboard"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/workflows"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+          capture:
+            - json: "$[0].id"
+              as: "workflowId"
+
+      - get:
+          url: "/api/workflows/{{ workflowId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 2
+
+  # Scenario 2: Create Workflow
+  - name: "Create Workflow"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/workflows"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            name: "Load Test Workflow {{ $randomString() }}"
+            description: "Created by load test"
+            nodes:
+              - id: "node-1"
+                type: "trigger"
+                position: { x: 100, y: 100 }
+                data:
+                  label: "Start"
+              - id: "node-2"
+                type: "httpRequest"
+                position: { x: 300, y: 100 }
+                data:
+                  label: "HTTP Request"
+                  url: "https://api.example.com/data"
+            edges:
+              - id: "edge-1"
+                source: "node-1"
+                target: "node-2"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "$.id"
+              as: "newWorkflowId"
+
+      - think: 1
+
+      - get:
+          url: "/api/workflows/{{ newWorkflowId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # Scenario 3: Execute Workflow
+  - name: "Execute Workflow"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/workflows/{{ workflowId }}/execute"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            input:
+              data: "test execution {{ $randomString() }}"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$.executionId"
+              as: "executionId"
+
+      - think: 0.5
+
+      - get:
+          url: "/api/executions/{{ executionId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # Scenario 4: List Executions
+  - name: "List Executions"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/executions?limit=50&offset=0"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+      - get:
+          url: "/api/executions?workflowId={{ workflowId }}&limit=20"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  # Scenario 5: Update Workflow
+  - name: "Update Workflow"
+    weight: 10
+    flow:
+      - put:
+          url: "/api/workflows/{{ workflowId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            name: "Updated Workflow {{ $randomString() }}"
+            nodes:
+              - id: "node-1"
+                type: "trigger"
+                position: { x: 100, y: 100 }
+                data:
+                  label: "Start"
+              - id: "node-2"
+                type: "httpRequest"
+                position: { x: 300, y: 100 }
+                data:
+                  label: "Updated HTTP Request"
+                  url: "https://api.example.com/updated"
+            edges:
+              - id: "edge-1"
+                source: "node-1"
+                target: "node-2"
+          expect:
+            - statusCode: 200
+
+  # Scenario 6: Queue Metrics
+  - name: "Queue Metrics"
+    weight: 5
+    flow:
+      - get:
+          url: "/api/queue-metrics"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+            - contentType: json
+
+  # Scenario 7: Webhook Trigger
+  - name: "Webhook Trigger"
+    weight: 5
+    flow:
+      - post:
+          url: "/api/webhooks/{{ webhookId }}/trigger"
+          headers:
+            Content-Type: "application/json"
+          json:
+            event: "test.event"
+            data:
+              message: "Load test webhook {{ $randomString() }}"
+          expect:
+            - statusCode: 200

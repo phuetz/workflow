@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 WorkflowBuilder Pro Contributors
+Copyright (c) 2025 Workflow Automation Platform Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,95 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+## Additional Information
+
+### Third-Party Licenses
+
+This software includes or may include components from third-party projects with
+their own licensing terms. See the `package.json` file and the `node_modules`
+directory for a complete list of dependencies and their respective licenses.
+
+Major dependencies include:
+- React (MIT License)
+- Vite (MIT License)
+- TypeScript (Apache License 2.0)
+- Express (MIT License)
+- Prisma (Apache License 2.0)
+- ReactFlow (MIT License)
+- Zustand (MIT License)
+- And many others...
+
+### Trademark Notice
+
+"Workflow Automation Platform" and any associated logos are trademarks of the
+project contributors. Use of these trademarks is subject to separate trademark
+guidelines.
+
+### Patents
+
+As of the date of this license, the contributors are not aware of any patents
+that would be infringed by this software. However, users should perform their
+own patent search if concerned about patent issues.
+
+### Export Compliance
+
+This software may be subject to export control laws and regulations. Users are
+responsible for compliance with all applicable export control laws in their
+jurisdiction.
+
+### Modifications
+
+If you distribute modified versions of this software, you must:
+1. Include this original license
+2. Clearly indicate that changes were made
+3. Include the date of any changes
+4. Not use the original project name without permission
+
+### Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+### Limitation of Liability
+
+IN NO EVENT WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR
+CONVEYS THE SOFTWARE AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
+INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
+OUT OF THE USE OR INABILITY TO USE THE SOFTWARE (INCLUDING BUT NOT LIMITED TO
+LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR
+THIRD PARTIES OR A FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER
+SOFTWARE), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.
+
+### Support and Maintenance
+
+This license does not obligate the copyright holders to provide support,
+maintenance, updates, or bug fixes. Such services may be available separately
+through commercial agreements. See SUPPORT.md for details.
+
+### Contribution Licensing
+
+By submitting a contribution to this project, you agree that your contribution
+will be licensed under the same MIT License that covers this project. See
+CONTRIBUTING.md for more details about the contribution process.
+
+### Contact
+
+For licensing questions, please contact:
+- Email: legal@example.com
+- Issues: https://github.com/OWNER/workflow/issues
+
+---
+
+**License Version**: 1.0
+**Effective Date**: January 23, 2025
+**Last Updated**: January 23, 2025

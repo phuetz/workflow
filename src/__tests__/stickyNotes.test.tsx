@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { useWorkflowStore } from '../store/workflowStore';
 import React from 'react';
-import StickyNotes from '../components/StickyNotes';
+import { StickyNotes } from '../components/canvas/StickyNotes';
 import { renderToString } from 'react-dom/server';
 
 describe('stickyNotes state', () => {

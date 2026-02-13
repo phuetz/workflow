@@ -1,0 +1,112 @@
+# ConfigMap for Workflow Platform Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-config
+  namespace: workflow-automation
+  labels:
+    app: workflow-app
+data:
+  # Application Configuration
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  PORT: "3000"
+  API_PORT: "3001"
+  WEBSOCKET_PORT: "3002"
+  
+  # Redis Configuration
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  
+  # Database Configuration
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_NAME: "workflow"
+  
+  # Performance Settings
+  NODE_OPTIONS: "--max-old-space-size=2048"
+  UV_THREADPOOL_SIZE: "4"
+  
+  # Rate Limiting
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  
+  # CORS Settings
+  CORS_ORIGIN: "https://workflow.company.com,https://api.workflow.company.com"
+  CORS_CREDENTIALS: "true"
+  
+  # File Upload Settings
+  MAX_FILE_SIZE: "100MB"
+  UPLOAD_PATH: "/app/uploads"
+  
+  # Monitoring Settings
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+  JAEGER_ENDPOINT: "http://jaeger-collector:14268/api/traces"
+  
+  # Feature Flags
+  ENABLE_COLLABORATION: "true"
+  ENABLE_AI_FEATURES: "true"
+  ENABLE_MARKETPLACE: "true"
+  ENABLE_ANALYTICS: "true"
+  
+  # Email Settings (if needed)
+  SMTP_HOST: "smtp.company.com"
+  SMTP_PORT: "587"
+  SMTP_SECURE: "false"
+  EMAIL_FROM: "noreply@workflow.company.com"
+  
+  # OAuth Settings
+  OAUTH_REDIRECT_URL: "https://workflow.company.com/auth/callback"
+  
+  # WebSocket Settings
+  WS_HEARTBEAT_INTERVAL: "30000"
+  WS_MAX_CONNECTIONS: "1000"
+  
+  # Security Settings
+  BCRYPT_ROUNDS: "12"
+  JWT_EXPIRES_IN: "24h"
+  REFRESH_TOKEN_EXPIRES_IN: "7d"
+  
+  # Cache Settings
+  CACHE_TTL: "3600"
+  CACHE_MAX_ITEMS: "1000"
+---
+# Secret for sensitive configuration
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workflow-secrets
+  namespace: workflow-automation
+type: Opaque
+data:
+  # Database URL (base64 encoded)
+  database-url: cG9zdGdyZXNxbDovL3dvcmtmbG93OndvcmtmbG93MTIzQHBvc3RncmVzLXNlcnZpY2U6NTQzMi93b3JrZmxvdw==
+  
+  # Redis URL (base64 encoded)
+  redis-url: cmVkaXM6Ly9yZWRpcy1zZXJ2aWNlOjYzNzk=
+  
+  # JWT Secret (base64 encoded - should be generated randomly)
+  jwt-secret: eW91ci1zdXBlci1zZWNyZXQtand0LWtleS1oZXJl
+  
+  # Encryption Key (base64 encoded - should be generated randomly)
+  encryption-key: eW91ci0zMi1jaGFyYWN0ZXItZW5jcnlwdGlvbi1rZXk=
+---
+# Secret for API Keys
+apiVersion: v1
+kind: Secret
+metadata:
+  name: workflow-api-keys
+  namespace: workflow-automation
+type: Opaque
+data:
+  # API Keys (base64 encoded - replace with actual keys)
+  OPENAI_API_KEY: ""
+  ANTHROPIC_API_KEY: ""
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_CLIENT_SECRET: ""
+  GITHUB_CLIENT_ID: ""
+  GITHUB_CLIENT_SECRET: ""
+  SLACK_BOT_TOKEN: ""
+  DISCORD_BOT_TOKEN: ""
+  SENDGRID_API_KEY: ""

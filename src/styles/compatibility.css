@@ -1,0 +1,476 @@
+/* CROSS-BROWSER FIX: Compatibility CSS for older browsers */
+
+/* IE and Edge Legacy Support */
+.browser-ie *,
+.browser-edge-legacy * {
+  box-sizing: border-box;
+}
+
+/* Flexbox fallbacks for IE */
+.browser-ie .flex {
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.browser-ie .flex-col {
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.browser-ie .items-center {
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.browser-ie .justify-center {
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+.browser-ie .justify-between {
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+}
+
+/* Grid fallbacks for browsers without CSS Grid */
+.no-css-grid .grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.5rem;
+}
+
+.no-css-grid .grid > * {
+  flex: 1;
+  margin: 0.5rem;
+  min-width: 250px;
+}
+
+/* CSS Variables fallbacks */
+.no-css-variables {
+  /* Primary colors */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  
+  /* Secondary colors */
+  --secondary-50: #f8fafc;
+  --secondary-100: #f1f5f9;
+  --secondary-200: #e2e8f0;
+  --secondary-300: #cbd5e1;
+  --secondary-500: #64748b;
+  --secondary-700: #334155;
+  --secondary-900: #0f172a;
+  
+  /* Status colors */
+  --success-500: #22c55e;
+  --warning-500: #f59e0b;
+  --error-500: #ef4444;
+  --info-500: #3b82f6;
+}
+
+/* Hard-coded fallbacks for CSS variables in older browsers */
+.no-css-variables .btn-primary {
+  background-color: #2563eb !important;
+  color: white !important;
+}
+
+.no-css-variables .btn-secondary {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.no-css-variables .btn-success {
+  background-color: #22c55e !important;
+  color: white !important;
+}
+
+.no-css-variables .btn-warning {
+  background-color: #f59e0b !important;
+  color: white !important;
+}
+
+.no-css-variables .btn-error {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.no-css-variables .card {
+  background-color: white !important;
+  border-color: #e2e8f0 !important;
+}
+
+.no-css-variables .input {
+  background-color: white !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+.no-css-variables .input:focus {
+  border-color: #3b82f6 !important;
+}
+
+/* Backdrop filter fallbacks */
+.no-backdrop-filter .glass {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.no-backdrop-filter .glass::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: -1;
+}
+
+/* Focus-visible fallbacks */
+.no-focus-visible .btn:focus,
+.no-focus-visible .input:focus,
+.no-focus-visible .select:focus {
+  outline: 2px solid #3b82f6 !important;
+  outline-offset: 2px !important;
+}
+
+/* Appearance fallbacks */
+.browser-firefox .select {
+  -moz-appearance: none;
+}
+
+.browser-webkit .select,
+.browser-chrome .select,
+.browser-safari .select {
+  -webkit-appearance: none;
+}
+
+.browser-ie .select {
+  -ms-appearance: none; /* This doesn't work in IE, but we try */
+}
+
+/* Transform fallbacks for IE */
+.browser-ie .card:hover {
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.browser-ie .btn:hover {
+  -ms-transform: translateY(-1px);
+  transform: translateY(-1px);
+}
+
+/* Animation fallbacks for older browsers */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* IE specific fixes */
+.browser-ie .animate-pulse {
+  animation: ie-pulse 2s infinite;
+}
+
+.browser-ie .animate-fadeIn {
+  animation: ie-fadeIn 200ms ease-out;
+}
+
+@keyframes ie-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+@keyframes ie-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile browser fixes */
+.browser-mobile .modal {
+  max-width: 95vw !important;
+  max-height: 95vh !important;
+  margin: 2.5vh 2.5vw !important;
+}
+
+.browser-mobile .tooltip {
+  display: none; /* Tooltips don't work well on touch devices */
+}
+
+.browser-mobile .dropdown:hover .dropdown-menu {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+}
+
+.browser-mobile .dropdown.active .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Safari specific fixes */
+.browser-safari .input,
+.browser-safari .select {
+  -webkit-appearance: none;
+  border-radius: 0.5rem; /* Safari rounds corners differently */
+}
+
+.browser-safari .btn {
+  -webkit-appearance: none;
+  border-radius: 0.5rem;
+}
+
+/* Firefox specific fixes */
+.browser-firefox .input::-moz-focus-inner,
+.browser-firefox .btn::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+.browser-firefox .select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn,
+  .card,
+  .input,
+  .select {
+    border-width: 2px !important;
+  }
+  
+  .btn-primary {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #000000 !important;
+  }
+  
+  .btn-secondary {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #000000 !important;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse,
+  .animate-bounce,
+  .animate-shake,
+  .node-running,
+  .node-error {
+    animation: none !important;
+  }
+  
+  .card:hover,
+  .btn:hover {
+    transform: none !important;
+  }
+  
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles for better compatibility */
+@media print {
+  .no-print,
+  .btn,
+  .modal-backdrop,
+  .modal,
+  .tooltip,
+  .dropdown-menu {
+    display: none !important;
+  }
+  
+  .card {
+    break-inside: avoid;
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    color: black !important;
+    page-break-after: avoid;
+  }
+}
+
+/* Legacy browser scrollbar styles */
+.browser-ie ::-ms-scrollbar,
+.browser-edge-legacy ::-ms-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.browser-ie ::-ms-scrollbar-track,
+.browser-edge-legacy ::-ms-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.browser-ie ::-ms-scrollbar-thumb,
+.browser-edge-legacy ::-ms-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+
+.browser-ie ::-ms-scrollbar-thumb:hover,
+.browser-edge-legacy ::-ms-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Polyfill styles for missing CSS features */
+.polyfill-backdrop-blur::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  z-index: -1;
+}
+
+/* Fallback for CSS Grid using Flexbox */
+.grid-fallback {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.5rem;
+}
+
+.grid-fallback > * {
+  flex: 1 1 auto;
+  margin: 0.5rem;
+  min-width: 250px;
+}
+
+.grid-fallback.cols-2 > * {
+  flex-basis: calc(50% - 1rem);
+}
+
+.grid-fallback.cols-3 > * {
+  flex-basis: calc(33.333% - 1rem);
+}
+
+.grid-fallback.cols-4 > * {
+  flex-basis: calc(25% - 1rem);
+}
+
+/* Compatibility for older versions of popular browsers */
+
+/* Chrome < 60 */
+.browser-chrome[data-version="59"] .card,
+.browser-chrome[data-version="58"] .card,
+.browser-chrome[data-version="57"] .card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Firefox < 55 */
+.browser-firefox[data-version="54"] .flex,
+.browser-firefox[data-version="53"] .flex,
+.browser-firefox[data-version="52"] .flex {
+  display: -moz-flex;
+  display: flex;
+}
+
+/* Safari < 11 */
+.browser-safari[data-version="10"] .grid,
+.browser-safari[data-version="9"] .grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Ensure text is readable in all browsers */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Prevent zoom on mobile inputs */
+.browser-mobile input,
+.browser-mobile select,
+.browser-mobile textarea {
+  font-size: 16px !important;
+}
+
+/* Fix for IE flexbox bugs */
+.browser-ie .flex {
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.browser-ie .flex > * {
+  -ms-flex: 1 1 auto;
+  flex: 1 1 auto;
+}
+
+/* Dark mode fallbacks for older browsers */
+.theme-dark.no-css-variables {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.theme-dark.no-css-variables .card {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.theme-dark.no-css-variables .input {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+/* Ensure minimum touch target sizes on mobile */
+.browser-mobile .btn,
+.browser-mobile .input,
+.browser-mobile .select {
+  min-height: 44px !important;
+  min-width: 44px !important;
+}
+
+/* Fix for older Android browsers */
+.browser-mobile .card {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* Memory optimization for older browsers */
+.browser-ie .animate-pulse,
+.browser-ie .animate-bounce {
+  will-change: auto !important; /* IE doesn't support will-change */
+}
+
+/* Ensure proper stacking contexts */
+.modal-backdrop {
+  z-index: 1040 !important;
+}
+
+.modal {
+  z-index: 1050 !important;
+}
+
+.tooltip {
+  z-index: 1070 !important;
+}
+
+.toast {
+  z-index: 1080 !important;
+}

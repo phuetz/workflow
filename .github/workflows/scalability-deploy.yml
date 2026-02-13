@@ -1,0 +1,381 @@
+# PLAN C - GitHub Actions CI/CD Pipeline
+# Automated deployment for scalability infrastructure
+# Ultra Think methodology - Complete CI/CD workflow
+
+name: Scalability Infrastructure Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/services/scalability/**'
+      - 'docker/**'
+      - 'k8s/**'
+      - '.github/workflows/scalability-deploy.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/services/scalability/**'
+      - 'docker/**'
+      - 'k8s/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/workflow-scalability
+  NODE_VERSION: '18'
+
+jobs:
+  # Test job
+  test:
+    name: Test Scalability Components
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm run test -- src/services/scalability
+
+      - name: Run integration tests
+        run: npm run test -- src/services/scalability/__tests__/integration.test.ts
+
+      - name: Upload test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: scalability
+          name: scalability-coverage
+
+  # Build job
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.scalability
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            BUILD_VERSION=${{ github.sha }}
+            BUILD_REVISION=${{ github.run_number }}
+
+  # Security scanning
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build.outputs.image-tag }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: ${{ needs.build.outputs.image-tag }}
+          args: --severity-threshold=high
+
+  # Deploy to development
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: development
+      url: https://dev.workflow.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.DEV_KUBECONFIG }}" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/scalability-deployment.yaml
+          kubectl apply -f k8s/scalability-infrastructure.yaml
+          kubectl apply -f k8s/scalability-monitoring.yaml
+          kubectl set image deployment/workflow-scalability-app \
+            workflow-app=${{ needs.build.outputs.image-tag }} \
+            -n workflow-scalability
+          kubectl rollout status deployment/workflow-scalability-app \
+            -n workflow-scalability --timeout=10m
+
+      - name: Run smoke tests
+        run: |
+          kubectl run smoke-test --image=curlimages/curl:latest \
+            --rm -i --restart=Never -- \
+            curl -f http://workflow-scalability-service/health
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.workflow.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.STAGING_KUBECONFIG }}" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install workflow-scalability ./helm/workflow-scalability \
+            --namespace workflow-scalability \
+            --create-namespace \
+            --values k8s/helm-values.yaml \
+            --values k8s/helm-values-staging.yaml \
+            --set app.image.tag=${{ github.sha }} \
+            --set workerPool.image.tag=${{ github.sha }} \
+            --wait --timeout 15m
+
+      - name: Run integration tests
+        run: |
+          npm run test:e2e -- --env staging
+
+      - name: Performance testing
+        run: |
+          npm run test:performance -- --env staging --duration 300
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security, deploy-staging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    environment:
+      name: production
+      url: https://workflow.example.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.13.0'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.PROD_KUBECONFIG }}" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Create backup
+        run: |
+          kubectl create job backup-$(date +%Y%m%d-%H%M%S) \
+            --from=cronjob/database-backup \
+            -n workflow-scalability
+
+      - name: Blue-Green Deployment
+        run: |
+          # Deploy to green environment
+          helm upgrade --install workflow-scalability-green ./helm/workflow-scalability \
+            --namespace workflow-scalability \
+            --values k8s/helm-values.yaml \
+            --values k8s/helm-values-production.yaml \
+            --set app.image.tag=${{ github.sha }} \
+            --set workerPool.image.tag=${{ github.sha }} \
+            --set app.service.selector=green \
+            --wait --timeout 15m
+          
+          # Run health checks
+          kubectl run health-check --image=curlimages/curl:latest \
+            --rm -i --restart=Never -- \
+            curl -f http://workflow-scalability-service-green/health
+          
+          # Switch traffic to green
+          kubectl patch service workflow-scalability-service \
+            -n workflow-scalability \
+            -p '{"spec":{"selector":{"version":"green"}}}'
+          
+          # Wait for stability
+          sleep 60
+          
+          # Delete blue deployment
+          helm delete workflow-scalability-blue --namespace workflow-scalability || true
+          
+          # Rename green to blue for next deployment
+          helm upgrade --install workflow-scalability-blue ./helm/workflow-scalability \
+            --reuse-values \
+            --set app.service.selector=blue \
+            --namespace workflow-scalability
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n workflow-scalability
+          kubectl get hpa -n workflow-scalability
+          kubectl top pods -n workflow-scalability
+
+      - name: Send notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Production deployment completed!
+            Version: ${{ github.sha }}
+            Environment: Production
+            URL: https://workflow.example.com
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+  # Rollback job
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure() && (github.ref == 'refs/heads/main')
+    needs: [deploy-staging, deploy-production]
+    steps:
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.PROD_KUBECONFIG }}" | base64 -d > kubeconfig
+          echo "KUBECONFIG=$PWD/kubeconfig" >> $GITHUB_ENV
+
+      - name: Rollback deployment
+        run: |
+          kubectl rollout undo deployment/workflow-scalability-app \
+            -n workflow-scalability
+          kubectl rollout status deployment/workflow-scalability-app \
+            -n workflow-scalability --timeout=10m
+
+      - name: Send alert
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ⚠️ Production deployment failed and was rolled back!
+            Version: ${{ github.sha }}
+            Check the logs for details.
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Monitoring job
+  monitor:
+    name: Post-Deployment Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: success()
+    steps:
+      - name: Check metrics
+        run: |
+          # Query Prometheus for key metrics
+          curl -s "http://prometheus.workflow.example.com/api/v1/query?query=up{job='workflow-app'}" | jq .
+          
+      - name: Check error rate
+        run: |
+          ERROR_RATE=$(curl -s "http://prometheus.workflow.example.com/api/v1/query?query=rate(http_requests_total{status=~'5..'}[5m])" | jq -r '.data.result[0].value[1]')
+          if (( $(echo "$ERROR_RATE > 0.05" | bc -l) )); then
+            echo "Error rate is too high: $ERROR_RATE"
+            exit 1
+          fi
+
+      - name: Check response time
+        run: |
+          RESPONSE_TIME=$(curl -s "http://prometheus.workflow.example.com/api/v1/query?query=histogram_quantile(0.95,http_request_duration_seconds_bucket)" | jq -r '.data.result[0].value[1]')
+          if (( $(echo "$RESPONSE_TIME > 2" | bc -l) )); then
+            echo "Response time is too slow: $RESPONSE_TIME"
+            exit 1
+          fi

@@ -1,18 +1,40 @@
-export function registerServiceWorker() {
+import { logger } from './services/SimpleLogger';
+export function registerServiceWorker(): Promise<void> {
   // Check if running in StackBlitz/WebContainer environment
-  const hostname = window.location.hostname;
-  const isStackBlitz = hostname.includes('stackblitz.com') || hostname.includes('webcontainer.io');
-  
+  const isStackBlitz = typeof process !== 'undefined' && process.env.NODE_ENV === 'development' && window.location.hostname.includes('stackblitz');
+
   if (isStackBlitz) {
-    console.log('Service worker registration skipped in StackBlitz environment');
-    return;
+    logger.info('Service worker registration skipped in StackBlitz environment');
+    return Promise.resolve();
   }
 
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/service-worker.js')
-        .catch(err => console.error('Service worker registration failed:', err));
+    return new Promise<void>((resolve, reject) => {
+      // Use a named function so we can remove the listener
+      const handleLoad = () => {
+        navigator.serviceWorker
+          .register('/service-worker.js')
+          .then(() => {
+            logger.info('Service worker registered successfully');
+            resolve();
+          })
+          .catch(err => {
+            logger.error('Service worker registration failed:', err);
+            reject(err);
+          });
+
+        // Remove the listener after registration
+        window.removeEventListener('load', handleLoad);
+      };
+
+      // Check if the page is already loaded
+      if (document.readyState === 'complete') {
+        handleLoad();
+      } else {
+        window.addEventListener('load', handleLoad);
+      }
     });
   }
+
+  return Promise.resolve();
 }

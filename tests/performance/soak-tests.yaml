@@ -1,0 +1,204 @@
+# Artillery Soak Testing Configuration
+# Tests system stability under sustained load over extended period
+# Run with: artillery run tests/performance/soak-tests.yaml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Warm-up
+    - duration: 180
+      arrivalRate: 20
+      rampTo: 50
+      name: "Warm-up"
+
+    # Sustained load for 1 hour
+    - duration: 3600
+      arrivalRate: 100
+      name: "Soak test - 1 hour at 100 users/sec"
+
+    # Graceful shutdown
+    - duration: 180
+      arrivalRate: 100
+      rampTo: 10
+      name: "Graceful ramp-down"
+
+  processor: "./tests/performance/processor.js"
+
+  # Soak test thresholds - should remain stable
+  ensure:
+    maxErrorRate: 0.5            # Very low error rate
+    p95: 200                     # Should not degrade over time
+    p99: 500
+
+  http:
+    timeout: 15
+    pool: 100
+
+  plugins:
+    expect: {}
+    metrics-by-endpoint:
+      stripQueryString: true
+    publish-metrics:
+      - type: "prometheus"
+        pushGateway: "http://localhost:9091"
+        prefix: "artillery_soak_"
+        tags:
+          - "test:soak"
+          - "environment:test"
+
+  variables:
+    apiUrl: "http://localhost:3000/api"
+
+scenarios:
+  # Realistic user behavior - mix of operations
+  - name: "Realistic User Session"
+    weight: 100
+    flow:
+      # Login / Auth check
+      - get:
+          url: "/api/health"
+          expect:
+            - statusCode: 200
+
+      # Browse workflows
+      - get:
+          url: "/api/workflows?limit=20&offset=0"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "$[0].id"
+              as: "workflowId"
+
+      - think: 3
+
+      # View workflow details
+      - get:
+          url: "/api/workflows/{{ workflowId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 5
+
+      # Execute workflow
+      - post:
+          url: "/api/workflows/{{ workflowId }}/execute"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            input:
+              data: "soak test {{ $timestamp }}"
+          expect:
+            - statusCode: [200, 202]
+          capture:
+            - json: "$.executionId"
+              as: "executionId"
+
+      - think: 2
+
+      # Check execution status
+      - get:
+          url: "/api/executions/{{ executionId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 4
+
+      # View execution history
+      - get:
+          url: "/api/executions?workflowId={{ workflowId }}&limit=10"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 3
+
+      # Check system metrics
+      - get:
+          url: "/api/queue-metrics"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+      - think: 10
+
+      # Create new workflow
+      - post:
+          url: "/api/workflows"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            name: "Soak Test Workflow {{ $randomString() }}"
+            description: "Testing memory leaks and stability"
+            nodes:
+              - id: "trigger-1"
+                type: "trigger"
+                position: { x: 100, y: 100 }
+                data:
+                  label: "Manual Trigger"
+              - id: "http-1"
+                type: "httpRequest"
+                position: { x: 300, y: 100 }
+                data:
+                  label: "Fetch Data"
+                  url: "https://jsonplaceholder.typicode.com/posts/1"
+                  method: "GET"
+              - id: "delay-1"
+                type: "delay"
+                position: { x: 500, y: 100 }
+                data:
+                  label: "Wait"
+                  duration: 1000
+            edges:
+              - id: "e1"
+                source: "trigger-1"
+                target: "http-1"
+              - id: "e2"
+                source: "http-1"
+                target: "delay-1"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "$.id"
+              as: "newWorkflowId"
+
+      - think: 5
+
+      # Update workflow
+      - put:
+          url: "/api/workflows/{{ newWorkflowId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            name: "Updated Soak Test {{ $randomString() }}"
+            nodes:
+              - id: "trigger-1"
+                type: "trigger"
+                position: { x: 100, y: 100 }
+                data:
+                  label: "Updated Trigger"
+            edges: []
+          expect:
+            - statusCode: 200
+
+      - think: 8
+
+      # Delete workflow (cleanup)
+      - delete:
+          url: "/api/workflows/{{ newWorkflowId }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 204]
+
+      - think: 15

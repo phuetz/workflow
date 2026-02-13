@@ -1,0 +1,175 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for the workflow platform
+title: "[Feature]: "
+labels: ["enhancement", "needs-discussion"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! We appreciate your input to make the platform better.
+        Please provide as much detail as possible to help us understand your request.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: A brief, clear description of the feature you'd like to see
+      placeholder: Summarize the feature in 1-2 sentences...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What pain point does it address?
+      placeholder: |
+        I'm frustrated when...
+        Currently, I have to...
+        This would help me...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this feature working?
+      placeholder: |
+        Describe your ideal solution:
+        - User flow
+        - UI/UX considerations
+        - Technical approach (if applicable)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: |
+        Alternative 1: ...
+        Alternative 2: ...
+        Current workaround: ...
+
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this?
+      options:
+        - New Node Type/Integration
+        - UI/UX Improvement
+        - Performance Enhancement
+        - Developer Experience
+        - Documentation
+        - API Enhancement
+        - Security Feature
+        - Monitoring/Analytics
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority/Impact
+      description: How would you rate the priority of this feature?
+      options:
+        - Critical - Blocking my work
+        - High - Would significantly improve my workflow
+        - Medium - Nice to have
+        - Low - Minor improvement
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: Who would benefit from this feature?
+      options:
+        - All users
+        - Power users/Advanced workflows
+        - Enterprise users
+        - Developers/Plugin creators
+        - Specific use case
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: Describe specific use cases where this feature would be valuable
+      placeholder: |
+        Use Case 1: ...
+        Use Case 2: ...
+        Use Case 3: ...
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Examples
+      description: If applicable, add mockups, wireframes, or examples from other tools
+      placeholder: Drag and drop images or paste links to examples...
+
+  - type: textarea
+    id: technical-details
+    attributes:
+      label: Technical Considerations (Optional)
+      description: Any technical details, dependencies, or implementation notes
+      placeholder: |
+        - Requires integration with...
+        - Depends on...
+        - Should be compatible with...
+
+  - type: dropdown
+    id: breaking-change
+    attributes:
+      label: Breaking Change?
+      description: Would this feature require breaking changes to existing workflows?
+      options:
+        - "No - Fully backward compatible"
+        - "Maybe - Need to investigate"
+        - "Yes - Would break existing workflows"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information, links, or references that would be helpful
+      placeholder: |
+        - Link to discussion: ...
+        - Similar feature in other tools: ...
+        - Research/articles: ...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to help with this feature?
+      options:
+        - label: I would be willing to submit a PR for this feature
+          required: false
+        - label: I can help with testing/feedback
+          required: false
+        - label: I can help with documentation
+          required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and discussions to ensure this hasn't been requested before
+          required: true
+        - label: I have provided sufficient context and use cases
+          required: true
+        - label: This feature aligns with the project's goals and vision
+          required: true

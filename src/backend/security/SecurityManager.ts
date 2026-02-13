@@ -3,6 +3,8 @@
  * Comprehensive security system for data protection
  */
 
+import { logger } from '../../services/SimpleLogger';
+
 interface EncryptionResult {
   encryptedData: string;
   iv: string;
@@ -100,14 +102,15 @@ export class SecurityManager {
       );
       
       const encryptedArray = new Uint8Array(encryptedBuffer);
-      
+
+
       return {
         encryptedData: this.bufferToBase64(encryptedArray),
         iv: this.bufferToBase64(iv),
         authTag: 'mock-auth-tag' // Would be extracted from GCM in real implementation
       };
     } catch (error) {
-      console.error('Encryption failed:', error);
+      logger.error('Encryption failed', error);
       throw new Error('Failed to encrypt data');
     }
   }
@@ -132,14 +135,15 @@ export class SecurityManager {
       
       // Decrypt data
       const decryptedBuffer = await crypto.subtle.decrypt(
-        { name: 'AES-GCM', iv },
+        { name: 'AES-GCM', iv: iv.buffer as ArrayBuffer },
         key,
-        encryptedData
+        encryptedData.buffer as ArrayBuffer
       );
-      
+
+
       return decoder.decode(decryptedBuffer);
     } catch (error) {
-      console.error('Decryption failed:', error);
+      logger.error('Decryption failed', error);
       throw new Error('Failed to decrypt data');
     }
   }
@@ -176,7 +180,13 @@ export class SecurityManager {
     }
 
     // In production, this would be sent to a secure logging service
-    console.log('🔒 Security Log:', auditEntry);
+    logger.info('Security Log', {
+      auditId: auditEntry.id,
+      action: auditEntry.action,
+      resourceType: auditEntry.resourceType,
+      severity: auditEntry.severity,
+      userId: auditEntry.userId
+    });
 
     // Alert on critical actions
     if (entry.severity === 'critical') {
@@ -198,8 +208,8 @@ export class SecurityManager {
     if (filters.userId) {
       filtered = filtered.filter(log => log.userId === filters.userId);
     }
-    if (filters.action) {
-      filtered = filtered.filter(log => log.action.includes(filters.action));
+    if (filters.action !== undefined) {
+      filtered = filtered.filter(log => log.action.includes(filters.action!));
     }
     if (filters.resourceType) {
       filtered = filtered.filter(log => log.resourceType === filters.resourceType);
@@ -414,7 +424,19 @@ export class SecurityManager {
   // PRIVATE HELPER METHODS
   // ================================
 
+  private encryptionKeyCache: string | null = null;
+
   private getOrGenerateEncryptionKey(): string {
+    // In backend (Node.js), use environment variable or in-memory cache
+    if (typeof localStorage === 'undefined') {
+      if (!this.encryptionKeyCache) {
+        // Use environment variable or generate a persistent key
+        this.encryptionKeyCache = process.env.ENCRYPTION_KEY || this.generateSecureKey(64);
+      }
+      return this.encryptionKeyCache;
+    }
+
+    // In browser, use localStorage
     let key = localStorage.getItem('encryption_key');
     if (!key) {
       key = this.generateSecureKey(64);
@@ -445,7 +467,7 @@ export class SecurityManager {
 
   private initializeSecurityHeaders(): void {
     // In a real application, these would be set on the server
-    console.log('🔒 Security headers initialized');
+    logger.info('Security headers initialized');
   }
 
   private startSecurityMonitoring(): void {
@@ -494,7 +516,13 @@ export class SecurityManager {
   }
 
   private async sendSecurityAlert(entry: AuditLogEntry): Promise<void> {
-    console.warn('🚨 SECURITY ALERT:', entry);
+    logger.warn('SECURITY ALERT', {
+      auditId: entry.id,
+      action: entry.action,
+      resourceType: entry.resourceType,
+      severity: entry.severity,
+      userId: entry.userId
+    });
     // In production, this would send alerts via email, Slack, etc.
   }
 

@@ -3,7 +3,7 @@
  * Export and import workflows and application data
  */
 
-import type { Node, Edge } from 'reactflow';
+import type { Node, Edge } from '@xyflow/react';
 
 export interface WorkflowBackup {
   id: string;

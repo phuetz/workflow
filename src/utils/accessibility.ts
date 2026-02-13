@@ -1,407 +1,328 @@
 /**
  * Accessibility Utilities
- * Tools and helpers for improving application accessibility
+ * Helper functions for improving application accessibility
  */
 
-/**
- * Generate unique ID for ARIA attributes
- */
-export function generateAriaId(prefix: string = 'aria'): string {
-  return `${prefix}-${Math.random().toString(36).substr(2, 9)}`;
+import { logger } from '../services/SimpleLogger';
+
+// Extend HTMLElement interface to include focus trap cleanup function
+interface HTMLElementWithFocusTrap extends HTMLElement {
+  __focusTrapCleanup?: () => void;
 }
 
 /**
- * Announce message to screen readers
+ * Generate a unique ID for accessibility attributes
  */
-export function announceToScreenReader(
-  message: string,
-  priority: 'polite' | 'assertive' = 'polite'
-) {
-  const announcement = document.createElement('div');
-  announcement.setAttribute('role', 'status');
-  announcement.setAttribute('aria-live', priority);
-  announcement.setAttribute('aria-atomic', 'true');
-  announcement.className = 'sr-only';
-  announcement.textContent = message;
-
-  document.body.appendChild(announcement);
-
-  // Remove after announcement
-  setTimeout(() => {
-    document.body.removeChild(announcement);
-  }, 1000);
+export function generateA11yId(prefix: string = 'a11y'): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 /**
- * Focus management utilities
+ * Announce content to screen readers using ARIA live regions
  */
-export const focusManager = {
+export function announceToScreenReader(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
+  try {
+    // Find or create live region
+    let liveRegion = document.getElementById(`live-region-${priority}`) as HTMLElement | null;
+
+    if (!liveRegion) {
+      liveRegion = document.createElement('div');
+      liveRegion.id = `live-region-${priority}`;
+      liveRegion.setAttribute('aria-live', priority);
+      liveRegion.setAttribute('aria-atomic', 'true');
+      liveRegion.className = 'sr-only';
+      document.body.appendChild(liveRegion);
+    }
+
+    // Clear any existing content and add new message
+    liveRegion.textContent = '';
+    setTimeout(() => {
+      liveRegion!.textContent = message;
+    }, 100);
+
+    // Clear after a delay to avoid cluttering
+    setTimeout(() => {
+      liveRegion!.textContent = '';
+    }, 10000);
+
+    logger.debug('Screen reader announcement made', { message, priority });
+  } catch (error) {
+    logger.error('Failed to announce to screen reader', error);
+  }
+}
+
+/**
+ * Manage focus for better keyboard navigation
+ */
+export class FocusManager {
+  private focusHistory: HTMLElement[] = [];
+  private trapActive = false;
+  private trapContainer: HTMLElement | null = null;
+
   /**
-   * Get all focusable elements within a container
+   * Save current focus and move to specified element
    */
-  getFocusableElements(container: HTMLElement = document.body): HTMLElement[] {
-    const selector = [
+  saveFocusAndMoveTo(element: HTMLElement): void {
+    const currentFocused = document.activeElement as HTMLElement;
+    if (currentFocused && currentFocused !== document.body) {
+      this.focusHistory.push(currentFocused);
+    }
+
+    element.focus();
+    logger.debug('Focus moved and saved', { to: element.tagName });
+  }
+
+  /**
+   * Restore previously saved focus
+   */
+  restoreFocus(): void {
+    const lastFocused = this.focusHistory.pop();
+    if (lastFocused && document.contains(lastFocused)) {
+      lastFocused.focus();
+      logger.debug('Focus restored', { to: lastFocused.tagName });
+    }
+  }
+
+  /**
+   * Trap focus within a container (useful for modals)
+   */
+  trapFocus(container: HTMLElement): void {
+    this.trapContainer = container;
+    this.trapActive = true;
+
+    const focusableSelectors = [
       'a[href]',
       'button:not([disabled])',
-      'textarea:not([disabled])',
       'input:not([disabled])',
       'select:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])'
-    ].join(', ');
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+      '[contenteditable="true"]'
+    ];
 
-    return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(
-      (el) => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden')
-    );
-  },
+    const focusableElements = container.querySelectorAll(focusableSelectors.join(',')) as NodeListOf<HTMLElement>;
+    if (focusableElements.length === 0) return;
 
-  /**
-   * Trap focus within a container (for modals, etc.)
-   */
-  trapFocus(container: HTMLElement): () => void {
-    const focusableElements = this.getFocusableElements(container);
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (!this.trapActive) return;
 
-      if (e.shiftKey) {
-        // Shift + Tab
-        if (document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement?.focus();
+      if (e.key === 'Tab') {
+        if (e.shiftKey) {
+          // Shift + Tab
+          if (document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab
+          if (document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+          }
         }
-      } else {
-        // Tab
-        if (document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement?.focus();
-        }
+      }
+
+      if (e.key === 'Escape') {
+        this.releaseFocusTrap();
       }
     };
 
-    container.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Store cleanup function
+    (container as HTMLElementWithFocusTrap).__focusTrapCleanup = () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
 
     // Focus first element
-    firstElement?.focus();
-
-    // Return cleanup function
-    return () => {
-      container.removeEventListener('keydown', handleKeyDown);
-    };
-  },
+    firstElement.focus();
+    logger.debug('Focus trap activated', { container: container.tagName });
+  }
 
   /**
-   * Restore focus to previous element
+   * Release focus trap
    */
-  saveFocus(): () => void {
-    const previouslyFocused = document.activeElement as HTMLElement;
-    return () => {
-      previouslyFocused?.focus();
-    };
+  releaseFocusTrap(): void {
+    this.trapActive = false;
+
+    if (this.trapContainer) {
+      const cleanup = (this.trapContainer as HTMLElementWithFocusTrap).__focusTrapCleanup;
+      if (cleanup) cleanup();
+      this.trapContainer = null;
+    }
+
+    this.restoreFocus();
+    logger.debug('Focus trap released');
   }
-};
+
+  /**
+   * Get all focusable elements within a container
+   */
+  private getFocusableElements(container: HTMLElement): HTMLElement[] {
+    const focusableSelectors = [
+      'a[href]',
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+      '[contenteditable="true"]'
+    ].join(', ');
+
+    return Array.from(container.querySelectorAll(focusableSelectors))
+      .filter((el) => {
+        const htmlEl = el as HTMLElement;
+        return htmlEl.offsetWidth > 0 &&
+               htmlEl.offsetHeight > 0 &&
+               !htmlEl.hasAttribute('disabled') &&
+               htmlEl.getAttribute('tabindex') !== '-1';
+      }) as HTMLElement[];
+  }
+}
 
 /**
- * Keyboard navigation utilities
+ * Keyboard navigation helpers
  */
-export const keyboardNav = {
+export const KeyboardNavigation = {
   /**
    * Handle arrow key navigation in a list
    */
-  handleArrowKeys(
-    e: React.KeyboardEvent,
-    items: HTMLElement[],
+  handleArrowNavigation(
+    event: KeyboardEvent,
     currentIndex: number,
-    options: {
-      loop?: boolean;
-      horizontal?: boolean;
-      onSelect?: (index: number) => void;
-    } = {}
-  ) {
-    const { loop = true, horizontal = false, onSelect } = options;
-
-    const nextKey = horizontal ? 'ArrowRight' : 'ArrowDown';
-    const prevKey = horizontal ? 'ArrowLeft' : 'ArrowUp';
-
+    totalItems: number,
+    onIndexChange: (newIndex: number) => void
+  ): void {
     let newIndex = currentIndex;
 
-    if (e.key === nextKey) {
-      e.preventDefault();
-      newIndex = currentIndex + 1;
-      if (newIndex >= items.length) {
-        newIndex = loop ? 0 : items.length - 1;
-      }
-    } else if (e.key === prevKey) {
-      e.preventDefault();
-      newIndex = currentIndex - 1;
-      if (newIndex < 0) {
-        newIndex = loop ? items.length - 1 : 0;
-      }
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      newIndex = 0;
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      newIndex = items.length - 1;
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onSelect?.(currentIndex);
-      return currentIndex;
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        newIndex = currentIndex < totalItems - 1 ? currentIndex + 1 : 0;
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        newIndex = currentIndex > 0 ? currentIndex - 1 : totalItems - 1;
+        break;
+      case 'Home':
+        event.preventDefault();
+        newIndex = 0;
+        break;
+      case 'End':
+        event.preventDefault();
+        newIndex = totalItems - 1;
+        break;
+      default:
+        return;
     }
 
-    items[newIndex]?.focus();
-    return newIndex;
+    onIndexChange(newIndex);
   },
 
   /**
-   * Type-ahead search in a list
+   * Handle grid navigation (arrow keys in 2D)
    */
-  createTypeAhead(
-    items: Array<{ id: string; label: string }>,
-    onSelect: (item: any) => void
-  ) {
-    let searchString = '';
-    let searchTimeout: NodeJS.Timeout;
+  handleGridNavigation(
+    event: KeyboardEvent,
+    currentRow: number,
+    currentCol: number,
+    totalRows: number,
+    totalCols: number,
+    onPositionChange: (row: number, col: number) => void
+  ): void {
+    let newRow = currentRow;
+    let newCol = currentCol;
 
-    return (e: KeyboardEvent) => {
-      clearTimeout(searchTimeout);
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        newRow = currentRow < totalRows - 1 ? currentRow + 1 : 0;
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        newRow = currentRow > 0 ? currentRow - 1 : totalRows - 1;
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        newCol = currentCol < totalCols - 1 ? currentCol + 1 : 0;
+        break;
+      case 'ArrowLeft':
+        event.preventDefault();
+        newCol = currentCol > 0 ? currentCol - 1 : totalCols - 1;
+        break;
+      default:
+        return;
+    }
 
-      // Only handle letter/number keys
-      if (e.key.length === 1 && /[a-z0-9]/i.test(e.key)) {
-        searchString += e.key.toLowerCase();
+    onPositionChange(newRow, newCol);
+  }
+};
 
-        const match = items.find((item) =>
-          item.label.toLowerCase().startsWith(searchString)
-        );
+/**
+ * Create accessible labels and descriptions
+ */
+export const AccessibleText = {
+  /**
+   * Format number for screen readers
+   */
+  formatNumber(num: number): string {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)} million`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)} mille`;
+    }
+    return num.toString();
+  },
 
-        if (match) {
-          onSelect(match);
-        }
+  /**
+   * Format duration for screen readers
+   */
+  formatDuration(milliseconds: number): string {
+    if (milliseconds < 1000) {
+      return `${milliseconds} millisecondes`;
+    } else if (milliseconds < 60000) {
+      return `${(milliseconds / 1000).toFixed(1)} secondes`;
+    } else {
+      return `${(milliseconds / 60000).toFixed(1)} minutes`;
+    }
+  },
 
-        searchTimeout = setTimeout(() => {
-          searchString = '';
-        }, 1000);
-      }
+  /**
+   * Format status for screen readers
+   */
+  formatStatus(status: string): string {
+    const statusMap: Record<string, string> = {
+      'success': 'succès',
+      'error': 'erreur',
+      'warning': 'avertissement',
+      'info': 'information',
+      'running': 'en cours',
+      'pending': 'en attente',
+      'completed': 'terminé',
+      'failed': 'échoué'
     };
+
+    return statusMap[status.toLowerCase()] || status;
   }
 };
 
 /**
- * Color contrast utilities
+ * Singleton focus manager instance
  */
-export const colorContrast = {
-  /**
-   * Calculate relative luminance
-   */
-  getLuminance(hex: string): number {
-    const rgb = this.hexToRgb(hex);
-    if (!rgb) return 0;
-
-    const [r, g, b] = rgb.map((val) => {
-      const sRGB = val / 255;
-      return sRGB <= 0.03928 ? sRGB / 12.92 : Math.pow((sRGB + 0.055) / 1.055, 2.4);
-    });
-
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  },
-
-  /**
-   * Calculate contrast ratio between two colors
-   */
-  getContrastRatio(hex1: string, hex2: string): number {
-    const lum1 = this.getLuminance(hex1);
-    const lum2 = this.getLuminance(hex2);
-    const lighter = Math.max(lum1, lum2);
-    const darker = Math.min(lum1, lum2);
-
-    return (lighter + 0.05) / (darker + 0.05);
-  },
-
-  /**
-   * Check if contrast meets WCAG AA standard (4.5:1 for normal text)
-   */
-  meetsWCAGAA(foreground: string, background: string): boolean {
-    return this.getContrastRatio(foreground, background) >= 4.5;
-  },
-
-  /**
-   * Check if contrast meets WCAG AAA standard (7:1 for normal text)
-   */
-  meetsWCAGAAA(foreground: string, background: string): boolean {
-    return this.getContrastRatio(foreground, background) >= 7;
-  },
-
-  /**
-   * Convert hex to RGB
-   */
-  hexToRgb(hex: string): [number, number, number] | null {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? [
-          parseInt(result[1], 16),
-          parseInt(result[2], 16),
-          parseInt(result[3], 16)
-        ]
-      : null;
-  }
-};
+export const focusManager = new FocusManager();
 
 /**
- * Reduced motion detection
+ * Hook for managing component accessibility
  */
-export function prefersReducedMotion(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-/**
- * High contrast mode detection
- */
-export function prefersHighContrast(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-contrast: high)').matches;
-}
-
-/**
- * Skip to content link utility
- */
-export function createSkipLink(targetId: string, label: string = 'Skip to content') {
-  const link = document.createElement('a');
-  link.href = `#${targetId}`;
-  link.className = 'skip-link';
-  link.textContent = label;
-  link.onclick = (e) => {
-    e.preventDefault();
-    const target = document.getElementById(targetId);
-    if (target) {
-      target.focus();
-      target.scrollIntoView();
-    }
+export function useAccessibility() {
+  return {
+    announceToScreenReader,
+    focusManager,
+    generateA11yId,
+    KeyboardNavigation,
+    AccessibleText
   };
-
-  document.body.insertBefore(link, document.body.firstChild);
-}
-
-/**
- * ARIA label helpers
- */
-export const ariaHelpers = {
-  /**
-   * Create descriptive label for interactive elements
-   */
-  describeElement(element: string, action: string, context?: string): string {
-    return context ? `${action} ${element} for ${context}` : `${action} ${element}`;
-  },
-
-  /**
-   * Create status message
-   */
-  statusMessage(item: string, state: string, count?: number): string {
-    const countText = count !== undefined ? ` (${count} items)` : '';
-    return `${item} ${state}${countText}`;
-  },
-
-  /**
-   * Create loading message
-   */
-  loadingMessage(item: string = 'content'): string {
-    return `Loading ${item}...`;
-  },
-
-  /**
-   * Create error message
-   */
-  errorMessage(action: string, item?: string): string {
-    return item ? `Error ${action} ${item}` : `Error: ${action}`;
-  }
-};
-
-/**
- * Modal accessibility helper
- */
-export class ModalA11y {
-  private previousFocus: HTMLElement | null = null;
-  private cleanupFocusTrap: (() => void) | null = null;
-
-  open(modalElement: HTMLElement) {
-    // Save current focus
-    this.previousFocus = document.activeElement as HTMLElement;
-
-    // Trap focus
-    this.cleanupFocusTrap = focusManager.trapFocus(modalElement);
-
-    // Prevent scrolling on body
-    document.body.style.overflow = 'hidden';
-
-    // Announce modal opened
-    announceToScreenReader('Dialog opened');
-  }
-
-  close() {
-    // Cleanup focus trap
-    this.cleanupFocusTrap?.();
-
-    // Restore focus
-    this.previousFocus?.focus();
-
-    // Restore scrolling
-    document.body.style.overflow = '';
-
-    // Announce modal closed
-    announceToScreenReader('Dialog closed');
-  }
-}
-
-/**
- * Form accessibility helpers
- */
-export const formA11y = {
-  /**
-   * Get error message ID for form field
-   */
-  getErrorId(fieldId: string): string {
-    return `${fieldId}-error`;
-  },
-
-  /**
-   * Get description ID for form field
-   */
-  getDescriptionId(fieldId: string): string {
-    return `${fieldId}-description`;
-  },
-
-  /**
-   * Get aria-describedby value
-   */
-  getDescribedBy(fieldId: string, hasError: boolean, hasDescription: boolean): string | undefined {
-    const ids: string[] = [];
-    if (hasError) ids.push(this.getErrorId(fieldId));
-    if (hasDescription) ids.push(this.getDescriptionId(fieldId));
-    return ids.length > 0 ? ids.join(' ') : undefined;
-  }
-};
-
-/**
- * Live region for dynamic content updates
- */
-export class LiveRegion {
-  private element: HTMLElement;
-
-  constructor(mode: 'polite' | 'assertive' = 'polite') {
-    this.element = document.createElement('div');
-    this.element.setAttribute('role', 'status');
-    this.element.setAttribute('aria-live', mode);
-    this.element.setAttribute('aria-atomic', 'true');
-    this.element.className = 'sr-only';
-    document.body.appendChild(this.element);
-  }
-
-  announce(message: string) {
-    this.element.textContent = message;
-  }
-
-  destroy() {
-    document.body.removeChild(this.element);
-  }
 }

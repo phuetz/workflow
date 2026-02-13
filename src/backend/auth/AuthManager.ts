@@ -1,9 +1,26 @@
 /**
  * Authentication & Authorization Manager
  * JWT/OAuth2 system with role-based access control
+ *
+ * @deprecated Use `@services/auth` (unified AuthService) instead.
+ * This service is kept for backward compatibility.
+ *
+ * Migration:
+ * ```typescript
+ * // Old:
+ * import { authManager, useAuth } from '@backend/auth/AuthManager';
+ *
+ * // New:
+ * import { authService } from '@services/auth';
+ * await authService.initialize();
+ * ```
+ *
+ * @see /src/services/auth/AuthService.ts for the unified implementation
  */
 
+import React from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { logger } from '../../services/SimpleLogger';
 
 interface User {
   id: string;
@@ -50,7 +67,7 @@ export class AuthManager {
       name: 'Google',
       clientId: process.env.VITE_GOOGLE_CLIENT_ID || 'google-client-id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'google-client-secret',
-      redirectUri: `${window.location.origin}/auth/callback/google`,
+      redirectUri: typeof (globalThis as any).window !== 'undefined' ? `${(globalThis as any).window.location.origin}/auth/callback/google` : 'http://localhost:3000/auth/callback/google',
       scope: ['openid', 'email', 'profile'],
       authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
       tokenUrl: 'https://oauth2.googleapis.com/token'
@@ -59,7 +76,7 @@ export class AuthManager {
       name: 'GitHub',
       clientId: process.env.VITE_GITHUB_CLIENT_ID || 'github-client-id',
       clientSecret: process.env.GITHUB_CLIENT_SECRET || 'github-client-secret',
-      redirectUri: `${window.location.origin}/auth/callback/github`,
+      redirectUri: typeof (globalThis as any).window !== 'undefined' ? `${(globalThis as any).window.location.origin}/auth/callback/github` : 'http://localhost:3000/auth/callback/github',
       scope: ['user:email'],
       authUrl: 'https://github.com/login/oauth/authorize',
       tokenUrl: 'https://github.com/login/oauth/access_token'
@@ -68,7 +85,7 @@ export class AuthManager {
       name: 'Microsoft',
       clientId: process.env.VITE_MICROSOFT_CLIENT_ID || 'microsoft-client-id',
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET || 'microsoft-client-secret',
-      redirectUri: `${window.location.origin}/auth/callback/microsoft`,
+      redirectUri: typeof (globalThis as any).window !== 'undefined' ? `${(globalThis as any).window.location.origin}/auth/callback/microsoft` : 'http://localhost:3000/auth/callback/microsoft',
       scope: ['openid', 'email', 'profile'],
       authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
       tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token'
@@ -80,7 +97,12 @@ export class AuthManager {
   }
 
   private async initializeAuth() {
-    // Try to restore session from localStorage
+    // Try to restore session from localStorage (browser only)
+    if (typeof localStorage === 'undefined') {
+      // Skip localStorage in Node.js backend environment
+      return;
+    }
+
     const savedTokens = localStorage.getItem('auth_tokens');
     const savedUser = localStorage.getItem('auth_user');
 
@@ -92,12 +114,12 @@ export class AuthManager {
         // Verify token is still valid
         if (this.tokens && await this.isTokenValid(this.tokens.accessToken)) {
           this.startRefreshTimer();
-          console.log('✅ Session restored for user:', this.currentUser?.email);
+          logger.info('Session restored for user', { email: this.currentUser?.email });
         } else {
           await this.logout();
         }
       } catch (error) {
-        console.error('❌ Error restoring session:', error);
+        logger.error('Error restoring session', error);
         await this.logout();
       }
     }
@@ -110,14 +132,14 @@ export class AuthManager {
       const response = await this.apiCall('/auth/login', 'POST', credentials);
       
       const { user, tokens } = response;
-      
+
       await this.setSession(user, tokens);
-      
-      console.log('✅ Login successful for user:', user.email);
-      
+
+      logger.info('Login successful for user', { email: user.email, userId: user.id });
+
       return { user, tokens };
     } catch (error) {
-      console.error('❌ Login failed:', error);
+      logger.error('Login failed', error);
       throw new Error('Invalid email or password');
     }
   }
@@ -133,14 +155,14 @@ export class AuthManager {
       const response = await this.apiCall('/auth/register', 'POST', userData);
       
       const { user, tokens } = response;
-      
+
       await this.setSession(user, tokens);
-      
-      console.log('✅ Registration successful for user:', user.email);
-      
+
+      logger.info('Registration successful for user', { email: user.email, userId: user.id });
+
       return { user, tokens };
     } catch (error) {
-      console.error('❌ Registration failed:', error);
+      logger.error('Registration failed', error);
       throw error;
     }
   }
@@ -153,8 +175,10 @@ export class AuthManager {
     }
 
     const state = this.generateSecureState();
-    localStorage.setItem('oauth_state', state);
-    localStorage.setItem('oauth_provider', provider);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('oauth_state', state);
+      localStorage.setItem('oauth_provider', provider);
+    }
 
     const params = new URLSearchParams({
       client_id: config.clientId,
@@ -167,16 +191,16 @@ export class AuthManager {
     });
 
     const authUrl = `${config.authUrl}?${params.toString()}`;
-    
-    console.log(`🔗 Initiating OAuth for ${provider}:`, authUrl);
-    
+
+    logger.info('Initiating OAuth', { provider, authUrl });
+
     return authUrl;
   }
 
   // Handle OAuth callback
   async handleOAuthCallback(code: string, state: string, provider: string): Promise<{ user: User; tokens: AuthTokens }> {
-    const savedState = localStorage.getItem('oauth_state');
-    const savedProvider = localStorage.getItem('oauth_provider');
+    const savedState = typeof localStorage !== 'undefined' ? localStorage.getItem('oauth_state') : null;
+    const savedProvider = typeof localStorage !== 'undefined' ? localStorage.getItem('oauth_provider') : null;
 
     // Verify state to prevent CSRF
     if (state !== savedState || provider !== savedProvider) {
@@ -193,16 +217,18 @@ export class AuthManager {
       const { user, tokens } = response;
       
       await this.setSession(user, tokens);
-      
+
       // Clean up
-      localStorage.removeItem('oauth_state');
-      localStorage.removeItem('oauth_provider');
-      
-      console.log(`✅ OAuth ${provider} login successful:`, user.email);
-      
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('oauth_state');
+        localStorage.removeItem('oauth_provider');
+      }
+
+      logger.info(`OAuth ${provider} login successful`, { provider, email: user.email, userId: user.id });
+
       return { user, tokens };
     } catch (error) {
-      console.error(`❌ OAuth ${provider} callback failed:`, error);
+      logger.error(`OAuth ${provider} callback failed`, error as Error);
       throw error;
     }
   }
@@ -216,10 +242,10 @@ export class AuthManager {
         });
       }
     } catch (error) {
-      console.warn('Logout API call failed:', error);
+      logger.warn('Logout API call failed', { error });
     } finally {
       this.clearSession();
-      console.log('✅ Logout successful');
+      logger.info('Logout successful');
     }
   }
 
@@ -234,15 +260,20 @@ export class AuthManager {
         refreshToken: this.tokens.refreshToken
       });
 
-      this.tokens = response.tokens;
-      this.saveTokens();
-      this.startRefreshTimer();
+      const newTokens = response.tokens;
+      if (newTokens) {
+        this.tokens = newTokens;
+        this.saveTokens();
+        this.startRefreshTimer();
 
-      console.log('✅ Tokens refreshed successfully');
-      
-      return this.tokens;
+        logger.info('Tokens refreshed successfully');
+
+        return newTokens;
+      } else {
+        throw new Error('No tokens received from refresh endpoint');
+      }
     } catch (error) {
-      console.error('❌ Token refresh failed:', error);
+      logger.error('Token refresh failed', error);
       await this.logout();
       throw error;
     }
@@ -259,12 +290,12 @@ export class AuthManager {
       newPassword
     });
 
-    console.log('✅ Password changed successfully');
+    logger.info('Password changed successfully', { userId: this.currentUser?.id });
   }
 
   async resetPassword(email: string): Promise<void> {
     await this.apiCall('/auth/reset-password', 'POST', { email });
-    console.log('✅ Password reset email sent');
+    logger.info('Password reset email sent', { email });
   }
 
   async confirmResetPassword(token: string, newPassword: string): Promise<void> {
@@ -272,7 +303,7 @@ export class AuthManager {
       token,
       newPassword
     });
-    console.log('✅ Password reset confirmed');
+    logger.info('Password reset confirmed');
   }
 
   // Email verification
@@ -282,18 +313,18 @@ export class AuthManager {
     }
 
     await this.apiCall('/auth/resend-verification', 'POST');
-    console.log('✅ Verification email sent');
+    logger.info('Verification email sent', { userId: this.currentUser.id, email: this.currentUser.email });
   }
 
   async verifyEmail(token: string): Promise<void> {
     await this.apiCall('/auth/verify-email', 'POST', { token });
-    
+
     if (this.currentUser) {
       this.currentUser.emailVerified = true;
       this.saveUser();
     }
-    
-    console.log('✅ Email verified successfully');
+
+    logger.info('Email verified successfully');
   }
 
   // Authorization checks
@@ -311,7 +342,7 @@ export class AuthManager {
 
   // Permission definitions
   private getPermissionsForRole(role: string): string[] {
-    const permissions = {
+    const permissions: Record<string, string[]> = {
       admin: [
         'workflow.create', 'workflow.read', 'workflow.update', 'workflow.delete',
         'workflow.execute', 'workflow.share', 'workflow.publish',
@@ -364,10 +395,12 @@ export class AuthManager {
   private clearSession(): void {
     this.currentUser = null;
     this.tokens = null;
-    
-    localStorage.removeItem('auth_user');
-    localStorage.removeItem('auth_tokens');
-    
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_tokens');
+    }
+
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
@@ -375,13 +408,13 @@ export class AuthManager {
   }
 
   private saveUser(): void {
-    if (this.currentUser) {
+    if (this.currentUser && typeof localStorage !== 'undefined') {
       localStorage.setItem('auth_user', JSON.stringify(this.currentUser));
     }
   }
 
   private saveTokens(): void {
-    if (this.tokens) {
+    if (this.tokens && typeof localStorage !== 'undefined') {
       localStorage.setItem('auth_tokens', JSON.stringify(this.tokens));
     }
   }
@@ -395,7 +428,7 @@ export class AuthManager {
       // Refresh 5 minutes before expiry
       const refreshTime = (this.tokens.expiresIn - 300) * 1000;
       this.refreshTimer = setTimeout(() => {
-        this.refreshTokens().catch(console.error);
+        this.refreshTokens().catch((error) => logger.error('Failed to refresh tokens', error));
       }, refreshTime);
     }
   }

@@ -1,0 +1,235 @@
+# Node GraphQL Schema
+# Apollo Federation 2.x compatible schema for node type definitions
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable", "@external", "@requires", "@provides"])
+
+"""
+NodeType represents a workflow node type definition
+"""
+type NodeType @key(fields: "type") {
+  type: String!
+  name: String!
+  category: NodeCategory!
+  description: String!
+  icon: String
+  color: String
+  version: String!
+  inputs: [NodeInput!]!
+  outputs: [NodeOutput!]!
+  credentials: [CredentialRequirement!]!
+  properties: [NodeProperty!]!
+  documentation: NodeDocumentation
+  examples: [NodeExample!]!
+  deprecated: Boolean!
+  deprecationMessage: String
+  tags: [String!]!
+}
+
+"""
+NodeCategory represents the category of a node type
+"""
+enum NodeCategory {
+  TRIGGER
+  ACTION
+  TRANSFORM
+  CONTROL
+  DATABASE
+  COMMUNICATION
+  CLOUD
+  AI
+  ANALYTICS
+  INTEGRATION
+  UTILITY
+}
+
+"""
+NodeInput represents an input parameter for a node
+"""
+type NodeInput {
+  name: String!
+  type: NodeInputType!
+  displayName: String!
+  description: String
+  required: Boolean!
+  default: JSON
+  options: [NodeInputOption!]
+  validation: NodeValidation
+  placeholder: String
+  hint: String
+}
+
+"""
+NodeOutput represents an output from a node
+"""
+type NodeOutput {
+  name: String!
+  type: NodeOutputType!
+  displayName: String!
+  description: String
+  schema: JSON
+}
+
+"""
+CredentialRequirement represents required credentials for a node
+"""
+type CredentialRequirement {
+  type: String!
+  displayName: String!
+  required: Boolean!
+  description: String
+  documentationUrl: String
+}
+
+"""
+NodeProperty represents a configuration property
+"""
+type NodeProperty {
+  name: String!
+  type: PropertyType!
+  displayName: String!
+  description: String
+  required: Boolean!
+  default: JSON
+  options: [PropertyOption!]
+  validation: PropertyValidation
+  displayOptions: DisplayOptions
+}
+
+"""
+NodeDocumentation contains documentation for a node type
+"""
+type NodeDocumentation {
+  description: String!
+  examples: String
+  notes: String
+  url: String
+}
+
+"""
+NodeExample contains usage examples
+"""
+type NodeExample {
+  name: String!
+  description: String!
+  workflow: JSON!
+}
+
+"""
+NodeInputOption for select/multiselect inputs
+"""
+type NodeInputOption {
+  name: String!
+  value: String!
+  description: String
+}
+
+"""
+NodeValidation defines validation rules
+"""
+type NodeValidation {
+  type: ValidationType!
+  min: Float
+  max: Float
+  pattern: String
+  message: String
+}
+
+"""
+PropertyOption for property select options
+"""
+type PropertyOption {
+  name: String!
+  value: JSON!
+  description: String
+}
+
+"""
+PropertyValidation defines property validation rules
+"""
+type PropertyValidation {
+  required: Boolean!
+  minLength: Int
+  maxLength: Int
+  pattern: String
+  custom: String
+}
+
+"""
+DisplayOptions control when properties are shown
+"""
+type DisplayOptions {
+  show: JSON
+  hide: JSON
+}
+
+enum NodeInputType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  OPTIONS
+  COLLECTION
+  CREDENTIALS
+}
+
+enum NodeOutputType {
+  JSON
+  BINARY
+  STRING
+  NUMBER
+  BOOLEAN
+}
+
+enum PropertyType {
+  STRING
+  NUMBER
+  BOOLEAN
+  OPTIONS
+  MULTI_OPTIONS
+  CREDENTIALS
+  RESOURCE_LOCATOR
+  COLOR
+  DATETIME
+  CODE
+  JSON
+}
+
+enum ValidationType {
+  STRING
+  NUMBER
+  EMAIL
+  URL
+  REGEX
+  CUSTOM
+}
+
+"""
+NodeFilter for querying node types
+"""
+input NodeFilter {
+  category: NodeCategory
+  tags: [String!]
+  search: String
+  deprecated: Boolean
+}
+
+type Query {
+  nodeType(type: String!): NodeType
+  nodeTypes(filter: NodeFilter): [NodeType!]!
+  nodeCategories: [NodeCategoryInfo!]!
+  nodeTypesCount(filter: NodeFilter): Int!
+}
+
+"""
+NodeCategoryInfo provides category metadata
+"""
+type NodeCategoryInfo {
+  category: NodeCategory!
+  displayName: String!
+  description: String!
+  count: Int!
+  icon: String
+}
+
+scalar JSON

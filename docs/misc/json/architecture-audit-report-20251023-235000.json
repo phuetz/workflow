@@ -1,0 +1,24 @@
+{
+  "timestamp": "2025-10-23T23:50:00+02:00",
+  "scores": {
+    "store_size": 0,
+    "circular_dependencies": 0,
+    "legacy_files": 1,
+    "file_sizes": 0,
+    "typescript": 1,
+    "test_coverage": 0,
+    "code_duplication": 0,
+    "dependencies": 0,
+    "linting": 2,
+    "bundle_size": 0
+  },
+  "total": 4,
+  "max_score": 20,
+  "percentage": 20,
+  "metrics": {
+    "store_lines": 2003,
+    "circular_count": ,
+    "legacy_files": 4,
+    "large_files": 637
+  }
+}

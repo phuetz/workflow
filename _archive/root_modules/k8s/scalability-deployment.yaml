@@ -1,0 +1,702 @@
+# PLAN C - Kubernetes Deployment for Scalability Infrastructure
+# Complete deployment configuration for 10K+ concurrent users
+# Ultra Think methodology - Production-ready K8s manifests
+
+---
+# Namespace for scalability infrastructure
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workflow-scalability
+  labels:
+    environment: production
+    plan: plan-c
+    monitoring: enabled
+
+---
+# ConfigMap for scalability configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scalability-config
+  namespace: workflow-scalability
+data:
+  ENABLE_WORKER_POOL: "true"
+  ENABLE_QUEUE: "true"
+  ENABLE_LOAD_BALANCER: "true"
+  ENABLE_AUTO_SCALING: "true"
+  ENABLE_FEDERATION: "true"
+  MAX_WORKERS: "100"
+  MIN_INSTANCES: "3"
+  MAX_INSTANCES: "50"
+  TARGET_UTILIZATION: "70"
+  SCALE_UP_THRESHOLD: "80"
+  SCALE_DOWN_THRESHOLD: "30"
+  COOLDOWN_PERIOD: "300000"
+  WARMUP_TIME: "60000"
+  HEALTH_CHECK_INTERVAL: "5000"
+  METRICS_WINDOW: "300000"
+  QUEUE_MAX_SIZE: "10000"
+  QUEUE_VISIBILITY_TIMEOUT: "30000"
+  LOAD_BALANCER_STRATEGY: "ml-optimized"
+  CIRCUIT_BREAKER_THRESHOLD: "5"
+  ENABLE_ML_OPTIMIZATION: "true"
+  ENABLE_COST_OPTIMIZATION: "true"
+  MONITORING_INTERVAL: "30000"
+  LOG_LEVEL: "info"
+
+---
+# Secret for sensitive data
+apiVersion: v1
+kind: Secret
+metadata:
+  name: scalability-secrets
+  namespace: workflow-scalability
+type: Opaque
+stringData:
+  REDIS_PASSWORD: "changeme-redis-password"
+  RABBITMQ_PASSWORD: "changeme-rabbitmq-password"
+  POSTGRES_PASSWORD: "changeme-postgres-password"
+  JWT_SECRET: "changeme-jwt-secret-min-32-chars-recommended"
+  ENCRYPTION_KEY: "changeme-encryption-key-256-bits"
+  API_KEY: "changeme-api-key"
+  GRAFANA_ADMIN_PASSWORD: "changeme-grafana-password"
+
+---
+# Main Application Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-scalability-app
+  namespace: workflow-scalability
+  labels:
+    app: workflow-scalability
+    component: main-app
+    version: v1.0.0
+  annotations:
+    fluxcd.io/automated: "true"
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: workflow-scalability
+      component: main-app
+  template:
+    metadata:
+      labels:
+        app: workflow-scalability
+        component: main-app
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        fluentd.io/parser: "json"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: workflow-app
+        image: workflow-scalability:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        - containerPort: 4000
+          name: graphql
+          protocol: TCP
+        - containerPort: 8080
+          name: websocket
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: SERVICE_NAME
+          value: "workflow-scalability-app"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: REDIS_URL
+          value: "redis://redis-service.workflow-scalability:6379"
+        - name: RABBITMQ_URL
+          value: "amqp://rabbitmq-service.workflow-scalability:5672"
+        - name: POSTGRES_URL
+          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres-service.workflow-scalability:5432/workflow"
+        envFrom:
+        - configMapRef:
+            name: scalability-config
+        - secretRef:
+            name: scalability-secrets
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+            ephemeral-storage: "5Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: 3000
+          initialDelaySeconds: 0
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 30
+          successThreshold: 1
+        volumeMounts:
+        - name: cache
+          mountPath: /app/cache
+        - name: tmp
+          mountPath: /tmp
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15"]
+      initContainers:
+      - name: wait-for-redis
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z redis-service.workflow-scalability 6379; do echo waiting for redis; sleep 2; done']
+      - name: wait-for-rabbitmq
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z rabbitmq-service.workflow-scalability 5672; do echo waiting for rabbitmq; sleep 2; done']
+      - name: wait-for-postgres
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z postgres-service.workflow-scalability 5432; do echo waiting for postgres; sleep 2; done']
+      volumes:
+      - name: cache
+        emptyDir:
+          sizeLimit: 10Gi
+      - name: tmp
+        emptyDir:
+          sizeLimit: 5Gi
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: workflow-scalability
+            component: main-app
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: node-type
+                operator: In
+                values:
+                - high-memory
+                - compute-optimized
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - workflow-scalability
+              - key: component
+                operator: In
+                values:
+                - main-app
+            topologyKey: kubernetes.io/hostname
+
+---
+# Worker Pool Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workflow-worker-pool
+  namespace: workflow-scalability
+  labels:
+    app: workflow-scalability
+    component: worker-pool
+    version: v1.0.0
+spec:
+  replicas: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: workflow-scalability
+      component: worker-pool
+  template:
+    metadata:
+      labels:
+        app: workflow-scalability
+        component: worker-pool
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+      - name: worker
+        image: workflow-scalability:latest
+        imagePullPolicy: IfNotPresent
+        command: ["node", "dist/worker.js"]
+        ports:
+        - containerPort: 9091
+          name: metrics
+          protocol: TCP
+        env:
+        - name: WORKER_MODE
+          value: "true"
+        - name: WORKER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: WORKER_TYPE
+          value: "general"
+        - name: MAX_CONCURRENT_TASKS
+          value: "10"
+        - name: TASK_TIMEOUT
+          value: "30000"
+        - name: REDIS_URL
+          value: "redis://redis-service.workflow-scalability:6379"
+        - name: RABBITMQ_URL
+          value: "amqp://rabbitmq-service.workflow-scalability:5672"
+        envFrom:
+        - configMapRef:
+            name: scalability-config
+        - secretRef:
+            name: scalability-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9091
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 9091
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - workflow-scalability
+                - key: component
+                  operator: In
+                  values:
+                  - worker-pool
+              topologyKey: kubernetes.io/hostname
+
+---
+# Service for Main App
+apiVersion: v1
+kind: Service
+metadata:
+  name: workflow-scalability-service
+  namespace: workflow-scalability
+  labels:
+    app: workflow-scalability
+    component: main-app
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  - port: 4000
+    targetPort: 4000
+    protocol: TCP
+    name: graphql
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: websocket
+  selector:
+    app: workflow-scalability
+    component: main-app
+
+---
+# Service for Worker Pool (Internal)
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-pool-service
+  namespace: workflow-scalability
+  labels:
+    app: workflow-scalability
+    component: worker-pool
+spec:
+  type: ClusterIP
+  ports:
+  - port: 9091
+    targetPort: 9091
+    protocol: TCP
+    name: metrics
+  selector:
+    app: workflow-scalability
+    component: worker-pool
+
+---
+# Horizontal Pod Autoscaler for Main App
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: workflow-scalability-hpa
+  namespace: workflow-scalability
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: workflow-scalability-app
+  minReplicas: 3
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "1000"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 5
+        periodSeconds: 60
+      selectPolicy: Max
+
+---
+# Horizontal Pod Autoscaler for Worker Pool
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-pool-hpa
+  namespace: workflow-scalability
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: workflow-worker-pool
+  minReplicas: 5
+  maxReplicas: 100
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+  - type: Pods
+    pods:
+      metric:
+        name: task_queue_length
+      target:
+        type: AverageValue
+        averageValue: "100"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+      - type: Percent
+        value: 20
+        periodSeconds: 120
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 200
+        periodSeconds: 30
+      - type: Pods
+        value: 10
+        periodSeconds: 60
+
+---
+# Ingress for External Access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: workflow-scalability-ingress
+  namespace: workflow-scalability
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/websocket-services: "workflow-scalability-service"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+spec:
+  tls:
+  - hosts:
+    - workflow.example.com
+    - api.workflow.example.com
+    - ws.workflow.example.com
+    secretName: workflow-tls
+  rules:
+  - host: workflow.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: workflow-scalability-service
+            port:
+              number: 80
+  - host: api.workflow.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: workflow-scalability-service
+            port:
+              number: 4000
+  - host: ws.workflow.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: workflow-scalability-service
+            port:
+              number: 8080
+
+---
+# PodDisruptionBudget for Main App
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: workflow-scalability-pdb
+  namespace: workflow-scalability
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: workflow-scalability
+      component: main-app
+
+---
+# PodDisruptionBudget for Worker Pool
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: worker-pool-pdb
+  namespace: workflow-scalability
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: workflow-scalability
+      component: worker-pool
+
+---
+# NetworkPolicy for Security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: workflow-scalability-netpol
+  namespace: workflow-scalability
+spec:
+  podSelector:
+    matchLabels:
+      app: workflow-scalability
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: workflow-scalability
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 3000
+    - protocol: TCP
+      port: 4000
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 9091
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: workflow-scalability
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis
+    - protocol: TCP
+      port: 5672  # RabbitMQ
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443   # HTTPS for external APIs
+    - protocol: TCP
+      port: 53    # DNS
+    - protocol: UDP
+      port: 53    # DNS
+
+---
+# ServiceMonitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: workflow-scalability-monitor
+  namespace: workflow-scalability
+  labels:
+    app: workflow-scalability
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: workflow-scalability
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    honorLabels: true
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      targetLabel: node
+
+---
+# Vertical Pod Autoscaler for optimization
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: workflow-scalability-vpa
+  namespace: workflow-scalability
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: workflow-scalability-app
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: workflow-app
+      minAllowed:
+        cpu: 250m
+        memory: 512Mi
+      maxAllowed:
+        cpu: 4
+        memory: 8Gi
+      controlledResources: ["cpu", "memory"]

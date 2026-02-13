@@ -1,13 +1,74 @@
 /**
  * Supabase-integrated Authentication Manager
  * Full JWT/OAuth2 implementation with Supabase backend
+ *
+ * @deprecated Use `@services/auth` (unified AuthService with SupabaseAuthProvider) instead.
+ * This service is kept for backward compatibility.
+ *
+ * Migration:
+ * ```typescript
+ * // Old:
+ * import { supabaseAuth } from '@backend/auth/SupabaseAuthManager';
+ *
+ * // New:
+ * import { authService, SupabaseAuthProvider } from '@services/auth';
+ *
+ * // Using the unified service (recommended):
+ * await authService.initialize();
+ * await authService.switchProvider('supabase');
+ *
+ * // Or using the provider directly:
+ * const supabaseProvider = new SupabaseAuthProvider();
+ * await supabaseProvider.initialize();
+ * ```
+ *
+ * @see /src/services/auth/providers/SupabaseAuthProvider.ts for the new implementation
  */
 
 import { createClient, SupabaseClient, Session, User as SupabaseUser } from '@supabase/supabase-js';
 import { jwtDecode } from 'jwt-decode';
+import { logger } from '../../services/SimpleLogger';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+// Declare window for Node.js compatibility
+declare const window: {
+  location: { origin: string };
+  localStorage: {
+    getItem: (key: string) => string | null;
+    setItem: (key: string, value: string) => void;
+    removeItem: (key: string) => void;
+  };
+} | undefined;
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'your-anon-key';
+
+// Storage adapter for Node.js environment
+const nodeStorage = {
+  getItem: (key: string) => {
+    // In Node.js, we'd typically use a database or file-based storage
+    // For now, we'll use an in-memory store
+    return (global as any).__authStorage?.[key] || null;
+  },
+  setItem: (key: string, value: string) => {
+    if (!(global as any).__authStorage) {
+      (global as any).__authStorage = {};
+    }
+    (global as any).__authStorage[key] = value;
+  },
+  removeItem: (key: string) => {
+    if ((global as any).__authStorage) {
+      delete (global as any).__authStorage[key];
+    }
+  }
+};
+
+// Helper to get base URL (works in both browser and Node.js)
+const getBaseUrl = (): string => {
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.origin;
+  }
+  return process.env.APP_URL || process.env.BASE_URL || 'http://localhost:3000';
+};
 
 export interface User {
   id: string;
@@ -41,8 +102,8 @@ export class SupabaseAuthManager {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage,
+        detectSessionInUrl: typeof window !== 'undefined',
+        storage: typeof window !== 'undefined' ? window.localStorage : nodeStorage,
         flowType: 'pkce' // More secure than implicit flow
       }
     });
@@ -53,7 +114,7 @@ export class SupabaseAuthManager {
   private async initializeAuth() {
     // Listen to auth state changes
     this.supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔐 Auth state changed:', event);
+      logger.debug('Auth state changed', { event });
 
       this.session = session;
 
@@ -85,7 +146,7 @@ export class SupabaseAuthManager {
         .single();
 
       if (error && error.code !== 'PGRST116') { // Not found error
-        console.error('Error loading user profile:', error);
+        logger.error('Error loading user profile', { errorCode: error.code });
       }
 
       this.currentUser = {
@@ -105,7 +166,7 @@ export class SupabaseAuthManager {
       // Update last login timestamp
       await this.updateLastLogin(supabaseUser.id);
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      logger.error('Error loading user profile', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
   }
@@ -130,14 +191,14 @@ export class SupabaseAuthManager {
 
       await this.loadUserProfile(data.user);
 
-      console.log('✅ Login successful for user:', email);
+      logger.info('Login successful');
 
       return {
         user: this.currentUser!,
         tokens: this.sessionToTokens(data.session)
       };
     } catch (error: any) {
-      console.error('❌ Login failed:', error);
+      logger.error('Login failed', { error: error.message || 'Unknown error' });
       throw new Error(error.message || 'Invalid email or password');
     }
   }
@@ -159,7 +220,7 @@ export class SupabaseAuthManager {
             first_name: userData.firstName,
             last_name: userData.lastName
           },
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+          emailRedirectTo: `${getBaseUrl()}/auth/verify-email`
         }
       });
 
@@ -180,14 +241,14 @@ export class SupabaseAuthManager {
         });
 
       if (profileError) {
-        console.error('Error creating user profile:', profileError);
+        logger.error('Error creating user profile', { errorCode: profileError.code });
       }
 
       if (data.session) {
         await this.loadUserProfile(data.user);
       }
 
-      console.log('✅ Registration successful for user:', userData.email);
+      logger.info('Registration successful');
 
       return {
         user: this.currentUser!,
@@ -199,7 +260,7 @@ export class SupabaseAuthManager {
         }
       };
     } catch (error: any) {
-      console.error('❌ Registration failed:', error);
+      logger.error('Registration failed', { error: error.message || 'Unknown error' });
       throw new Error(error.message || 'Registration failed');
     }
   }
@@ -210,16 +271,16 @@ export class SupabaseAuthManager {
       const { data, error } = await this.supabase.auth.signInWithOAuth({
         provider: provider as any,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${getBaseUrl()}/auth/callback`,
           scopes: provider === 'github' ? 'user:email' : 'openid email profile'
         }
       });
 
       if (error) throw error;
 
-      console.log(`🔗 Redirecting to ${provider} OAuth...`);
+      logger.debug('Redirecting to OAuth provider', { provider });
     } catch (error: any) {
-      console.error(`❌ OAuth ${provider} failed:`, error);
+      logger.error('OAuth authentication failed', { provider, error: error.message || 'Unknown error' });
       throw error;
     }
   }
@@ -230,15 +291,15 @@ export class SupabaseAuthManager {
       const { error } = await this.supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${getBaseUrl()}/auth/callback`
         }
       });
 
       if (error) throw error;
 
-      console.log('✅ Magic link sent to:', email);
+      logger.info('Magic link sent successfully');
     } catch (error: any) {
-      console.error('❌ Magic link failed:', error);
+      logger.error('Magic link send failed', { error: error.message || 'Unknown error' });
       throw error;
     }
   }
@@ -252,9 +313,9 @@ export class SupabaseAuthManager {
       this.currentUser = null;
       this.session = null;
 
-      console.log('✅ Logout successful');
+      logger.info('Logout successful');
     } catch (error) {
-      console.error('❌ Logout failed:', error);
+      logger.error('Logout failed', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
   }
@@ -272,9 +333,9 @@ export class SupabaseAuthManager {
 
       if (error) throw error;
 
-      console.log('✅ Password changed successfully');
+      logger.info('Password changed successfully');
     } catch (error: any) {
-      console.error('❌ Password change failed:', error);
+      logger.error('Password change failed', { error: error.message || 'Unknown error' });
       throw error;
     }
   }
@@ -282,14 +343,14 @@ export class SupabaseAuthManager {
   async resetPassword(email: string): Promise<void> {
     try {
       const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+        redirectTo: `${getBaseUrl()}/auth/reset-password`
       });
 
       if (error) throw error;
 
-      console.log('✅ Password reset email sent to:', email);
+      logger.info('Password reset email sent successfully');
     } catch (error: any) {
-      console.error('❌ Password reset failed:', error);
+      logger.error('Password reset failed', { error: error.message || 'Unknown error' });
       throw error;
     }
   }
@@ -305,15 +366,15 @@ export class SupabaseAuthManager {
         type: 'signup',
         email: this.currentUser.email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/verify-email`
+          emailRedirectTo: `${getBaseUrl()}/auth/verify-email`
         }
       });
 
       if (error) throw error;
 
-      console.log('✅ Verification email resent');
+      logger.info('Verification email resent successfully');
     } catch (error: any) {
-      console.error('❌ Resend verification failed:', error);
+      logger.error('Resend verification failed', { error: error.message || 'Unknown error' });
       throw error;
     }
   }
@@ -354,9 +415,9 @@ export class SupabaseAuthManager {
         };
       }
 
-      console.log('✅ Profile updated successfully');
+      logger.info('Profile updated successfully');
     } catch (error: any) {
-      console.error('❌ Profile update failed:', error);
+      logger.error('Profile update failed', { error: error.message || 'Unknown error' });
       throw error;
     }
   }
@@ -369,10 +430,10 @@ export class SupabaseAuthManager {
 
       if (data.session) {
         this.session = data.session;
-        console.log('✅ Session refreshed');
+        logger.debug('Session refreshed');
       }
     } catch (error: any) {
-      console.error('❌ Session refresh failed:', error);
+      logger.error('Session refresh failed', { error: error.message || 'Unknown error' });
       throw error;
     }
   }
@@ -467,7 +528,7 @@ export class SupabaseAuthManager {
       try {
         callback(this.currentUser);
       } catch (error) {
-        console.error('Error in auth state listener:', error);
+        logger.error('Error in auth state listener', { error: error instanceof Error ? error.message : 'Unknown error' });
       }
     });
   }

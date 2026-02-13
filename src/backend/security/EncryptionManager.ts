@@ -1,7 +1,10 @@
 /**
- * Encryption Manager for securing sensitive data
+ * Encryption Manager for securing sensitive data (Node.js version)
  * Handles encryption/decryption of credentials and sensitive information
  */
+
+import * as crypto from 'crypto';
+import { logger } from '../../services/SimpleLogger';
 
 export interface EncryptedData {
   encrypted: string;
@@ -13,17 +16,20 @@ export interface EncryptedData {
 
 export interface EncryptionKey {
   id: string;
-  key: CryptoKey;
+  key: Buffer;
   algorithm: string;
   createdAt: number;
   expiresAt?: number;
 }
 
+// In-memory storage for Node.js (use proper secure storage in production)
+const keyStorage: Map<string, string> = new Map();
+
 export class EncryptionManager {
-  private masterKey: CryptoKey | null = null;
+  private masterKey: Buffer | null = null;
   private keys: Map<string, EncryptionKey> = new Map();
-  private readonly algorithm = 'AES-GCM';
-  private readonly keyLength = 256;
+  private readonly algorithm = 'aes-256-gcm';
+  private readonly keyLength = 32; // 256 bits
   private readonly version = 1;
 
   constructor() {
@@ -40,15 +46,15 @@ export class EncryptionManager {
 
       if (storedKey) {
         this.masterKey = storedKey;
-        console.log('✅ Master encryption key loaded');
+        logger.debug('Master encryption key loaded successfully');
       } else {
         // Generate new master key
         this.masterKey = await this.generateKey();
         await this.storeMasterKey(this.masterKey);
-        console.log('✅ New master encryption key generated');
+        logger.debug('New master encryption key generated successfully');
       }
     } catch (error) {
-      console.error('❌ Encryption initialization failed:', error);
+      logger.error('Encryption initialization failed', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
   }
@@ -56,15 +62,8 @@ export class EncryptionManager {
   /**
    * Generate a new encryption key
    */
-  private async generateKey(): Promise<CryptoKey> {
-    return await crypto.subtle.generateKey(
-      {
-        name: this.algorithm,
-        length: this.keyLength
-      },
-      true, // extractable
-      ['encrypt', 'decrypt']
-    );
+  private async generateKey(): Promise<Buffer> {
+    return crypto.randomBytes(this.keyLength);
   }
 
   /**
@@ -79,35 +78,27 @@ export class EncryptionManager {
       }
 
       // Generate random IV (Initialization Vector)
-      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const iv = crypto.randomBytes(12);
 
-      // Convert data to bytes
-      const encoder = new TextEncoder();
-      const dataBytes = encoder.encode(data);
+      // Create cipher
+      const cipher = crypto.createCipheriv(this.algorithm, key, iv);
 
       // Encrypt
-      const encryptedBuffer = await crypto.subtle.encrypt(
-        {
-          name: this.algorithm,
-          iv: iv
-        },
-        key,
-        dataBytes
-      );
+      let encrypted = cipher.update(data, 'utf8', 'base64');
+      encrypted += cipher.final('base64');
 
-      // Convert to base64 for storage
-      const encryptedArray = new Uint8Array(encryptedBuffer);
-      const encrypted = this.arrayBufferToBase64(encryptedArray);
-      const ivBase64 = this.arrayBufferToBase64(iv);
+      // Get auth tag for GCM
+      const tag = cipher.getAuthTag();
 
       return {
         encrypted,
-        iv: ivBase64,
+        iv: iv.toString('base64'),
+        tag: tag.toString('base64'),
         algorithm: this.algorithm,
         version: this.version
       };
     } catch (error) {
-      console.error('❌ Encryption failed:', error);
+      logger.error('Encryption operation failed', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw new Error('Failed to encrypt data');
     }
   }
@@ -124,24 +115,23 @@ export class EncryptionManager {
       }
 
       // Convert from base64
-      const encryptedBytes = this.base64ToArrayBuffer(encryptedData.encrypted);
-      const iv = this.base64ToArrayBuffer(encryptedData.iv);
+      const iv = Buffer.from(encryptedData.iv, 'base64');
+      const tag = encryptedData.tag ? Buffer.from(encryptedData.tag, 'base64') : undefined;
+
+      // Create decipher
+      const decipher = crypto.createDecipheriv(this.algorithm, key, iv);
+
+      if (tag) {
+        decipher.setAuthTag(tag);
+      }
 
       // Decrypt
-      const decryptedBuffer = await crypto.subtle.decrypt(
-        {
-          name: this.algorithm,
-          iv: iv
-        },
-        key,
-        encryptedBytes
-      );
+      let decrypted = decipher.update(encryptedData.encrypted, 'base64', 'utf8');
+      decrypted += decipher.final('utf8');
 
-      // Convert bytes back to string
-      const decoder = new TextDecoder();
-      return decoder.decode(decryptedBuffer);
+      return decrypted;
     } catch (error) {
-      console.error('❌ Decryption failed:', error);
+      logger.error('Decryption operation failed', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw new Error('Failed to decrypt data');
     }
   }
@@ -149,7 +139,7 @@ export class EncryptionManager {
   /**
    * Encrypt object
    */
-  async encryptObject<T extends Record<string, any>>(obj: T, keyId?: string): Promise<EncryptedData> {
+  async encryptObject<T extends Record<string, unknown>>(obj: T, keyId?: string): Promise<EncryptedData> {
     const jsonString = JSON.stringify(obj);
     return await this.encrypt(jsonString, keyId);
   }
@@ -165,50 +155,23 @@ export class EncryptionManager {
   /**
    * Hash data (one-way)
    */
-  async hash(data: string, algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' = 'SHA-256'): Promise<string> {
-    const encoder = new TextEncoder();
-    const dataBytes = encoder.encode(data);
-
-    const hashBuffer = await crypto.subtle.digest(algorithm, dataBytes);
-    const hashArray = new Uint8Array(hashBuffer);
-
-    return this.arrayBufferToHex(hashArray);
+  async hash(data: string, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): Promise<string> {
+    return crypto.createHash(algorithm).update(data).digest('hex');
   }
 
   /**
    * Verify hash
    */
-  async verifyHash(data: string, hash: string, algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' = 'SHA-256'): Promise<boolean> {
+  async verifyHash(data: string, hash: string, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): Promise<boolean> {
     const computedHash = await this.hash(data, algorithm);
-    return computedHash === hash;
+    return crypto.timingSafeEqual(Buffer.from(computedHash), Buffer.from(hash));
   }
 
   /**
    * Generate HMAC for data integrity
    */
   async generateHMAC(data: string, secret: string): Promise<string> {
-    const encoder = new TextEncoder();
-
-    // Import secret as key
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      {
-        name: 'HMAC',
-        hash: 'SHA-256'
-      },
-      false,
-      ['sign']
-    );
-
-    // Generate HMAC
-    const signature = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      encoder.encode(data)
-    );
-
-    return this.arrayBufferToHex(new Uint8Array(signature));
+    return crypto.createHmac('sha256', secret).update(data).digest('hex');
   }
 
   /**
@@ -216,16 +179,18 @@ export class EncryptionManager {
    */
   async verifyHMAC(data: string, hmac: string, secret: string): Promise<boolean> {
     const computedHMAC = await this.generateHMAC(data, secret);
-    return computedHMAC === hmac;
+    try {
+      return crypto.timingSafeEqual(Buffer.from(computedHMAC), Buffer.from(hmac));
+    } catch {
+      return false;
+    }
   }
 
   /**
    * Generate secure random token
    */
   generateToken(length: number = 32): string {
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-    return this.arrayBufferToHex(array);
+    return crypto.randomBytes(length).toString('hex');
   }
 
   /**
@@ -233,7 +198,7 @@ export class EncryptionManager {
    */
   async encryptCredential(credential: {
     type: string;
-    data: Record<string, any>;
+    data: Record<string, unknown>;
   }): Promise<{
     id: string;
     type: string;
@@ -256,48 +221,27 @@ export class EncryptionManager {
    */
   async decryptCredential(encryptedCredential: {
     encrypted: EncryptedData;
-  }): Promise<Record<string, any>> {
+  }): Promise<Record<string, unknown>> {
     return await this.decryptObject(encryptedCredential.encrypted);
   }
 
   /**
    * Derive key from password (for user-specific encryption)
    */
-  async deriveKeyFromPassword(password: string, salt?: Uint8Array): Promise<{
-    key: CryptoKey;
-    salt: Uint8Array;
+  async deriveKeyFromPassword(password: string, salt?: Buffer): Promise<{
+    key: Buffer;
+    salt: Buffer;
   }> {
-    const encoder = new TextEncoder();
-    const passwordBytes = encoder.encode(password);
-
     // Generate or use provided salt
-    const actualSalt = salt || crypto.getRandomValues(new Uint8Array(16));
-
-    // Import password as key material
-    const keyMaterial = await crypto.subtle.importKey(
-      'raw',
-      passwordBytes,
-      'PBKDF2',
-      false,
-      ['deriveBits', 'deriveKey']
-    );
+    const actualSalt = salt || crypto.randomBytes(16);
 
     // Derive key using PBKDF2
-    const key = await crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        salt: actualSalt,
-        iterations: 100000,
-        hash: 'SHA-256'
-      },
-      keyMaterial,
-      {
-        name: this.algorithm,
-        length: this.keyLength
-      },
-      true,
-      ['encrypt', 'decrypt']
-    );
+    const key = await new Promise<Buffer>((resolve, reject) => {
+      crypto.pbkdf2(password, actualSalt, 100000, this.keyLength, 'sha256', (err, derivedKey) => {
+        if (err) reject(err);
+        else resolve(derivedKey);
+      });
+    });
 
     return { key, salt: actualSalt };
   }
@@ -353,58 +297,25 @@ export class EncryptionManager {
   /**
    * Secure data erasure
    */
-  secureErase(data: Uint8Array): void {
+  secureErase(data: Buffer): void {
     // Overwrite with random data
-    crypto.getRandomValues(data);
+    crypto.randomFillSync(data);
     // Overwrite with zeros
     data.fill(0);
   }
 
   /**
-   * Helper: Convert ArrayBuffer to Base64
-   */
-  private arrayBufferToBase64(buffer: Uint8Array): string {
-    const binary = Array.from(buffer)
-      .map(byte => String.fromCharCode(byte))
-      .join('');
-    return btoa(binary);
-  }
-
-  /**
-   * Helper: Convert Base64 to ArrayBuffer
-   */
-  private base64ToArrayBuffer(base64: string): Uint8Array {
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  }
-
-  /**
-   * Helper: Convert ArrayBuffer to Hex
-   */
-  private arrayBufferToHex(buffer: Uint8Array): string {
-    return Array.from(buffer)
-      .map(byte => byte.toString(16).padStart(2, '0'))
-      .join('');
-  }
-
-  /**
    * Store master key (in production, use secure key management service)
    */
-  private async storeMasterKey(key: CryptoKey): Promise<void> {
+  private async storeMasterKey(key: Buffer): Promise<void> {
     try {
-      const exported = await crypto.subtle.exportKey('jwk', key);
-      // In production, store in secure key management service (AWS KMS, Azure Key Vault, etc.)
-      // For now, using localStorage (NOT RECOMMENDED for production)
-      const keyData = JSON.stringify(exported);
+      const keyData = key.toString('base64');
       const hash = await this.hash(keyData);
-      localStorage.setItem('_master_key', keyData);
-      localStorage.setItem('_master_key_hash', hash);
+      // In production, store in secure key management service (AWS KMS, Azure Key Vault, etc.)
+      keyStorage.set('_master_key', keyData);
+      keyStorage.set('_master_key_hash', hash);
     } catch (error) {
-      console.error('Failed to store master key:', error);
+      logger.error('Failed to store master key', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
     }
   }
@@ -412,10 +323,10 @@ export class EncryptionManager {
   /**
    * Load master key
    */
-  private async loadMasterKey(): Promise<CryptoKey | null> {
+  private async loadMasterKey(): Promise<Buffer | null> {
     try {
-      const keyData = localStorage.getItem('_master_key');
-      const storedHash = localStorage.getItem('_master_key_hash');
+      const keyData = keyStorage.get('_master_key');
+      const storedHash = keyStorage.get('_master_key_hash');
 
       if (!keyData || !storedHash) {
         return null;
@@ -424,23 +335,13 @@ export class EncryptionManager {
       // Verify integrity
       const computedHash = await this.hash(keyData);
       if (computedHash !== storedHash) {
-        console.error('Master key integrity check failed');
+        logger.error('Master key integrity check failed');
         return null;
       }
 
-      const jwk = JSON.parse(keyData);
-      return await crypto.subtle.importKey(
-        'jwk',
-        jwk,
-        {
-          name: this.algorithm,
-          length: this.keyLength
-        },
-        true,
-        ['encrypt', 'decrypt']
-      );
+      return Buffer.from(keyData, 'base64');
     } catch (error) {
-      console.error('Failed to load master key:', error);
+      logger.error('Failed to load master key', { error: error instanceof Error ? error.message : 'Unknown error' });
       return null;
     }
   }

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { EncryptionManager } from '../backend/security/EncryptionManager';
+import { EncryptionManager } from './EncryptionManager';
 
 describe('EncryptionManager', () => {
   let manager: EncryptionManager;
@@ -19,7 +19,7 @@ describe('EncryptionManager', () => {
 
       expect(encrypted.encrypted).toBeTruthy();
       expect(encrypted.iv).toBeTruthy();
-      expect(encrypted.algorithm).toBe('AES-GCM');
+      expect(encrypted.algorithm).toBe('aes-256-gcm');
 
       const decrypted = await manager.decrypt(encrypted);
       expect(decrypted).toBe(plaintext);

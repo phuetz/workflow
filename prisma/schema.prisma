@@ -1,0 +1,1028 @@
+// Prisma Schema for Workflow Automation Platform
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================================
+// USER MANAGEMENT & AUTHENTICATION
+// ================================
+
+model User {
+  id                          String    @id @default(cuid())
+  email                       String    @unique
+  firstName                   String?
+  lastName                    String?
+  passwordHash                String
+  role                        Role      @default(USER)
+  status                      UserStatus @default(ACTIVE)
+  emailVerified               Boolean   @default(false)
+  emailVerificationToken      String?   @unique
+  emailVerificationExpires    DateTime?
+  passwordResetToken          String?   @unique
+  passwordResetExpires        DateTime?
+  lastLoginAt                 DateTime?
+  failedLoginAttempts         Int       @default(0)
+  accountLockedUntil          DateTime?
+  twoFactorEnabled            Boolean   @default(false)
+  twoFactorSecret             String?
+  backupCodes                 String[]
+  profilePicture              String?
+  avatarUrl                   String?   // Profile picture from OAuth provider
+  timezone                    String    @default("UTC")
+  language                    String    @default("en")
+  preferences                 Json      @default("{}")
+
+  // OAuth2 fields
+  oauthProvider               String?   // Provider name (google, github, microsoft, etc.)
+  oauthProviderId             String?   // User ID from the OAuth provider
+
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  // Relations
+  workflows                   Workflow[]
+  executions                  WorkflowExecution[]
+  credentials                 Credential[]
+  sessions                    UserSession[]
+  apiKeys                     ApiKey[]
+  auditLogs                   AuditLog[]
+  notifications               Notification[]
+  teams                       TeamMember[]
+  ownedTeams                  Team[]    @relation("TeamOwner")
+  comments                    Comment[]
+  shares                      WorkflowShare[]
+  deviceTokens                DeviceToken[]
+
+  @@map("users")
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner       User           @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     TeamMember[]
+  workflows   Workflow[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id       String     @id @default(cuid())
+  teamId   String
+  userId   String
+  role     TeamRole   @default(MEMBER)
+  joinedAt DateTime   @default(now())
+
+  // Relations
+  team     Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model UserSession {
+  id          String    @id @default(cuid())
+  userId      String
+  sessionToken String   @unique
+  deviceInfo  Json?
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime  @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model ApiKey {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  keyHash     String    @unique
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  permissions String[]
+  rateLimit   Int       @default(1000)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+  @@index([userId])
+}
+
+// ================================
+// WORKFLOW MANAGEMENT
+// ================================
+
+model Workflow {
+  id                String             @id @default(cuid())
+  name              String
+  description       String?
+  version           Int                @default(1)
+  status            WorkflowStatus     @default(DRAFT)
+  tags              String[]
+  category          String?
+  visibility        WorkflowVisibility @default(PRIVATE)
+  nodes             Json               // ReactFlow nodes data
+  edges             Json               // ReactFlow edges data
+  variables         Json               @default("{}")
+  settings          Json               @default("{}")
+  schedule          Json?              // Cron schedule configuration
+  webhookUrl        String?            @unique
+  isTemplate        Boolean            @default(false)
+  templateData      Json?
+  statistics        Json               @default("{}")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  publishedAt       DateTime?
+  userId            String
+  teamId            String?
+
+  // Relations
+  user              User               @relation(fields: [userId], references: [id])
+  team              Team?              @relation(fields: [teamId], references: [id])
+  executions        WorkflowExecution[]
+  versions          WorkflowVersion[]
+  shares            WorkflowShare[]
+  comments          Comment[]
+  analytics         WorkflowAnalytics[]
+
+  @@map("workflows")
+  @@index([userId])
+  @@index([status])
+  @@index([visibility])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([teamId])
+  @@index([isTemplate])
+}
+
+model WorkflowVersion {
+  id              String    @id @default(cuid())
+  workflowId      String
+  version         Int
+  branch          String    @default("main")
+  name            String?
+  description     String?
+  commitMessage   String?
+  nodes           Json
+  edges           Json
+  variables       Json      @default("{}")
+  settings        Json      @default("{}")
+  metadata        Json      @default("{}")
+  delta           String?   @db.Text  // Compressed diff from previous version
+  snapshot        Json?     // Full workflow snapshot
+  size            Int       @default(0)
+  checksum        String?
+  tags            String[]
+  parentVersion   Int?      // Previous version on same branch
+  baseBranch      String?   // Branch this was created from
+  mergeInfo       Json?     // Merge metadata if this is a merge commit
+  createdAt       DateTime  @default(now())
+  createdBy       String
+
+  // Relations
+  workflow        Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowId, branch, version])
+  @@index([workflowId, version])
+  @@index([workflowId, branch])
+  @@index([tags])
+  @@map("workflow_versions")
+}
+
+model WorkflowShare {
+  id          String      @id @default(cuid())
+  workflowId  String
+  userId      String
+  permission  Permission  @default(READ)
+  expiresAt   DateTime?
+  createdAt   DateTime    @default(now())
+
+  // Relations
+  workflow    Workflow    @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowId, userId])
+  @@map("workflow_shares")
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  workflowId String
+  userId     String
+  content    String
+  nodeId     String?  // Optional: comment on specific node
+  position   Json?    // Position in workflow canvas
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  workflow   Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+  @@index([workflowId])
+}
+
+// ================================
+// WORKFLOW EXECUTION
+// ================================
+
+model WorkflowExecution {
+  id              String            @id @default(cuid())
+  workflowId      String
+  userId          String
+  version         Int               @default(1)
+  status          ExecutionStatus   @default(RUNNING)
+  startedAt       DateTime          @default(now())
+  finishedAt      DateTime?
+  duration        Int?              // Duration in milliseconds
+  trigger         Json              // Trigger information
+  input           Json?             // Input data
+  output          Json?             // Final output
+  error           Json?             // Error information
+  executionData   Json              @default("{}")
+  nodeExecutions  NodeExecution[]
+  retryCount      Int               @default(0)
+  maxRetries      Int               @default(3)
+  priority        Int               @default(0)
+  parentExecutionId String?         // For sub-workflows
+  metadata        Json              @default("{}")
+
+  // Relations
+  workflow        Workflow          @relation(fields: [workflowId], references: [id])
+  user            User              @relation(fields: [userId], references: [id])
+  parentExecution WorkflowExecution? @relation("SubWorkflowExecution", fields: [parentExecutionId], references: [id])
+  subExecutions   WorkflowExecution[] @relation("SubWorkflowExecution")
+
+  @@map("workflow_executions")
+  @@index([workflowId])
+  @@index([userId])
+  @@index([status])
+  @@index([startedAt])
+  @@index([finishedAt])
+  @@index([workflowId, status])
+  @@index([workflowId, startedAt])
+  @@index([userId, status])
+  @@index([userId, startedAt])
+}
+
+model NodeExecution {
+  id            String             @id @default(cuid())
+  executionId   String
+  nodeId        String
+  nodeName      String
+  nodeType      String
+  status        ExecutionStatus    @default(RUNNING)
+  startedAt     DateTime           @default(now())
+  finishedAt    DateTime?
+  duration      Int?               // Duration in milliseconds
+  input         Json?
+  output        Json?
+  error         Json?
+  retryCount    Int                @default(0)
+  metadata      Json               @default("{}")
+
+  // Relations
+  execution     WorkflowExecution  @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@map("node_executions")
+  @@index([executionId])
+  @@index([nodeId])
+}
+
+// ================================
+// CREDENTIALS MANAGEMENT
+// ================================
+
+model Credential {
+  id                 String              @id @default(cuid())
+  userId             String
+  name               String
+  type               CredentialType
+  data               String              // Encrypted credential data (AES-256-GCM)
+  description        String?
+  isActive           Boolean             @default(true)
+  expiresAt          DateTime?
+  lastUsedAt         DateTime?
+
+  // Encryption metadata (NEW - for key rotation support)
+  isEncrypted        Boolean             @default(true)   // Flag to support migration
+  encryptionVersion  String              @default("v1")   // Encryption key version
+
+  // RBAC metadata
+  visibility         CredentialVisibility @default(PRIVATE)
+  shareCount         Int                 @default(0)
+
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  // Relations
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shares             CredentialShare[]
+  permissions        ResourcePermission[] @relation("CredentialPermissions")
+
+  @@map("credentials")
+  @@index([userId])
+  @@index([type])
+  @@index([isEncrypted])
+  @@index([encryptionVersion])
+  @@index([visibility])
+}
+
+model CredentialShare {
+  id             String                  @id @default(cuid())
+  credentialId   String
+  sharedWithId   String                  // User ID to share with
+  sharedById     String                  // User who shared
+  permissions    CredentialPermission[]
+  expiresAt      DateTime?
+  isActive       Boolean                 @default(true)
+  maxUses        Int?                    // Optional usage limit
+  usageCount     Int                     @default(0)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  // Relations
+  credential     Credential              @relation(fields: [credentialId], references: [id], onDelete: Cascade)
+
+  @@unique([credentialId, sharedWithId])
+  @@map("credential_shares")
+  @@index([sharedWithId])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+// ================================
+// RBAC & PERMISSIONS
+// ================================
+
+model ResourcePermission {
+  id            String              @id @default(cuid())
+  userId        String
+  resourceType  ResourceType
+  resourceId    String
+  permissions   String[]            // Array of permission strings
+  grantedBy     String?             // User who granted permission
+  expiresAt     DateTime?
+  isActive      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  // Relations
+  credential    Credential?         @relation("CredentialPermissions", fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceType, resourceId])
+  @@map("resource_permissions")
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([isActive])
+}
+
+model RolePermission {
+  id            String              @id @default(cuid())
+  role          Role
+  resource      ResourceType
+  action        String              // e.g., "create", "read", "update", "delete", "execute", "share"
+  conditions    Json?               // Optional conditions (e.g., only own resources)
+  createdAt     DateTime            @default(now())
+
+  @@unique([role, resource, action])
+  @@map("role_permissions")
+  @@index([role])
+  @@index([resource])
+}
+
+model UserGroup {
+  id            String              @id @default(cuid())
+  name          String
+  description   String?
+  permissions   String[]
+  members       UserGroupMember[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@map("user_groups")
+}
+
+model UserGroupMember {
+  id         String      @id @default(cuid())
+  groupId    String
+  userId     String
+  role       GroupRole   @default(MEMBER)
+  joinedAt   DateTime    @default(now())
+
+  // Relations
+  group      UserGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("user_group_members")
+  @@index([userId])
+}
+
+// ================================
+// WEBHOOKS
+// ================================
+
+model Webhook {
+  id          String       @id @default(cuid())
+  workflowId  String
+  name        String       @default("default")  // Human-readable name for the webhook
+  path        String       @default("default")  // URL path segment for routing
+  url         String       // Full webhook URL (computed, not unique by itself)
+  method      HttpMethod   @default(POST)
+  isActive    Boolean      @default(true)
+  secret      String?
+  headers     Json         @default("{}")
+  events      WebhookEvent[]
+  lastTriggeredAt DateTime?
+  triggerCount    Int      @default(0)
+  description String?      // Optional description
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("webhooks")
+  @@unique([workflowId, path])  // Unique path per workflow
+  @@index([workflowId])
+  @@index([url])
+}
+
+model WebhookEvent {
+  id          String      @id @default(cuid())
+  webhookId   String
+  eventType   String
+  payload     Json
+  headers     Json
+  ipAddress   String?
+  userAgent   String?
+  processed   Boolean     @default(false)
+  processingError Json?
+  createdAt   DateTime    @default(now())
+
+  // Relations
+  webhook     Webhook     @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@map("webhook_events")
+  @@index([webhookId])
+  @@index([processed])
+}
+
+// ================================
+// ANALYTICS & MONITORING
+// ================================
+
+model WorkflowAnalytics {
+  id              String    @id @default(cuid())
+  workflowId      String
+  date            DateTime  @db.Date
+  executions      Int       @default(0)
+  successfulRuns  Int       @default(0)
+  failedRuns      Int       @default(0)
+  avgDuration     Float?
+  totalDuration   Int       @default(0)
+  metrics         Json      @default("{}")
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  workflow        Workflow  @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@unique([workflowId, date])
+  @@map("workflow_analytics")
+}
+
+model SystemMetrics {
+  id          String    @id @default(cuid())
+  timestamp   DateTime  @default(now())
+  metricType  String
+  value       Float
+  labels      Json      @default("{}")
+  metadata    Json      @default("{}")
+
+  @@map("system_metrics")
+  @@index([timestamp])
+  @@index([metricType])
+}
+
+// ================================
+// NOTIFICATIONS
+// ================================
+
+model Notification {
+  id          String             @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  data        Json               @default("{}")
+  read        Boolean            @default(false)
+  priority    NotificationPriority @default(NORMAL)
+  expiresAt   DateTime?
+  createdAt   DateTime           @default(now())
+
+  // Relations
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+  @@index([userId])
+  @@index([read])
+}
+
+// ================================
+// AUDIT LOGS
+// ================================
+
+model AuditLog {
+  id            String      @id @default(cuid())
+  userId        String?
+  action        String
+  resource      String
+  resourceId    String?
+  details       Json        @default("{}")
+  ipAddress     String?
+  userAgent     String?
+  timestamp     DateTime    @default(now())
+
+  // Relations
+  user          User?       @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+}
+
+// ================================
+// FILE STORAGE
+// ================================
+
+model File {
+  id          String      @id @default(cuid())
+  filename    String
+  originalName String
+  mimetype    String
+  size        Int
+  path        String
+  url         String?
+  userId      String?
+  workflowId  String?
+  metadata    Json        @default("{}")
+  createdAt   DateTime    @default(now())
+
+  @@map("files")
+  @@index([userId])
+  @@index([workflowId])
+}
+
+// ================================
+// ENUMS
+// ================================
+
+enum Role {
+  ADMIN
+  USER
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum TeamRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum WorkflowVisibility {
+  PRIVATE
+  TEAM
+  PUBLIC
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILED
+  CANCELLED
+  TIMEOUT
+}
+
+enum Permission {
+  READ
+  WRITE
+  EXECUTE
+  ADMIN
+}
+
+enum CredentialType {
+  API_KEY
+  OAUTH2
+  BASIC_AUTH
+  JWT
+  SSH_KEY
+  DATABASE
+  CUSTOM
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+}
+
+enum NotificationType {
+  WORKFLOW_STARTED
+  WORKFLOW_COMPLETED
+  WORKFLOW_FAILED
+  SYSTEM_ALERT
+  MENTION
+  SHARE_RECEIVED
+  REMINDER
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// ================================
+// PUSH NOTIFICATIONS
+// ================================
+
+model DeviceToken {
+  id          String      @id @default(cuid())
+  userId      String
+  token       String      @unique
+  platform    PushPlatform
+  deviceName  String?
+  deviceModel String?
+  osVersion   String?
+  appVersion  String?
+  locale      String      @default("en")
+  timezone    String      @default("UTC")
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  lastUsed    DateTime?
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions PushSubscription[]
+
+  @@map("device_tokens")
+  @@index([userId])
+  @@index([platform])
+  @@index([isActive])
+}
+
+model PushNotification {
+  id          String      @id @default(cuid())
+  userId      String
+  type        PushNotificationType
+  title       String
+  body        String
+  data        Json?
+  badge       Int?
+  priority    PushNotificationPriority @default(NORMAL)
+  platform    PushPlatform?
+  deviceToken String?
+  messageId   String?
+  sentAt      DateTime    @default(now())
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  failedAt    DateTime?
+  error       String?
+  metadata    Json        @default("{}")
+
+  @@map("push_notifications")
+  @@index([userId])
+  @@index([type])
+  @@index([sentAt])
+}
+
+model PushSubscription {
+  id            String      @id @default(cuid())
+  userId        String
+  deviceTokenId String
+  topics        String[]
+  preferences   Json        @default("{}")
+  quietHoursEnabled Boolean   @default(false)
+  quietHoursStart String?
+  quietHoursEnd   String?
+  quietHoursTimezone String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // Relations
+  deviceToken   DeviceToken @relation(fields: [deviceTokenId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceTokenId])
+  @@map("push_subscriptions")
+  @@index([userId])
+}
+
+model PushNotificationRule {
+  id            String      @id @default(cuid())
+  userId        String
+  type          PushNotificationType
+  enabled       Boolean     @default(true)
+  priority      PushNotificationPriority @default(NORMAL)
+  platforms     PushPlatform[]
+  conditions    Json        @default("[]")
+  customizations Json       @default("{}")
+  quietHoursEnabled Boolean @default(false)
+  quietHoursStart String?
+  quietHoursEnd   String?
+  quietHoursTimezone String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, type])
+  @@map("push_notification_rules")
+  @@index([userId])
+}
+
+// ================================
+// PUSH NOTIFICATION ENUMS
+// ================================
+
+enum PushPlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum PushNotificationType {
+  WORKFLOW_STARTED
+  WORKFLOW_COMPLETED
+  WORKFLOW_FAILED
+  WORKFLOW_TIMEOUT
+  APPROVAL_REQUEST
+  APPROVAL_APPROVED
+  APPROVAL_REJECTED
+  SYSTEM_ALERT
+  SYSTEM_WARNING
+  SYSTEM_ERROR
+  CUSTOM
+}
+
+enum PushNotificationPriority {
+  CRITICAL
+  HIGH
+  NORMAL
+  LOW
+}
+
+// ================================
+// RBAC ENUMS
+// ================================
+
+enum ResourceType {
+  WORKFLOW
+  CREDENTIAL
+  EXECUTION
+  WEBHOOK
+  TEAM
+  USER_GROUP
+  FILE
+}
+
+enum CredentialPermission {
+  READ          // Can view credential metadata
+  USE           // Can use credential in workflows
+  EDIT          // Can modify credential
+  DELETE        // Can delete credential
+  SHARE         // Can share with others
+  ADMIN         // Full control
+}
+
+enum CredentialVisibility {
+  PRIVATE       // Only owner can access
+  TEAM          // Team members can access
+  SHARED        // Explicitly shared users
+  PUBLIC        // Anyone with link (encrypted view only)
+}
+
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// ================================
+// SECRET SCANNING
+// ================================
+
+model SecretScan {
+  id               String   @id @default(cuid())
+  timestamp        DateTime @default(now())
+  scannedFiles     Int
+  matchesFound     Int
+  criticalIssues   Int      @default(0)
+  highIssues       Int      @default(0)
+  mediumIssues     Int      @default(0)
+  lowIssues        Int      @default(0)
+  duration         Float    // Scan duration in seconds
+  trigger          String   // manual, commit, pr, scheduled, ci
+  passed           Boolean  @default(false)
+  triggeredBy      String?
+  metadata         Json     @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relations
+  detectedSecrets  DetectedSecret[]
+
+  @@map("secret_scans")
+  @@index([timestamp])
+  @@index([passed])
+}
+
+model DetectedSecret {
+  id          String   @id @default(cuid())
+  scanId      String
+  file        String
+  line        Int
+  column      Int?
+  patternName String
+  severity    SecretSeverity
+  confidence  SecretConfidence
+  category    String
+  match       String   // Masked secret value
+  detectedAt  DateTime @default(now())
+  status      SecretStatus @default(OPEN)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  notes       String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  scan        SecretScan @relation(fields: [scanId], references: [id], onDelete: Cascade)
+
+  @@map("detected_secrets")
+  @@index([scanId])
+  @@index([status])
+  @@index([severity])
+  @@index([file])
+}
+
+// ================================
+// SECRET SCANNING ENUMS
+// ================================
+
+enum SecretSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SecretConfidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SecretStatus {
+  OPEN
+  RESOLVED
+  FALSE_POSITIVE
+  ACCEPTED_RISK
+}
+
+// ================================
+// PASSWORD SECURITY
+// ================================
+
+model PasswordHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  passwordHash  String
+  createdAt     DateTime @default(now())
+
+  @@map("password_history")
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model PasswordResetToken {
+  id          String    @id @default(cuid())
+  userId      String
+  token       String    // Hashed token
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  used        Boolean   @default(false)
+  usedAt      DateTime?
+  ipAddress   String?
+
+  @@map("password_reset_tokens")
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([used])
+}
+
+// ================================
+// FORMS & SUBMISSIONS
+// ================================
+
+model Form {
+  id            String           @id @default(cuid())
+  name          String
+  description   String?
+  fields        Json             // Form field definitions
+  settings      Json             @default("{}")
+  isActive      Boolean          @default(true)
+  successMessage String?
+  redirectUrl   String?
+  workflowId    String?          // Associated workflow to trigger on submission
+  createdBy     String?          // User who created the form
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // Relations
+  submissions   FormSubmission[]
+
+  @@map("forms")
+  @@index([createdBy])
+  @@index([workflowId])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model FormSubmission {
+  id            String           @id @default(cuid())
+  formId        String
+  workflowId    String?          // Workflow that was triggered (if any)
+  data          Json             // Submitted form data
+  status        FormSubmissionStatus @default(PENDING)
+  ipAddress     String?
+  userAgent     String?
+  referrer      String?
+  metadata      Json             @default("{}")
+  submittedAt   DateTime         @default(now())
+  processedAt   DateTime?
+
+  // Relations
+  form          Form             @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@map("form_submissions")
+  @@index([formId])
+  @@index([workflowId])
+  @@index([status])
+  @@index([submittedAt])
+}
+
+// ================================
+// FORM SUBMISSION ENUM
+// ================================
+
+enum FormSubmissionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}

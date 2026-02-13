@@ -1,0 +1,287 @@
+# Prometheus Alert Rules for Workflow Automation Platform
+
+groups:
+  # System-level alerts
+  - name: system.rules
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High CPU usage detected on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 5 minutes on {{ $labels.instance }}"
+          runbook_url: "https://runbook.workflow-app.com/alerts/high-cpu"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "High memory usage detected on {{ $labels.instance }}"
+          description: "Memory usage is above 85% for more than 5 minutes on {{ $labels.instance }}"
+          runbook_url: "https://runbook.workflow-app.com/alerts/high-memory"
+
+      - alert: DiskSpaceRunningLow
+        expr: (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_free_bytes{fstype!="tmpfs"}) / node_filesystem_size_bytes{fstype!="tmpfs"} * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Disk space running low on {{ $labels.instance }}"
+          description: "Disk usage is above 85% on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+          runbook_url: "https://runbook.workflow-app.com/alerts/disk-space"
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_size_bytes{fstype!="tmpfs"} - node_filesystem_free_bytes{fstype!="tmpfs"}) / node_filesystem_size_bytes{fstype!="tmpfs"} * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Disk space critically low on {{ $labels.instance }}"
+          description: "Disk usage is above 95% on {{ $labels.instance }} ({{ $labels.mountpoint }})"
+          runbook_url: "https://runbook.workflow-app.com/alerts/disk-space-critical"
+
+  # Application-level alerts
+  - name: application.rules
+    rules:
+      - alert: ApplicationDown
+        expr: up{job="workflow-platform"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "Application {{ $labels.instance }} is down"
+          description: "The workflow platform application on {{ $labels.instance }} has been down for more than 30 seconds"
+          runbook_url: "https://runbook.workflow-app.com/alerts/app-down"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          team: engineering
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}% for more than 2 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/high-error-rate"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s for more than 5 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/high-response-time"
+
+      - alert: WorkflowExecutionFailureRate
+        expr: rate(workflow_executions_total{success="false"}[10m]) / rate(workflow_executions_total[10m]) * 100 > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "High workflow execution failure rate"
+          description: "Workflow failure rate is {{ $value }}% for more than 5 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/high-workflow-failure-rate"
+
+      - alert: WorkflowExecutionStuck
+        expr: workflow_executions_total{status="running"} and on() (time() - workflow_execution_start_time > 3600)
+        for: 0m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "Workflow execution appears stuck"
+          description: "Workflow execution {{ $labels.execution_id }} has been running for more than 1 hour"
+          runbook_url: "https://runbook.workflow-app.com/alerts/workflow-stuck"
+
+  # Database alerts
+  - name: database.rules
+    rules:
+      - alert: PostgreSQLDown
+        expr: up{job="postgresql"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database has been down for more than 30 seconds"
+          runbook_url: "https://runbook.workflow-app.com/alerts/postgresql-down"
+
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "PostgreSQL has too many connections"
+          description: "PostgreSQL connection usage is above 80% ({{ $value }}%)"
+          runbook_url: "https://runbook.workflow-app.com/alerts/postgresql-connections"
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration[5m]) > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "PostgreSQL has slow running queries"
+          description: "There are queries running for more than 5 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/postgresql-slow-queries"
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache has been down for more than 30 seconds"
+          runbook_url: "https://runbook.workflow-app.com/alerts/redis-down"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "Redis memory usage is high"
+          description: "Redis memory usage is above 90% ({{ $value }}%)"
+          runbook_url: "https://runbook.workflow-app.com/alerts/redis-memory"
+
+  # Security alerts
+  - name: security.rules
+    rules:
+      - alert: HighFailedLoginAttempts
+        expr: rate(auth_login_failures_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High number of failed login attempts"
+          description: "There have been {{ $value }} failed login attempts per second in the last 5 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/failed-logins"
+
+      - alert: SuspiciousAPIActivity
+        expr: rate(http_requests_total{status="403"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "High number of forbidden API requests"
+          description: "There have been {{ $value }} forbidden requests per second in the last 5 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/suspicious-api"
+
+      - alert: RateLimitHit
+        expr: rate(rate_limit_exceeded_total[5m]) > 1
+        for: 1m
+        labels:
+          severity: info
+          team: security
+        annotations:
+          summary: "Rate limits are being hit"
+          description: "Rate limits are being exceeded {{ $value }} times per second"
+          runbook_url: "https://runbook.workflow-app.com/alerts/rate-limit"
+
+  # Business metrics alerts
+  - name: business.rules
+    rules:
+      - alert: NoWorkflowExecutions
+        expr: rate(workflow_executions_total[1h]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: "No workflow executions in the last hour"
+          description: "There have been no workflow executions for more than 10 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/no-executions"
+
+      - alert: UnusuallyHighWorkflowVolume
+        expr: rate(workflow_executions_total[5m]) > avg_over_time(rate(workflow_executions_total[5m])[1d]) * 3
+        for: 5m
+        labels:
+          severity: info
+          team: business
+        annotations:
+          summary: "Unusually high workflow execution volume"
+          description: "Workflow execution rate is 3x higher than the daily average"
+          runbook_url: "https://runbook.workflow-app.com/alerts/high-volume"
+
+      - alert: HighCostPerExecution
+        expr: workflow_cost_per_execution > 0.50
+        for: 0m
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: "High cost per workflow execution"
+          description: "Average cost per execution is ${{ $value }}, which exceeds the $0.50 threshold"
+          runbook_url: "https://runbook.workflow-app.com/alerts/high-cost"
+
+  # External dependencies
+  - name: external.rules
+    rules:
+      - alert: ExternalServiceDown
+        expr: probe_success{job="blackbox"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "External service {{ $labels.instance }} is down"
+          description: "External service health check has been failing for more than 2 minutes"
+          runbook_url: "https://runbook.workflow-app.com/alerts/external-service-down"
+
+      - alert: ExternalServiceSlowResponse
+        expr: probe_duration_seconds{job="blackbox"} > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+        annotations:
+          summary: "External service {{ $labels.instance }} is responding slowly"
+          description: "External service response time is {{ $value }}s, which is above the 5s threshold"
+          runbook_url: "https://runbook.workflow-app.com/alerts/external-service-slow"
+
+  # Certificate expiration
+  - name: certificates.rules
+    rules:
+      - alert: SSLCertificateExpiringSoon
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 0m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} will expire in {{ $value | humanizeDuration }}"
+          runbook_url: "https://runbook.workflow-app.com/alerts/ssl-expiring"
+
+      - alert: SSLCertificateExpired
+        expr: probe_ssl_earliest_cert_expiry - time() <= 0
+        for: 0m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "SSL certificate has expired"
+          description: "SSL certificate for {{ $labels.instance }} has expired"
+          runbook_url: "https://runbook.workflow-app.com/alerts/ssl-expired"

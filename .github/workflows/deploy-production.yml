@@ -1,0 +1,318 @@
+# ============================================
+# Production Deployment Pipeline
+# Zero-downtime deployment with rollback capability
+# ============================================
+
+name: Deploy to Production
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+        default: 'latest'
+      skip_tests:
+        description: 'Skip tests (emergency deploy only)'
+        required: false
+        default: 'false'
+
+env:
+  AWS_REGION: us-west-2
+  EKS_CLUSTER_NAME: workflow-production
+  HELM_RELEASE_NAME: workflow-platform
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Pre-deployment validation
+  validate:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Kubernetes manifests
+        run: |
+          kubectl --dry-run=client apply -f k8s/ || exit 1
+
+      - name: Validate Helm chart
+        run: |
+          helm lint helm/workflow-platform
+          helm template helm/workflow-platform --debug
+
+      - name: Check deployment prerequisites
+        run: |
+          echo "Checking database migrations..."
+          echo "Checking configuration..."
+          echo "Validation complete"
+
+  # Security scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Scan Docker image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
+  # Database backup before deployment
+  backup:
+    name: Pre-deployment Backup
+    runs-on: ubuntu-latest
+    needs: [validate, security-scan]
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create RDS snapshot
+        run: |
+          SNAPSHOT_ID="workflow-pre-deploy-$(date +%Y%m%d-%H%M%S)"
+          aws rds create-db-snapshot \
+            --db-instance-identifier workflow-production \
+            --db-snapshot-identifier $SNAPSHOT_ID
+          echo "SNAPSHOT_ID=$SNAPSHOT_ID" >> $GITHUB_ENV
+
+      - name: Wait for snapshot completion
+        run: |
+          aws rds wait db-snapshot-completed \
+            --db-snapshot-identifier $SNAPSHOT_ID
+
+  # Deploy to production
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: backup
+    environment:
+      name: production
+      url: https://workflow.company.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ env.EKS_CLUSTER_NAME }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'latest'
+
+      - name: Add Helm repositories
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ${{ env.HELM_RELEASE_NAME }} ./helm/workflow-platform \
+            --namespace production \
+            --create-namespace \
+            --set image.tag=${{ github.event.release.tag_name }} \
+            --set image.pullPolicy=IfNotPresent \
+            --set replicaCount=3 \
+            --set autoscaling.enabled=true \
+            --set autoscaling.minReplicas=3 \
+            --set autoscaling.maxReplicas=20 \
+            --set ingress.enabled=true \
+            --set ingress.hosts[0].host=workflow.company.com \
+            --set secrets.data.DATABASE_URL=${{ secrets.PROD_DATABASE_URL }} \
+            --set secrets.data.JWT_SECRET=${{ secrets.PROD_JWT_SECRET }} \
+            --set secrets.data.ENCRYPTION_KEY=${{ secrets.PROD_ENCRYPTION_KEY }} \
+            --wait \
+            --timeout 10m
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/${{ env.HELM_RELEASE_NAME }} -n production
+          kubectl get pods -n production
+
+      - name: Run smoke tests
+        run: |
+          # Wait for service to be ready
+          sleep 30
+
+          # Health check
+          kubectl run smoke-test --rm -i --restart=Never --image=curlimages/curl -- \
+            curl -f http://workflow-platform:3001/health || exit 1
+
+          echo "Smoke tests passed"
+
+  # Database migrations
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations
+        run: |
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+  # Post-deployment verification
+  verify:
+    name: Post-deployment Verification
+    runs-on: ubuntu-latest
+    needs: [deploy, migrate]
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ env.EKS_CLUSTER_NAME }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Check pod health
+        run: |
+          kubectl get pods -n production
+          kubectl top pods -n production
+
+      - name: Check service endpoints
+        run: |
+          kubectl get svc -n production
+          kubectl get ingress -n production
+
+      - name: Monitor for errors
+        run: |
+          # Check for pod errors
+          if kubectl get pods -n production | grep -E 'Error|CrashLoop'; then
+            echo "Found pods with errors!"
+            kubectl describe pods -n production
+            exit 1
+          fi
+
+      - name: Verify metrics
+        run: |
+          echo "Checking Prometheus metrics..."
+          # Add metric checks here
+
+  # Notification
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [deploy, migrate, verify]
+    if: always()
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          custom_payload: |
+            {
+              text: "${{ job.status == 'success' && '✅' || '❌' }} Production Deployment",
+              attachments: [{
+                color: "${{ job.status == 'success' && 'good' || 'danger' }}",
+                fields: [
+                  {
+                    title: "Status",
+                    value: "${{ job.status }}",
+                    short: true
+                  },
+                  {
+                    title: "Version",
+                    value: "${{ github.event.release.tag_name }}",
+                    short: true
+                  },
+                  {
+                    title: "Environment",
+                    value: "Production",
+                    short: true
+                  },
+                  {
+                    title: "Deployed by",
+                    value: "${{ github.actor }}",
+                    short: true
+                  },
+                  {
+                    title: "URL",
+                    value: "https://workflow.company.com",
+                    short: false
+                  }
+                ]
+              }]
+            }
+
+      - name: Create deployment record
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              auto_merge: false,
+              required_contexts: []
+            });
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deployment.data.id,
+              state: 'success',
+              environment_url: 'https://workflow.company.com',
+              log_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });

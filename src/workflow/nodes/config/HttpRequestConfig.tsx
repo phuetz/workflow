@@ -1,13 +1,22 @@
 import React from 'react';
 import { useWorkflowStore } from '../../../store/workflowStore';
+import NodeTimeoutConfig from './NodeTimeoutConfig';
 
-interface Props { node: any; }
+interface Props {
+  node: {
+    id: string;
+    data: {
+      config?: Record<string, unknown>;
+      timeout?: number;
+    };
+  };
+}
 
 export default function HttpRequestConfig({ node }: Props) {
   const { updateNode, darkMode } = useWorkflowStore();
-  const config = node.data.config || {};
+  const config = (node.data.config || {}) as Record<string, string>;
 
-  const update = (field: string, value: any) => {
+  const update = (field: string, value: string) => {
     updateNode(node.id, { config: { ...config, [field]: value } });
   };
 
@@ -32,6 +41,10 @@ export default function HttpRequestConfig({ node }: Props) {
           className={`w-full px-3 py-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'}`}
         />
       </div>
+      <NodeTimeoutConfig
+        nodeId={node.id}
+        timeout={node.data.timeout}
+      />
     </div>
   );
 }

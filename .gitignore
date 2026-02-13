@@ -22,4 +22,69 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# ==========================================
+# ENVIRONMENT FILES (NEVER COMMIT SECRETS!)
+# ==========================================
+# All .env files are ignored except .env.example
 .env
+.env.local
+.env.*.local
+.env.development
+.env.development.local
+.env.staging
+.env.staging.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+.env.transformation
+
+# But keep example files tracked
+!.env.example
+!.env.production.example
+!.env.development.example
+!.env.test.example
+
+# ==========================================
+# SECRETS AND CREDENTIALS
+# ==========================================
+# Never commit these security-sensitive files
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.csr
+*.cer
+*.der
+.doppler/
+.vault-token
+credentials.json
+service-account.json
+gcp-key.json
+aws-credentials
+.aws/credentials
+
+# API Keys and tokens
+.api-keys
+.tokens
+*.token
+*.secret
+
+# Secret backup files
+/tmp/secrets-*
+secrets-backup-*
+.secrets-*
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+
+# GPG keys
+*.gpg
+*.pgp
+secring.*

@@ -3,11 +3,14 @@
  * Quick navigation and command palette
  */
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Search, Workflow, Settings, FileText, Zap, Clock, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Search, Workflow, Settings, FileText, Zap, Clock, ChevronRight, Moon, Sun, Download, Upload, Plus } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { nodeTypes } from '../data/nodeTypes';
 import { useWorkflowStore } from '../store/workflowStore';
+import { generateNodeId, createWorkflowNode } from '../utils/workflowEditorHelpers';
+import { useToast } from './ui/Toast';
+import { logger } from '../services/SimpleLogger';
 
 interface SearchResult {
   type: 'workflow' | 'node' | 'command' | 'recent';
@@ -28,7 +31,73 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { workflows, addNode, darkMode } = useWorkflowStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    workflows,
+    addNode,
+    darkMode,
+    toggleDarkMode,
+    setNodes,
+    setEdges,
+    exportWorkflow,
+    importWorkflow,
+    loadWorkflow,
+    setWorkflowName
+  } = useWorkflowStore();
+  const toast = useToast();
+
+  // Action handlers
+  const handleCreateNewWorkflow = useCallback(() => {
+    // Clear the canvas and create a new workflow
+    setNodes([]);
+    setEdges([]);
+    setWorkflowName('New Workflow');
+    // Navigate to editor if not already there
+    if (!window.location.pathname.includes('/editor')) {
+      window.location.href = '/editor';
+    }
+  }, [setNodes, setEdges, setWorkflowName]);
+
+  const handleOpenSettings = useCallback(() => {
+    window.location.href = '/settings';
+  }, []);
+
+  const handleOpenWorkflow = useCallback((workflowId: string) => {
+    loadWorkflow(workflowId);
+    // Navigate to editor
+    window.location.href = `/editor?workflow=${workflowId}`;
+  }, [loadWorkflow]);
+
+  const handleImportWorkflow = useCallback(() => {
+    // Trigger file input click
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileSelected = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      try {
+        await importWorkflow(file);
+        // Navigate to editor after import
+        if (!window.location.pathname.includes('/editor')) {
+          window.location.href = '/editor';
+        }
+      } catch (error) {
+        logger.error('Failed to import workflow', { error });
+        toast.error('Failed to import workflow. Please check the file format.');
+      }
+    }
+    // Reset the input value to allow re-importing the same file
+    event.target.value = '';
+  }, [importWorkflow]);
+
+  const handleExportWorkflow = useCallback(() => {
+    exportWorkflow();
+  }, [exportWorkflow]);
+
+  const handleToggleDarkMode = useCallback(() => {
+    toggleDarkMode();
+  }, [toggleDarkMode]);
 
   // Focus input when opened
   useEffect(() => {
@@ -74,8 +143,8 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
         id: 'recent-1',
         title: 'Create New Workflow',
         subtitle: 'Start from scratch',
-        icon: <Workflow size={18} />,
-        action: () => console.log('Create workflow'),
+        icon: <Plus size={18} />,
+        action: handleCreateNewWorkflow,
         category: 'Quick Actions'
       });
 
@@ -85,7 +154,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
         title: 'Open Settings',
         subtitle: 'Configure your workspace',
         icon: <Settings size={18} />,
-        action: () => console.log('Open settings'),
+        action: handleOpenSettings,
         category: 'Quick Actions'
       });
 
@@ -95,7 +164,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     const lowerQuery = query.toLowerCase();
 
     // Search workflows
-    workflows.forEach(workflow => {
+    Object.values(workflows).forEach(workflow => {
       if (workflow.name.toLowerCase().includes(lowerQuery)) {
         searchResults.push({
           type: 'workflow',
@@ -103,7 +172,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
           title: workflow.name,
           subtitle: workflow.description || 'Workflow',
           icon: <FileText size={18} />,
-          action: () => console.log('Open workflow:', workflow.id),
+          action: () => handleOpenWorkflow(workflow.id),
           category: 'Workflows'
         });
       }
@@ -113,14 +182,23 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     Object.values(nodeTypes).forEach(node => {
       if (node.label.toLowerCase().includes(lowerQuery) ||
           node.description?.toLowerCase().includes(lowerQuery)) {
-        const Icon = Icons[node.icon as keyof typeof Icons] as React.ComponentType<any>;
+        const Icon = Icons[node.icon as keyof typeof Icons] as React.ComponentType<{ size: number }>;
         searchResults.push({
           type: 'node',
           id: node.type,
           title: node.label,
           subtitle: node.description || 'Node',
           icon: Icon ? <Icon size={18} /> : <Zap size={18} />,
-          action: () => addNode(node.type, { x: 100, y: 100 }),
+          action: () => {
+            const nodeId = generateNodeId();
+            const position = { x: 250, y: 250 };
+            const newNode = createWorkflowNode(nodeId, node.type, position, node.label);
+            addNode(newNode);
+            // Navigate to editor if not already there
+            if (!window.location.pathname.includes('/editor')) {
+              window.location.href = '/editor';
+            }
+          },
           category: 'Nodes'
         });
       }
@@ -132,25 +210,29 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
         id: 'create-workflow',
         title: 'Create New Workflow',
         subtitle: 'Start a new workflow',
-        action: () => console.log('Create workflow')
+        icon: <Plus size={18} />,
+        action: handleCreateNewWorkflow
       },
       {
         id: 'import-workflow',
         title: 'Import Workflow',
         subtitle: 'Import from JSON file',
-        action: () => console.log('Import workflow')
+        icon: <Upload size={18} />,
+        action: handleImportWorkflow
       },
       {
         id: 'export-workflow',
         title: 'Export Workflow',
         subtitle: 'Save as JSON file',
-        action: () => console.log('Export workflow')
+        icon: <Download size={18} />,
+        action: handleExportWorkflow
       },
       {
         id: 'toggle-dark-mode',
         title: 'Toggle Dark Mode',
         subtitle: darkMode ? 'Switch to light mode' : 'Switch to dark mode',
-        action: () => console.log('Toggle dark mode')
+        icon: darkMode ? <Sun size={18} /> : <Moon size={18} />,
+        action: handleToggleDarkMode
       }
     ];
 
@@ -161,7 +243,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
           id: cmd.id,
           title: cmd.title,
           subtitle: cmd.subtitle,
-          icon: <Zap size={18} />,
+          icon: cmd.icon,
           action: cmd.action,
           category: 'Commands'
         });
@@ -169,7 +251,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     });
 
     return searchResults;
-  }, [query, workflows, darkMode, addNode]);
+  }, [query, workflows, darkMode, addNode, handleCreateNewWorkflow, handleOpenSettings, handleOpenWorkflow, handleImportWorkflow, handleExportWorkflow, handleToggleDarkMode]);
 
   // Group results by category
   const groupedResults = useMemo(() => {
@@ -189,10 +271,19 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/50 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <>
+      {/* Hidden file input for import functionality */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleFileSelected}
+      />
+      <div
+        className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      >
       <div
         className={`w-full max-w-2xl mx-4 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-2xl border overflow-hidden`}
         onClick={e => e.stopPropagation()}
@@ -292,7 +383,8 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

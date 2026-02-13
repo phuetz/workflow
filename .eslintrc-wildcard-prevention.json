@@ -1,0 +1,57 @@
+{
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["*"],
+            "importNamePattern": "^\\* as .*Icons",
+            "message": "❌ Wildcard icon imports are forbidden. Use named imports for better tree-shaking:\n\n  BAD:  import * as Icons from 'lucide-react';\n  GOOD: import { Play, Clock, Database } from 'lucide-react';\n\nThis prevents importing all 1000+ icons (~2.5MB) when you only need a few.\nRun 'python3 scripts/fix_wildcard_imports.py' to auto-fix."
+          }
+        ],
+        "paths": [
+          {
+            "name": "lucide-react",
+            "importNames": ["*"],
+            "message": "❌ Import specific icons from lucide-react instead of using wildcard imports.\n\n  BAD:  import * as Icons from 'lucide-react';\n  GOOD: import { Play, Clock, Database } from 'lucide-react';"
+          },
+          {
+            "name": "@mui/icons-material",
+            "importNames": ["*"],
+            "message": "❌ Import specific icons from @mui/icons-material instead of using wildcard imports.\n\n  BAD:  import * as MuiIcons from '@mui/icons-material';\n  GOOD: import { Add, Delete, Edit } from '@mui/icons-material';"
+          },
+          {
+            "name": "react-icons/fa",
+            "importNames": ["*"],
+            "message": "❌ Import specific icons from react-icons instead of using wildcard imports."
+          },
+          {
+            "name": "react-icons/md",
+            "importNames": ["*"],
+            "message": "❌ Import specific icons from react-icons instead of using wildcard imports."
+          },
+          {
+            "name": "react-icons/ai",
+            "importNames": ["*"],
+            "message": "❌ Import specific icons from react-icons instead of using wildcard imports."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "ImportDeclaration[source.value=/lucide-react|@mui\\/icons-material|react-icons/] > ImportNamespaceSpecifier",
+            "message": "❌ Wildcard imports (import * as) are not allowed for icon libraries. Use named imports instead for better tree-shaking."
+          }
+        ]
+      }
+    }
+  ]
+}

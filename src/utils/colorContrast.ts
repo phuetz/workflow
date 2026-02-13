@@ -1,8 +1,9 @@
 export function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const normalized = hex.replace('#', '');
-  const bigint = parseInt(normalized.length === 3
+  const fullHex = normalized.length === 3
     ? normalized.split('').map(c => c + c).join('')
-    : normalized, 16);
+    : normalized;
+  const bigint = parseInt(fullHex, 16);
   return {
     r: (bigint >> 16) & 255,
     g: (bigint >> 8) & 255,
@@ -11,8 +12,11 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
 }
 
 function luminanceChannel(value: number): number {
+  // PRECISION FIX: Use more precise floating point arithmetic
   const channel = value / 255;
-  return channel <= 0.03928 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
+  return channel <= 0.03928 
+    ? Math.round((channel * 1000000) / 12.92) / 1000000
+    : Math.pow((channel + 0.055) / 1.055, 2.4);
 }
 
 export function relativeLuminance(hex: string): number {
@@ -24,10 +28,10 @@ export function relativeLuminance(hex: string): number {
 }
 
 export function contrastRatio(foreground: string, background: string): number {
-  const L1 = relativeLuminance(foreground);
-  const L2 = relativeLuminance(background);
-  const lighter = Math.max(L1, L2);
-  const darker = Math.min(L1, L2);
+  const l1 = relativeLuminance(foreground);
+  const l2 = relativeLuminance(background);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
   return (lighter + 0.05) / (darker + 0.05);
 }
 
@@ -45,7 +49,7 @@ export function bestTextColor(
 ): string {
   const blackContrast = contrastRatio('#000000', background);
   const whiteContrast = contrastRatio('#ffffff', background);
-
+  
   if (blackContrast >= ratio && whiteContrast >= ratio) {
     return blackContrast >= whiteContrast ? '#000000' : '#ffffff';
   }

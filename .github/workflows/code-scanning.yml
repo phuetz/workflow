@@ -1,0 +1,79 @@
+name: Code Scanning
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+    branches: [ main, master, develop ]
+  schedule:
+    # Run weekly on Mondays at 6 AM UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  secret-scanning:
+    name: Secret Detection & Code Scanning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run secret scanner
+        id: scan
+        run: |
+          echo "🔍 Running secret scanner..."
+          tsx scripts/ci-secret-scan.ts
+        continue-on-error: true
+
+      - name: Generate SARIF report
+        if: always()
+        run: |
+          echo "📄 Generating SARIF report..."
+          tsx scripts/generate-sarif-report.ts
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: secret-scan-results.sarif
+          category: secret-scanning
+
+      - name: Upload scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-scan-results
+          path: |
+            secret-scan-report.json
+            secret-scan-results.sarif
+          retention-days: 90
+
+      - name: Check scan results
+        if: steps.scan.outcome == 'failure'
+        run: |
+          echo "❌ Secret scanning detected issues"
+          echo "Review the Security tab for details"
+          exit 1
+
+      - name: Report success
+        if: steps.scan.outcome == 'success'
+        run: |
+          echo "✅ No secrets detected"
+          echo "Code scanning completed successfully"

@@ -1,0 +1,375 @@
+# PLAN C - Helm Values for Scalability Infrastructure
+# Configuration values for different environments
+# Ultra Think methodology - Helm chart values
+
+# Global configuration
+global:
+  environment: production
+  domain: workflow.example.com
+  imageRegistry: ghcr.io/workflow-automation
+  imagePullPolicy: IfNotPresent
+  storageClass: fast-ssd
+
+# Application configuration
+app:
+  name: workflow-scalability
+  version: 1.0.0
+  replicaCount: 3
+  image:
+    repository: workflow-scalability
+    tag: latest
+  
+  service:
+    type: LoadBalancer
+    ports:
+      http: 80
+      graphql: 4000
+      websocket: 8080
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+    hosts:
+      - host: workflow.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: api.workflow.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: ws.workflow.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: workflow-tls
+        hosts:
+          - workflow.example.com
+          - api.workflow.example.com
+          - ws.workflow.example.com
+  
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 50
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Worker Pool configuration
+workerPool:
+  enabled: true
+  replicaCount: 5
+  image:
+    repository: workflow-scalability
+    tag: latest
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 60
+  
+  config:
+    maxConcurrentTasks: 10
+    taskTimeout: 30000
+    workerType: general
+
+# Scalability configuration
+scalability:
+  workerPool:
+    enabled: true
+    maxWorkers: 100
+    minWorkers: 2
+    autoScale: true
+  
+  queue:
+    enabled: true
+    maxSize: 10000
+    visibilityTimeout: 30000
+    persistence: true
+    clustering: true
+  
+  loadBalancer:
+    enabled: true
+    strategy: ml-optimized
+    healthCheckInterval: 5000
+    circuitBreakerThreshold: 5
+    enableML: true
+  
+  autoScaling:
+    enabled: true
+    minInstances: 3
+    maxInstances: 50
+    targetUtilization: 70
+    scaleUpThreshold: 80
+    scaleDownThreshold: 30
+    cooldownPeriod: 300000
+    warmupTime: 60000
+    predictionEnabled: true
+    costOptimization: true
+  
+  federation:
+    enabled: true
+    port: 4000
+    playground: true
+    introspection: true
+    tracing: true
+
+# Redis configuration
+redis:
+  enabled: true
+  architecture: replication
+  auth:
+    enabled: true
+    password: changeme-redis-password
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: fast-ssd
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+  replica:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# RabbitMQ configuration
+rabbitmq:
+  enabled: true
+  auth:
+    username: admin
+    password: changeme-rabbitmq-password
+    erlangCookie: workflow-cookie-secret
+  clustering:
+    enabled: true
+    replicaCount: 3
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: fast-ssd
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  plugins: "rabbitmq_management rabbitmq_prometheus rabbitmq_peer_discovery_k8s"
+
+# PostgreSQL configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: changeme-postgres-password
+    database: workflow
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: fast-ssd
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "500m"
+      limits:
+        memory: "8Gi"
+        cpu: "2000m"
+    initdb:
+      scripts:
+        init.sql: |
+          CREATE SCHEMA IF NOT EXISTS scalability;
+          -- Additional initialization SQL
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  postgresqlMaxConnections: 500
+  postgresqlSharedBuffers: "2GB"
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    retention: 30d
+    storageSize: 50Gi
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "4Gi"
+        cpu: "2000m"
+  
+  grafana:
+    enabled: true
+    adminPassword: changeme-grafana-password
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "1Gi"
+        cpu: "500m"
+    plugins:
+      - redis-datasource
+      - prometheus
+      - grafana-piechart-panel
+      - grafana-worldmap-panel
+  
+  jaeger:
+    enabled: true
+    storage:
+      type: memory
+      maxTraces: 100000
+    resources:
+      requests:
+        memory: "512Mi"
+        cpu: "250m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+  
+  alertmanager:
+    enabled: true
+    config:
+      receivers:
+        - name: default
+          webhook_configs:
+            - url: http://workflow-scalability-service/api/alerts
+        - name: critical
+          email_configs:
+            - to: ops-team@example.com
+              from: alertmanager@workflow.example.com
+
+# Security configuration
+security:
+  podSecurityPolicy:
+    enabled: true
+  networkPolicy:
+    enabled: true
+  rbac:
+    create: true
+  serviceAccount:
+    create: true
+    name: workflow-scalability
+
+# Node affinity configuration
+nodeSelector: {}
+  # node-type: high-memory
+
+tolerations: []
+  # - key: "dedicated"
+  #   operator: "Equal"
+  #   value: "workflow"
+  #   effect: "NoSchedule"
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app
+              operator: In
+              values:
+                - workflow-scalability
+        topologyKey: kubernetes.io/hostname
+
+# Environment-specific overrides
+environments:
+  development:
+    app:
+      replicaCount: 1
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "100m"
+        limits:
+          memory: "1Gi"
+          cpu: "500m"
+    workerPool:
+      replicaCount: 2
+    redis:
+      replica:
+        replicaCount: 0
+    rabbitmq:
+      clustering:
+        replicaCount: 1
+    monitoring:
+      enabled: false
+  
+  staging:
+    app:
+      replicaCount: 2
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "250m"
+        limits:
+          memory: "2Gi"
+          cpu: "1000m"
+    workerPool:
+      replicaCount: 3
+    redis:
+      replica:
+        replicaCount: 1
+    rabbitmq:
+      clustering:
+        replicaCount: 2
+  
+  production:
+    # Use default values defined above
+    app:
+      autoscaling:
+        minReplicas: 5
+        maxReplicas: 100
+    workerPool:
+      autoscaling:
+        minReplicas: 10
+        maxReplicas: 200

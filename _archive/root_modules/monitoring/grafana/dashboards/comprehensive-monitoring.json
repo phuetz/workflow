@@ -1,0 +1,175 @@
+{
+  "dashboard": {
+    "title": "Workflow Platform - Comprehensive Monitoring",
+    "tags": ["workflow", "monitoring", "production"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Overview",
+        "type": "row",
+        "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 0, "y": 1, "w": 8, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(workflow_http_requests_total[5m]))",
+            "legendFormat": "Total Requests/s"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Error Rate",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 8, "y": 1, "w": 8, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(workflow_http_requests_total{status=~\"5..\"}[5m]))",
+            "legendFormat": "5xx Errors/s"
+          },
+          {
+            "expr": "sum(rate(workflow_http_requests_total{status=~\"4..\"}[5m]))",
+            "legendFormat": "4xx Errors/s"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Response Time (P95)",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 16, "y": 1, "w": 8, "h": 8 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(workflow_http_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "P95 Response Time"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Workflow Execution",
+        "type": "row",
+        "gridPos": { "x": 0, "y": 9, "w": 24, "h": 1 }
+      },
+      {
+        "id": 6,
+        "title": "Workflow Execution Rate",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 0, "y": 10, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(rate(workflow_workflow_executions_total[5m]))",
+            "legendFormat": "Total Executions/s"
+          },
+          {
+            "expr": "sum(rate(workflow_workflow_executions_total{status=\"success\"}[5m]))",
+            "legendFormat": "Successful/s"
+          },
+          {
+            "expr": "sum(rate(workflow_workflow_executions_total{status=\"error\"}[5m]))",
+            "legendFormat": "Failed/s"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Success Rate",
+        "type": "gauge",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 12, "y": 10, "w": 6, "h": 8 },
+        "targets": [
+          {
+            "expr": "(sum(rate(workflow_workflow_executions_total{status=\"success\"}[5m])) / sum(rate(workflow_workflow_executions_total[5m]))) * 100"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 95, "color": "yellow" },
+                { "value": 99, "color": "green" }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "Active Workflows",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 18, "y": 10, "w": 6, "h": 8 },
+        "targets": [
+          {
+            "expr": "sum(workflow_workflow_active_executions)"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Resource Utilization",
+        "type": "row",
+        "gridPos": { "x": 0, "y": 18, "w": 24, "h": 1 }
+      },
+      {
+        "id": 10,
+        "title": "Memory Usage",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 0, "y": 19, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "workflow_nodejs_process_memory_heap_used_bytes",
+            "legendFormat": "Heap Used"
+          },
+          {
+            "expr": "workflow_nodejs_process_memory_heap_total_bytes",
+            "legendFormat": "Heap Total"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          }
+        }
+      },
+      {
+        "id": 11,
+        "title": "CPU Usage",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "gridPos": { "x": 12, "y": 19, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "rate(workflow_nodejs_process_cpu_usage[5m]) / 1000000",
+            "legendFormat": "CPU Usage"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit"
+          }
+        }
+      }
+    ]
+  }
+}

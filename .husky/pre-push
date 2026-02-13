@@ -1,0 +1,32 @@
+#!/bin/sh
+# Husky pre-push hook
+# Lance les tests complets avant chaque push
+
+echo ""
+echo "🚀 Pre-push: Validation complète avant push..."
+echo ""
+
+# 1. TypeScript type checking
+echo "📝 TypeScript type checking..."
+npm run typecheck || exit 1
+
+# 2. ESLint
+echo ""
+echo "🔍 ESLint code quality..."
+npm run lint || {
+    echo "⚠️  Warnings ESLint détectés (non-bloquant)"
+}
+
+# 3. Smoke tests complets
+echo ""
+echo "🔥 Smoke tests..."
+npm run test:smoke || exit 1
+
+# 4. Build test
+echo ""
+echo "🏗️  Test de build..."
+npm run build:backend || exit 1
+
+echo ""
+echo "✅ Pre-push validation réussie! Vous pouvez push."
+echo ""

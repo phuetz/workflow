@@ -1,0 +1,25 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/patrice/workflow/wiki
+    about: Browse the documentation and guides
+
+  - name: 💬 Community Discussions
+    url: https://github.com/patrice/workflow/discussions
+    about: Ask questions, share workflows, and discuss ideas with the community
+
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/patrice/workflow/security/advisories/new
+    about: Report a security vulnerability privately (DO NOT create public issues for security bugs)
+
+  - name: 💡 Feature Discussions
+    url: https://github.com/patrice/workflow/discussions/categories/ideas
+    about: Discuss and vote on feature ideas before creating formal requests
+
+  - name: 🆘 Support & Help
+    url: https://github.com/patrice/workflow/discussions/categories/q-a
+    about: Get help with setup, configuration, and troubleshooting
+
+  - name: 🎓 Learning Resources
+    url: https://github.com/patrice/workflow/wiki/getting-started
+    about: Tutorials, examples, and best practices

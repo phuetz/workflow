@@ -1,0 +1,163 @@
+# Execution GraphQL Schema
+# Apollo Federation 2.x compatible schema for workflow execution management
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable", "@external", "@requires", "@provides"])
+
+"""
+Execution represents a single workflow execution instance
+"""
+type Execution @key(fields: "id") {
+  id: ID!
+  workflowId: ID!
+  workflow: Workflow! @requires(fields: "workflowId")
+  status: ExecutionStatus!
+  mode: ExecutionMode!
+  startedAt: DateTime!
+  finishedAt: DateTime
+  duration: Int
+  error: ExecutionError
+  nodeExecutions: [NodeExecution!]!
+  metrics: ExecutionMetrics!
+  triggeredBy: String
+  retryOf: ID
+  retries: [Execution!]!
+}
+
+"""
+NodeExecution represents the execution of a single node
+"""
+type NodeExecution {
+  nodeId: ID!
+  nodeName: String!
+  nodeType: String!
+  status: ExecutionStatus!
+  startedAt: DateTime!
+  finishedAt: DateTime
+  duration: Int
+  inputData: JSON
+  outputData: JSON
+  error: NodeExecutionError
+  retryCount: Int!
+  logs: [ExecutionLog!]!
+}
+
+"""
+ExecutionError contains error information
+"""
+type ExecutionError {
+  message: String!
+  code: String
+  nodeId: ID
+  stack: String
+  timestamp: DateTime!
+}
+
+"""
+NodeExecutionError contains node-specific error information
+"""
+type NodeExecutionError {
+  message: String!
+  code: String
+  type: String!
+  stack: String
+  timestamp: DateTime!
+}
+
+"""
+ExecutionMetrics contains execution performance metrics
+"""
+type ExecutionMetrics {
+  totalNodes: Int!
+  successfulNodes: Int!
+  failedNodes: Int!
+  skippedNodes: Int!
+  totalInputBytes: Int!
+  totalOutputBytes: Int!
+  peakMemoryUsage: Int!
+  cpuTime: Int!
+}
+
+"""
+ExecutionLog represents a log entry from execution
+"""
+type ExecutionLog {
+  level: LogLevel!
+  message: String!
+  timestamp: DateTime!
+  nodeId: ID
+  metadata: JSON
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  ERROR
+  CANCELLED
+  TIMEOUT
+}
+
+enum ExecutionMode {
+  MANUAL
+  SCHEDULED
+  WEBHOOK
+  TRIGGER
+  TEST
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+"""
+ExecutionFilter for querying executions
+"""
+input ExecutionFilter {
+  workflowId: ID
+  status: ExecutionStatus
+  mode: ExecutionMode
+  startedAfter: DateTime
+  startedBefore: DateTime
+  finishedAfter: DateTime
+  finishedBefore: DateTime
+}
+
+"""
+ExecutionInput for starting a workflow execution
+"""
+input ExecutionInput {
+  mode: ExecutionMode = MANUAL
+  inputData: JSON
+  startNodeId: ID
+}
+
+type Query {
+  execution(id: ID!): Execution
+  executions(filter: ExecutionFilter, limit: Int = 20, offset: Int = 0): [Execution!]!
+  executionCount(filter: ExecutionFilter): Int!
+  executionLogs(executionId: ID!, nodeId: ID): [ExecutionLog!]!
+}
+
+type Mutation {
+  executeWorkflow(workflowId: ID!, input: ExecutionInput): Execution!
+  cancelExecution(id: ID!): Execution!
+  retryExecution(id: ID!): Execution!
+  retryFailedNodes(id: ID!): Execution!
+  deleteExecution(id: ID!): Boolean!
+}
+
+type Subscription {
+  executionUpdated(executionId: ID!): Execution!
+  executionStarted(workflowId: ID!): Execution!
+  executionFinished(workflowId: ID!): Execution!
+  nodeExecutionUpdated(executionId: ID!): NodeExecution!
+  executionLogs(executionId: ID!): ExecutionLog!
+}
+
+scalar DateTime
+scalar JSON

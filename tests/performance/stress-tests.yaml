@@ -1,0 +1,134 @@
+# Artillery Stress Testing Configuration
+# Tests the system under extreme load to find breaking points
+# Run with: artillery run tests/performance/stress-tests.yaml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Gradual ramp-up
+    - duration: 120
+      arrivalRate: 50
+      rampTo: 200
+      name: "Ramp-up to 200 users"
+
+    # Heavy load
+    - duration: 180
+      arrivalRate: 500
+      name: "Heavy load - 500 users"
+
+    # Extreme stress
+    - duration: 180
+      arrivalRate: 1000
+      name: "Stress test - 1000 concurrent users"
+
+    # Recovery test
+    - duration: 120
+      arrivalRate: 1000
+      rampTo: 100
+      name: "Recovery phase"
+
+  processor: "./tests/performance/processor.js"
+
+  # More lenient thresholds for stress testing
+  ensure:
+    maxErrorRate: 5              # Max 5% error rate under stress
+    p95: 500                     # 95th percentile < 500ms
+    p99: 2000                    # 99th percentile < 2s
+
+  http:
+    timeout: 30
+    pool: 200
+
+  plugins:
+    expect: {}
+    metrics-by-endpoint:
+      stripQueryString: true
+
+  variables:
+    apiUrl: "http://localhost:3000/api"
+
+scenarios:
+  # Heavy workflow execution stress
+  - name: "Concurrent Workflow Executions"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/workflows/{{ workflowId }}/execute"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            input:
+              data: "stress test {{ $randomNumber(1, 1000000) }}"
+              timestamp: "{{ $timestamp }}"
+          expect:
+            - statusCode: [200, 202, 429]  # Allow rate limiting
+
+  # Database query stress
+  - name: "Heavy Query Load"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/executions?limit=100&offset={{ $randomNumber(0, 10000) }}"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 429]
+
+      - get:
+          url: "/api/workflows?limit=100"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 429]
+
+  # Rapid workflow creation
+  - name: "Rapid Workflow Creation"
+    weight: 15
+    flow:
+      - post:
+          url: "/api/workflows"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            name: "Stress Test WF {{ $timestamp }}"
+            nodes:
+              - id: "n1"
+                type: "trigger"
+                position: { x: 0, y: 0 }
+                data: { label: "Start" }
+            edges: []
+          expect:
+            - statusCode: [201, 429, 503]
+
+  # WebSocket connection stress
+  - name: "WebSocket Connections"
+    weight: 10
+    engine: "ws"
+    flow:
+      - send:
+          payload:
+            type: "subscribe"
+            channel: "workflow.{{ workflowId }}"
+
+      - think: 5
+
+      - send:
+          payload:
+            type: "unsubscribe"
+            channel: "workflow.{{ workflowId }}"
+
+  # Queue metrics under load
+  - name: "Queue Metrics Polling"
+    weight: 5
+    flow:
+      - loop:
+          - get:
+              url: "/api/queue-metrics"
+              headers:
+                Authorization: "Bearer {{ authToken }}"
+              expect:
+                - statusCode: [200, 429, 503]
+          - think: 0.1
+        count: 10

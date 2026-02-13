@@ -1,0 +1,167 @@
+# User GraphQL Schema
+# Apollo Federation 2.x compatible schema for user management
+
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable", "@external", "@requires", "@provides"])
+
+"""
+User represents a platform user
+"""
+type User @key(fields: "id") {
+  id: ID!
+  email: String!
+  username: String!
+  firstName: String
+  lastName: String
+  fullName: String
+  avatar: String
+  role: UserRole!
+  status: UserStatus!
+  preferences: UserPreferences!
+  statistics: UserStatistics!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  lastLoginAt: DateTime
+  workflows(limit: Int = 10): [Workflow!]!
+  permissions: [Permission!]!
+}
+
+"""
+UserPreferences contains user settings
+"""
+type UserPreferences {
+  theme: Theme!
+  language: String!
+  timezone: String!
+  notifications: NotificationPreferences!
+  editor: EditorPreferences!
+}
+
+"""
+NotificationPreferences for user notifications
+"""
+type NotificationPreferences {
+  email: Boolean!
+  push: Boolean!
+  executionSuccess: Boolean!
+  executionFailure: Boolean!
+  workflowUpdates: Boolean!
+}
+
+"""
+EditorPreferences for workflow editor
+"""
+type EditorPreferences {
+  snapToGrid: Boolean!
+  gridSize: Int!
+  showMinimap: Boolean!
+  autoSave: Boolean!
+  autoSaveInterval: Int!
+}
+
+"""
+UserStatistics contains user activity statistics
+"""
+type UserStatistics {
+  totalWorkflows: Int!
+  activeWorkflows: Int!
+  totalExecutions: Int!
+  successfulExecutions: Int!
+  failedExecutions: Int!
+  lastExecutionTime: DateTime
+}
+
+"""
+Permission represents a user permission
+"""
+type Permission {
+  resource: String!
+  action: String!
+  granted: Boolean!
+}
+
+enum UserRole {
+  ADMIN
+  DEVELOPER
+  VIEWER
+  GUEST
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum Theme {
+  LIGHT
+  DARK
+  AUTO
+}
+
+"""
+UserFilter for querying users
+"""
+input UserFilter {
+  role: UserRole
+  status: UserStatus
+  search: String
+}
+
+"""
+UserInput for creating/updating users
+"""
+input UserInput {
+  email: String
+  username: String
+  firstName: String
+  lastName: String
+  avatar: String
+  role: UserRole
+  status: UserStatus
+}
+
+"""
+UserPreferencesInput for updating preferences
+"""
+input UserPreferencesInput {
+  theme: Theme
+  language: String
+  timezone: String
+  notifications: NotificationPreferencesInput
+  editor: EditorPreferencesInput
+}
+
+input NotificationPreferencesInput {
+  email: Boolean
+  push: Boolean
+  executionSuccess: Boolean
+  executionFailure: Boolean
+  workflowUpdates: Boolean
+}
+
+input EditorPreferencesInput {
+  snapToGrid: Boolean
+  gridSize: Int
+  showMinimap: Boolean
+  autoSave: Boolean
+  autoSaveInterval: Int
+}
+
+type Query {
+  user(id: ID!): User
+  currentUser: User!
+  users(filter: UserFilter, limit: Int = 20, offset: Int = 0): [User!]!
+  userCount(filter: UserFilter): Int!
+}
+
+type Mutation {
+  updateUser(id: ID!, input: UserInput!): User!
+  updateUserPreferences(input: UserPreferencesInput!): User!
+  deleteUser(id: ID!): Boolean!
+  suspendUser(id: ID!): User!
+  activateUser(id: ID!): User!
+}
+
+scalar DateTime

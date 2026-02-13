@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { MiniMap } from 'reactflow';
+import { MiniMap } from '@xyflow/react';
 import { useWorkflowStore } from '../store/workflowStore';
 
 export default function WorkflowMinimap() {

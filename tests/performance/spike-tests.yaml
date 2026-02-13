@@ -1,0 +1,101 @@
+# Artillery Spike Testing Configuration
+# Tests system behavior under sudden traffic spikes
+# Run with: artillery run tests/performance/spike-tests.yaml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Normal baseline
+    - duration: 120
+      arrivalRate: 20
+      name: "Baseline load"
+
+    # Sudden spike
+    - duration: 60
+      arrivalRate: 1000
+      name: "SPIKE - Sudden 50x increase"
+
+    # Recovery period
+    - duration: 180
+      arrivalRate: 20
+      name: "Recovery observation"
+
+    # Second spike
+    - duration: 60
+      arrivalRate: 500
+      name: "Second spike - 25x increase"
+
+    # Final recovery
+    - duration: 120
+      arrivalRate: 20
+      name: "Final recovery"
+
+  processor: "./tests/performance/processor.js"
+
+  ensure:
+    maxErrorRate: 10             # Allow higher error rate during spikes
+    p95: 1000
+    p99: 3000
+
+  http:
+    timeout: 30
+    pool: 300
+
+  plugins:
+    expect: {}
+    metrics-by-endpoint:
+      stripQueryString: true
+
+  variables:
+    apiUrl: "http://localhost:3000/api"
+
+scenarios:
+  # Primary spike scenario - workflow executions
+  - name: "Spike Workflow Executions"
+    weight: 60
+    flow:
+      - post:
+          url: "/api/workflows/{{ workflowId }}/execute"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+            Content-Type: "application/json"
+          json:
+            input:
+              spike: true
+              timestamp: "{{ $timestamp }}"
+              random: "{{ $randomNumber(1, 1000000) }}"
+          expect:
+            - statusCode: [200, 202, 429, 503]
+
+  # Secondary spike scenario - API reads
+  - name: "Spike API Reads"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/workflows"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 429, 503]
+
+      - get:
+          url: "/api/executions?limit=50"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 429, 503]
+
+  # Webhook spike
+  - name: "Spike Webhook Triggers"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/webhooks/{{ webhookId }}/trigger"
+          headers:
+            Content-Type: "application/json"
+          json:
+            event: "spike.test"
+            data:
+              timestamp: "{{ $timestamp }}"
+          expect:
+            - statusCode: [200, 202, 429, 503]

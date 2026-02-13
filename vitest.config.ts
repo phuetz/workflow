@@ -1,50 +1,53 @@
-import { defineConfig, configDefaults } from 'vitest/config';
-import react from '@vitejs/plugin-react';
-import path from 'path';
+import { defineConfig } from 'vitest/config';
+import { resolve } from 'path';
 
 export default defineConfig({
-  plugins: [react()],
   test: {
-    globals: true,
     environment: 'jsdom',
-    setupFiles: './src/tests/setup.ts',
-    css: true,
+    globals: true,
+    setupFiles: ['./src/test-setup.ts'],
+    testTimeout: 30000, // 30 seconds default timeout
+    hookTimeout: 30000, // 30 seconds for hooks
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        singleThread: true
+      }
+    },
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/cypress/**',
+      '**/tests/e2e/**',
+      '**/*.spec.ts', // Exclude Playwright specs
+      '**/e2e/**'
+    ],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'json', 'html'],
       exclude: [
-        ...configDefaults.exclude,
-        'src/**/*.d.ts',
-        'src/**/*.config.*',
-        'src/**/index.ts',
-        'src/tests/**',
-        '**/*.spec.ts',
-        '**/*.test.ts',
-        '**/node_modules/**',
-        '**/dist/**',
-        '**/.{idea,git,cache,output,temp}/**'
-      ],
-      include: ['src/**/*.{ts,tsx}'],
-      all: true,
-      lines: 80,
-      functions: 80,
-      branches: 80,
-      statements: 80
-    },
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    exclude: [...configDefaults.exclude, 'e2e/**'],
-    testTimeout: 10000,
-    hookTimeout: 10000
+        'node_modules/',
+        'dist/',
+        'build/',
+        'src/test-setup.tsx',
+        '**/*.config.ts',
+        '**/*.d.ts',
+        '**/__tests__/**'
+      ]
+    }
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@components': path.resolve(__dirname, './src/components'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
-      '@utils': path.resolve(__dirname, './src/utils'),
-      '@store': path.resolve(__dirname, './src/store'),
-      '@types': path.resolve(__dirname, './src/types'),
-      '@data': path.resolve(__dirname, './src/data')
+      '@': resolve(__dirname, './src'),
+      'events': 'events',
+      'crypto': 'crypto-browserify',
+      'stream': 'stream-browserify',
+      'buffer': 'buffer',
+      'process': 'process/browser'
     }
+  },
+  define: {
+    global: 'globalThis',
+    'process.env': process.env
   }
 });

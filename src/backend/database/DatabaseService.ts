@@ -5,8 +5,120 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
-const supabaseServiceKey = import.meta.env.SUPABASE_SERVICE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-service-key';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://your-project.supabase.co';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'your-service-key';
+
+// Database entity types
+export interface WorkflowNode {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+}
+
+export interface WorkflowEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+}
+
+export interface WorkflowSettings {
+  timeout?: number;
+  retryOnFailure?: boolean;
+  maxRetries?: number;
+  errorHandling?: 'stop' | 'continue';
+  [key: string]: unknown;
+}
+
+export interface WorkflowRecord {
+  id: string;
+  name: string;
+  description?: string;
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+  settings: WorkflowSettings;
+  userId: string;
+  organizationId?: string;
+  status: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NodeExecutionRecord {
+  nodeId: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  startedAt?: string;
+  completedAt?: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  error?: { message: string; stack?: string };
+}
+
+export interface ExecutionRecord {
+  id: string;
+  workflowId: string;
+  status: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  error?: { message: string; stack?: string };
+  nodeExecutions?: NodeExecutionRecord[];
+  startedAt: string;
+  completedAt?: string;
+  duration?: number;
+}
+
+export interface CredentialRecord {
+  id: string;
+  name: string;
+  type: string;
+  encryptedData: Record<string, unknown>;
+  userId: string;
+  organizationId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VariableRecord {
+  id: string;
+  key: string;
+  value: unknown;
+  scope: 'user' | 'organization';
+  userId: string;
+  organizationId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CacheEntry<T = unknown> {
+  data: T;
+  expiresAt: number;
+}
+
+export interface UserProfileRecord {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  avatarUrl?: string;
+  role?: string;
+  status?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookRecord {
+  id: string;
+  workflowId: string;
+  path: string;
+  method: string;
+  userId: string;
+  enabled: boolean;
+  createdAt: string;
+}
 
 export interface DatabaseConfig {
   maxConnections?: number;
@@ -25,13 +137,13 @@ export interface QueryOptions {
 export interface Transaction {
   commit(): Promise<void>;
   rollback(): Promise<void>;
-  query<T>(sql: string, params?: any[]): Promise<T[]>;
+  query<T>(sql: string, params?: unknown[]): Promise<T[]>;
 }
 
 export class DatabaseService {
   private supabase: SupabaseClient;
   private config: DatabaseConfig;
-  private queryCache: Map<string, { data: any; expiresAt: number }> = new Map();
+  private queryCache: Map<string, CacheEntry> = new Map();
   private cleanupInterval: NodeJS.Timeout;
 
   constructor(config?: DatabaseConfig) {
@@ -65,12 +177,12 @@ export class DatabaseService {
   async createWorkflow(workflow: {
     name: string;
     description?: string;
-    nodes: any[];
-    edges: any[];
-    settings?: any;
+    nodes: WorkflowNode[];
+    edges: WorkflowEdge[];
+    settings?: WorkflowSettings;
     userId: string;
     organizationId?: string;
-  }): Promise<any> {
+  }): Promise<WorkflowRecord> {
     const { data, error } = await this.supabase
       .from('workflows')
       .insert({
@@ -90,10 +202,10 @@ export class DatabaseService {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as WorkflowRecord;
   }
 
-  async getWorkflow(id: string, userId: string): Promise<any> {
+  async getWorkflow(id: string, userId: string): Promise<WorkflowRecord | null> {
     const { data, error } = await this.supabase
       .from('workflows')
       .select('*')
@@ -102,7 +214,7 @@ export class DatabaseService {
       .single();
 
     if (error) throw error;
-    return data;
+    return data as WorkflowRecord | null;
   }
 
   async listWorkflows(userId: string, filters?: {
@@ -111,7 +223,7 @@ export class DatabaseService {
     search?: string;
     limit?: number;
     offset?: number;
-  }): Promise<{ data: any[]; count: number }> {
+  }): Promise<{ data: WorkflowRecord[]; count: number }> {
     let query = this.supabase
       .from('workflows')
       .select('*', { count: 'exact' })
@@ -142,11 +254,11 @@ export class DatabaseService {
   async updateWorkflow(id: string, userId: string, updates: {
     name?: string;
     description?: string;
-    nodes?: any[];
-    edges?: any[];
-    settings?: any;
+    nodes?: WorkflowNode[];
+    edges?: WorkflowEdge[];
+    settings?: WorkflowSettings;
     status?: string;
-  }): Promise<any> {
+  }): Promise<WorkflowRecord> {
     const { data, error } = await this.supabase
       .from('workflows')
       .update({
@@ -195,8 +307,8 @@ export class DatabaseService {
     userId: string;
     status: string;
     mode?: string;
-    input?: any;
-  }): Promise<any> {
+    input?: Record<string, unknown>;
+  }): Promise<ExecutionRecord> {
     const { data, error } = await this.supabase
       .from('executions')
       .insert({
@@ -217,11 +329,11 @@ export class DatabaseService {
 
   async updateExecution(id: string, updates: {
     status?: string;
-    output?: any;
-    error?: any;
+    output?: Record<string, unknown>;
+    error?: { message: string; stack?: string };
     finishedAt?: string;
-    nodeExecutions?: any[];
-  }): Promise<any> {
+    nodeExecutions?: NodeExecutionRecord[];
+  }): Promise<ExecutionRecord> {
     const { data, error } = await this.supabase
       .from('executions')
       .update({
@@ -244,7 +356,7 @@ export class DatabaseService {
     status?: string;
     limit?: number;
     offset?: number;
-  }): Promise<{ data: any[]; count: number }> {
+  }): Promise<{ data: ExecutionRecord[]; count: number }> {
     let query = this.supabase
       .from('executions')
       .select('*', { count: 'exact' })
@@ -271,10 +383,10 @@ export class DatabaseService {
   async createCredential(credential: {
     name: string;
     type: string;
-    encryptedData: any;
+    encryptedData: Record<string, unknown>;
     userId: string;
     organizationId?: string;
-  }): Promise<any> {
+  }): Promise<CredentialRecord> {
     const { data, error } = await this.supabase
       .from('credentials')
       .insert({
@@ -305,7 +417,7 @@ export class DatabaseService {
     return data;
   }
 
-  async listCredentials(userId: string, type?: string): Promise<any[]> {
+  async listCredentials(userId: string, type?: string): Promise<Partial<CredentialRecord>[]> {
     let query = this.supabase
       .from('credentials')
       .select('id, name, type, created_at, updated_at')
@@ -323,8 +435,8 @@ export class DatabaseService {
 
   async updateCredential(id: string, userId: string, updates: {
     name?: string;
-    encryptedData?: any;
-  }): Promise<any> {
+    encryptedData?: Record<string, unknown>;
+  }): Promise<CredentialRecord> {
     const { data, error } = await this.supabase
       .from('credentials')
       .update({
@@ -354,7 +466,7 @@ export class DatabaseService {
   /**
    * User Profiles
    */
-  async getUserProfile(userId: string): Promise<any> {
+  async getUserProfile(userId: string): Promise<UserProfileRecord | null> {
     const { data, error } = await this.supabase
       .from('user_profiles')
       .select('*')
@@ -371,8 +483,8 @@ export class DatabaseService {
     avatarUrl?: string;
     role?: string;
     status?: string;
-    metadata?: any;
-  }): Promise<any> {
+    metadata?: Record<string, unknown>;
+  }): Promise<UserProfileRecord> {
     const { data, error } = await this.supabase
       .from('user_profiles')
       .upsert({
@@ -400,7 +512,7 @@ export class DatabaseService {
     path: string;
     method: string;
     userId: string;
-  }): Promise<any> {
+  }): Promise<WebhookRecord> {
     const { data, error } = await this.supabase
       .from('webhooks')
       .insert({
@@ -418,7 +530,7 @@ export class DatabaseService {
     return data;
   }
 
-  async getWebhookByPath(path: string, method: string): Promise<any> {
+  async getWebhookByPath(path: string, method: string): Promise<WebhookRecord | null> {
     const { data, error } = await this.supabase
       .from('webhooks')
       .select('*')
@@ -434,7 +546,7 @@ export class DatabaseService {
   /**
    * Global Variables
    */
-  async setGlobalVariable(key: string, value: any, userId: string, scope: 'user' | 'organization' = 'user'): Promise<void> {
+  async setGlobalVariable(key: string, value: unknown, userId: string, scope: 'user' | 'organization' = 'user'): Promise<void> {
     const { error } = await this.supabase
       .from('global_variables')
       .upsert({
@@ -448,7 +560,7 @@ export class DatabaseService {
     if (error) throw error;
   }
 
-  async getGlobalVariable(key: string, userId: string, scope: 'user' | 'organization' = 'user'): Promise<any> {
+  async getGlobalVariable(key: string, userId: string, scope: 'user' | 'organization' = 'user'): Promise<unknown> {
     const { data, error } = await this.supabase
       .from('global_variables')
       .select('value')
@@ -469,7 +581,7 @@ export class DatabaseService {
     action: string;
     resourceType: string;
     resourceId: string;
-    metadata?: any;
+    metadata?: Record<string, unknown>;
     ipAddress?: string;
     userAgent?: string;
   }): Promise<void> {
@@ -492,16 +604,16 @@ export class DatabaseService {
   /**
    * Query caching
    */
-  private getCachedQuery(key: string): any | null {
+  private getCachedQuery<T = unknown>(key: string): T | null {
     const cached = this.queryCache.get(key);
     if (cached && cached.expiresAt > Date.now()) {
-      return cached.data;
+      return cached.data as T;
     }
     this.queryCache.delete(key);
     return null;
   }
 
-  private setCachedQuery(key: string, data: any, ttl: number): void {
+  private setCachedQuery(key: string, data: unknown, ttl: number): void {
     this.queryCache.set(key, {
       data,
       expiresAt: Date.now() + ttl

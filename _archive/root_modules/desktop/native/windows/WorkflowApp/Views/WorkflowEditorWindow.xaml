@@ -1,0 +1,328 @@
+<!-- Workflow Editor Window - WPF Native -->
+<Window x:Class="WorkflowApp.Views.WorkflowEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WorkflowApp.Views"
+        xmlns:controls="clr-namespace:WorkflowApp.Controls"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        mc:Ignorable="d"
+        Title="{Binding WorkflowName}" 
+        Height="900" Width="1400"
+        MinHeight="600" MinWidth="1000"
+        WindowStartupLocation="CenterScreen"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}">
+    
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+    </Window.Resources>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Toolbar -->
+        <ToolBar Grid.Row="0" ToolBarTray.IsLocked="True" Height="48">
+            <Button Command="{Binding SaveCommand}" 
+                    ToolTip="Save (Ctrl+S)">
+                <materialDesign:PackIcon Kind="ContentSave" />
+            </Button>
+            
+            <Separator />
+            
+            <Button Command="{Binding UndoCommand}" 
+                    ToolTip="Undo (Ctrl+Z)">
+                <materialDesign:PackIcon Kind="Undo" />
+            </Button>
+            
+            <Button Command="{Binding RedoCommand}" 
+                    ToolTip="Redo (Ctrl+Y)">
+                <materialDesign:PackIcon Kind="Redo" />
+            </Button>
+            
+            <Separator />
+            
+            <Button Command="{Binding RunCommand}" 
+                    ToolTip="Run Workflow (F5)">
+                <materialDesign:PackIcon Kind="Play" Foreground="Green" />
+            </Button>
+            
+            <Button Command="{Binding StopCommand}" 
+                    ToolTip="Stop Workflow (Shift+F5)"
+                    IsEnabled="{Binding IsRunning}">
+                <materialDesign:PackIcon Kind="Stop" Foreground="Red" />
+            </Button>
+            
+            <Button Command="{Binding DebugCommand}" 
+                    ToolTip="Debug Workflow (F9)">
+                <materialDesign:PackIcon Kind="BugCheck" />
+            </Button>
+            
+            <Separator />
+            
+            <ToggleButton IsChecked="{Binding ShowGrid}" 
+                          ToolTip="Toggle Grid">
+                <materialDesign:PackIcon Kind="Grid" />
+            </ToggleButton>
+            
+            <ToggleButton IsChecked="{Binding SnapToGrid}" 
+                          ToolTip="Snap to Grid">
+                <materialDesign:PackIcon Kind="Magnet" />
+            </ToggleButton>
+            
+            <Separator />
+            
+            <ComboBox ItemsSource="{Binding ZoomLevels}" 
+                      SelectedItem="{Binding SelectedZoom}"
+                      Width="100">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding StringFormat='{}{0}%'}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            
+            <Button Command="{Binding FitToScreenCommand}" 
+                    ToolTip="Fit to Screen">
+                <materialDesign:PackIcon Kind="FitToScreen" />
+            </Button>
+        </ToolBar>
+        
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" MinWidth="200"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="300" MinWidth="250"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Node Palette -->
+            <Border Grid.Column="0" BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                    BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBox Grid.Row="0" 
+                             materialDesign:HintAssist.Hint="Search nodes..."
+                             materialDesign:TextFieldAssist.HasClearButton="True"
+                             Text="{Binding NodeSearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="8"/>
+                    
+                    <TreeView Grid.Row="1" 
+                              ItemsSource="{Binding NodeCategories}"
+                              VirtualizingPanel.IsVirtualizing="True"
+                              VirtualizingPanel.VirtualizationMode="Recycling">
+                        <TreeView.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding Nodes}">
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                                <HierarchicalDataTemplate.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="Transparent" 
+                                                MouseLeftButtonDown="NodeTemplate_MouseDown"
+                                                Cursor="Hand">
+                                            <Grid Margin="4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                
+                                                <Border Grid.Column="0" 
+                                                        Width="32" Height="32"
+                                                        CornerRadius="4"
+                                                        Background="{Binding Color}"
+                                                        Margin="0,0,8,0">
+                                                    <materialDesign:PackIcon Kind="{Binding Icon}" 
+                                                                           Foreground="White"
+                                                                           Width="20" Height="20"
+                                                                           HorizontalAlignment="Center"
+                                                                           VerticalAlignment="Center"/>
+                                                </Border>
+                                                
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="Medium"/>
+                                                    <TextBlock Text="{Binding Description}" 
+                                                             FontSize="11" 
+                                                             Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                                             TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </HierarchicalDataTemplate.ItemTemplate>
+                            </HierarchicalDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </Grid>
+            </Border>
+            
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" />
+            
+            <!-- Canvas -->
+            <Border Grid.Column="2" 
+                    Background="{DynamicResource MaterialDesignChipBackground}"
+                    ClipToBounds="True">
+                <Grid>
+                    <!-- Workflow Canvas Control -->
+                    <controls:WorkflowCanvas x:Name="WorkflowCanvas"
+                                           Nodes="{Binding Nodes}"
+                                           Edges="{Binding Edges}"
+                                           SelectedNode="{Binding SelectedNode, Mode=TwoWay}"
+                                           SelectedEdge="{Binding SelectedEdge, Mode=TwoWay}"
+                                           ShowGrid="{Binding ShowGrid}"
+                                           SnapToGrid="{Binding SnapToGrid}"
+                                           Zoom="{Binding Zoom}"
+                                           AllowDrop="True"
+                                           Drop="WorkflowCanvas_Drop"
+                                           DragOver="WorkflowCanvas_DragOver"/>
+                    
+                    <!-- Minimap -->
+                    <Border HorizontalAlignment="Right" 
+                            VerticalAlignment="Bottom"
+                            Margin="16"
+                            Width="200" Height="150"
+                            Background="{DynamicResource MaterialDesignPaper}"
+                            BorderBrush="{DynamicResource MaterialDesignDivider}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Visibility="{Binding ShowMinimap, Converter={StaticResource BoolToVisConverter}}">
+                        <controls:WorkflowMinimap Canvas="{Binding ElementName=WorkflowCanvas}"/>
+                    </Border>
+                    
+                    <!-- Execution Overlay -->
+                    <Border Background="#80000000" 
+                            Visibility="{Binding IsRunning, Converter={StaticResource BoolToVisConverter}}">
+                        <StackPanel HorizontalAlignment="Center" 
+                                    VerticalAlignment="Center">
+                            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                       Value="0"
+                                       IsIndeterminate="True"
+                                       Width="60" Height="60"/>
+                            <TextBlock Text="Executing Workflow..." 
+                                     Foreground="White"
+                                     FontSize="16"
+                                     Margin="0,16,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+            
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" />
+            
+            <!-- Properties Panel -->
+            <Border Grid.Column="4" 
+                    BorderBrush="{DynamicResource MaterialDesignDivider}" 
+                    BorderThickness="1,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <materialDesign:ColorZone Grid.Row="0" 
+                                            Mode="PrimaryLight" 
+                                            Padding="8">
+                        <TextBlock Text="Properties" FontWeight="Bold"/>
+                    </materialDesign:ColorZone>
+                    
+                    <ScrollViewer Grid.Row="1" 
+                                  VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisConverter}}">
+                        <StackPanel Margin="8">
+                            <!-- Node Properties -->
+                            <GroupBox Header="Node Configuration" 
+                                      Visibility="{Binding IsNodeSelected, Converter={StaticResource BoolToVisConverter}}">
+                                <StackPanel>
+                                    <TextBox materialDesign:HintAssist.Hint="Node Name"
+                                           Text="{Binding SelectedNode.Name, UpdateSourceTrigger=PropertyChanged}"
+                                           Margin="0,0,0,8"/>
+                                    
+                                    <TextBox materialDesign:HintAssist.Hint="Description"
+                                           Text="{Binding SelectedNode.Description}"
+                                           TextWrapping="Wrap"
+                                           AcceptsReturn="True"
+                                           MinLines="3"
+                                           Margin="0,0,0,8"/>
+                                    
+                                    <!-- Dynamic property editor based on node type -->
+                                    <ContentControl Content="{Binding SelectedNodePropertyEditor}"/>
+                                </StackPanel>
+                            </GroupBox>
+                            
+                            <!-- Edge Properties -->
+                            <GroupBox Header="Connection Configuration" 
+                                      Visibility="{Binding IsEdgeSelected, Converter={StaticResource BoolToVisConverter}}">
+                                <StackPanel>
+                                    <TextBox materialDesign:HintAssist.Hint="Label"
+                                           Text="{Binding SelectedEdge.Label}"
+                                           Margin="0,0,0,8"/>
+                                    
+                                    <ComboBox materialDesign:HintAssist.Hint="Condition Type"
+                                            ItemsSource="{Binding ConditionTypes}"
+                                            SelectedItem="{Binding SelectedEdge.ConditionType}"
+                                            Margin="0,0,0,8"/>
+                                    
+                                    <TextBox materialDesign:HintAssist.Hint="Condition Expression"
+                                           Text="{Binding SelectedEdge.Condition}"
+                                           Margin="0,0,0,8"/>
+                                </StackPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </ScrollViewer>
+                    
+                    <TextBlock Grid.Row="1" 
+                             Text="Select a node or connection to view properties"
+                             HorizontalAlignment="Center"
+                             VerticalAlignment="Center"
+                             Foreground="{DynamicResource MaterialDesignBodyLight}"
+                             Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Inverse}"/>
+                </Grid>
+            </Border>
+        </Grid>
+        
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}" />
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="GraphOutline" 
+                                           VerticalAlignment="Center" 
+                                           Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding NodeCount, StringFormat='Nodes: {0}'}" />
+                </StackPanel>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="VectorLine" 
+                                           VerticalAlignment="Center" 
+                                           Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding EdgeCount, StringFormat='Connections: {0}'}" />
+                </StackPanel>
+            </StatusBarItem>
+            <Separator />
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock Text="{Binding LastSaved, StringFormat='Last saved: {0:HH:mm:ss}'}" />
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

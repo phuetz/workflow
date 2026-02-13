@@ -1,217 +1,201 @@
-# Contributing to WorkflowBuilder Pro
+# Contributing to Workflow Automation Platform
 
-Thank you for your interest in contributing to WorkflowBuilder Pro! 🎉
+First off, thank you for considering contributing to our workflow automation platform! It's people like you that make this tool such a great solution for the community.
 
 ## Table of Contents
 
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
-- [Development Setup](#development-setup)
-- [How to Contribute](#how-to-contribute)
-- [Coding Guidelines](#coding-guidelines)
-- [Commit Messages](#commit-messages)
+- [Development Workflow](#development-workflow)
+- [How Can I Contribute?](#how-can-i-contribute)
+- [Style Guides](#style-guides)
+- [Testing Requirements](#testing-requirements)
 - [Pull Request Process](#pull-request-process)
-- [Testing](#testing)
-- [Documentation](#documentation)
+- [Community](#community)
 
 ## Code of Conduct
 
-This project follows a Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
 
 ## Getting Started
+
+### Prerequisites
+
+- **Node.js**: >= 20.0.0 (required for Vite 7.0)
+- **npm**: >= 9.0.0
+- **PostgreSQL**: 15+ (for database)
+- **Redis**: 7+ (for caching and queues)
+- **Git**: Latest version
+
+### Initial Setup
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/workflowbuilder-pro.git
-   cd workflowbuilder-pro
+   git clone https://github.com/YOUR-USERNAME/workflow.git
+   cd workflow
    ```
+
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/original-org/workflowbuilder-pro.git
+   git remote add upstream https://github.com/ORIGINAL-OWNER/workflow.git
    ```
 
-## Development Setup
+4. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-### Prerequisites
+5. **Set up environment variables**:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your local configuration
+   ```
 
-- Node.js >= 18.0.0
-- npm >= 9.0.0
-- Supabase account (for database features)
+6. **Set up the database**:
+   ```bash
+   npm run migrate:dev
+   npm run seed
+   ```
 
-### Installation
+7. **Start development servers**:
+   ```bash
+   npm run dev  # Starts both frontend and backend
+   ```
+
+8. **Verify setup**:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000/health
+
+## Development Workflow
+
+### Branch Naming Convention
+
+- **Feature**: `feature/description-of-feature`
+- **Bug Fix**: `fix/description-of-bug`
+- **Documentation**: `docs/description-of-change`
+- **Performance**: `perf/description-of-improvement`
+- **Refactor**: `refactor/description-of-change`
+- **Tests**: `test/description-of-tests`
+
+### Creating a Branch
 
 ```bash
-# Install dependencies
-npm install
-
-# Copy environment variables
-cp .env.example .env
-
-# Edit .env with your Supabase credentials
-
-# Run migrations
-npm run db:migrate
-
-# Start development server
-npm run dev
+git checkout main
+git pull upstream main
+git checkout -b feature/your-feature-name
 ```
 
-The app will be available at `http://localhost:5173`
-
-### Available Commands
+### Keeping Your Fork Updated
 
 ```bash
-npm run dev          # Start dev server
-npm run build        # Build for production
-npm run preview      # Preview production build
-npm run test         # Run unit tests
-npm run test:watch   # Run tests in watch mode
-npm run test:e2e     # Run E2E tests
-npm run lint         # Lint code
-npm run format       # Format code with Prettier
-npm run typecheck    # TypeScript type checking
+git fetch upstream
+git checkout main
+git merge upstream/main
+git push origin main
 ```
 
-## How to Contribute
+## How Can I Contribute?
 
 ### Reporting Bugs
 
-1. Check if the bug has already been reported in [Issues](https://github.com/org/workflowbuilder-pro/issues)
-2. If not, create a new issue with:
-   - Clear title and description
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Screenshots if applicable
-   - Environment details (OS, browser, Node version)
+Before creating bug reports, please check the [existing issues](https://github.com/OWNER/workflow/issues) to avoid duplicates.
 
-### Suggesting Features
+**When submitting a bug report, include**:
+- **Clear descriptive title**
+- **Exact steps to reproduce** the problem
+- **Expected behavior** vs **actual behavior**
+- **Screenshots** if applicable
+- **Environment details** (OS, Node version, browser)
+- **Error messages and stack traces**
+- **Relevant workflow configuration** (if applicable)
 
-1. Check [existing feature requests](https://github.com/org/workflowbuilder-pro/issues?q=is%3Aissue+is%3Aopen+label%3Aenhancement)
-2. Create a new issue with:
-   - Clear description of the feature
-   - Use cases and benefits
-   - Possible implementation approach
-   - Any relevant examples or mockups
+**Template**:
+```markdown
+## Description
+[Clear description of the bug]
 
-### Pull Requests
+## Steps to Reproduce
+1. Go to '...'
+2. Click on '...'
+3. Scroll down to '...'
+4. See error
 
-1. **Create a branch** from `main`:
+## Expected Behavior
+[What you expected to happen]
+
+## Actual Behavior
+[What actually happened]
+
+## Environment
+- OS: [e.g., Ubuntu 22.04]
+- Node.js: [e.g., 20.10.0]
+- Browser: [e.g., Chrome 120]
+- Version: [e.g., 1.0.0]
+
+## Additional Context
+[Screenshots, logs, workflow JSON, etc.]
+```
+
+### Suggesting Enhancements
+
+Enhancement suggestions are tracked as GitHub issues.
+
+**When suggesting an enhancement, include**:
+- **Clear use case**: Why is this needed?
+- **Proposed solution**: How should it work?
+- **Alternatives considered**: What other approaches did you think about?
+- **Additional context**: Screenshots, mockups, or examples
+
+### Adding New Node Types
+
+We love new integrations! Here's how to add a node:
+
+1. **Use the Node Builder CLI**:
    ```bash
-   git checkout -b feature/your-feature-name
-   # or
-   git checkout -b fix/your-bug-fix
+   npx create-workflow-node my-integration
    ```
 
-2. **Make your changes** following our [coding guidelines](#coding-guidelines)
+2. **Follow the generated structure**:
+   - Node definition in `src/data/nodeTypes.ts`
+   - Configuration component in `src/workflow/nodes/config/MyNodeConfig.tsx`
+   - Execution logic in node config or `ExecutionEngine.ts`
+   - Unit tests in `src/__tests__/`
 
-3. **Write tests** for your changes
+3. **Required elements**:
+   - Input/output schema definition
+   - Configuration UI component
+   - Execution logic with error handling
+   - Authentication/credentials (if needed)
+   - Comprehensive tests (unit + integration)
+   - Documentation with examples
 
-4. **Update documentation** if needed
+4. **See existing nodes for examples**:
+   - Simple: `src/workflow/nodes/config/DelayConfig.tsx`
+   - API integration: `src/workflow/nodes/config/HttpRequestConfig.tsx`
+   - Database: `src/workflow/nodes/config/PostgreSQLConfig.tsx`
+   - Trigger: `src/workflow/nodes/config/ScheduleConfig.tsx`
 
-5. **Commit your changes** using [conventional commits](#commit-messages)
+### Contributing to Documentation
 
-6. **Push to your fork**:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
+Documentation improvements are always welcome!
 
-7. **Create a Pull Request** on GitHub
+- **Fix typos/errors**: Small fixes can be PRs directly
+- **New guides**: Discuss in an issue first
+- **API docs**: Update alongside code changes
+- **Examples**: Real-world workflow examples appreciated
 
-## Coding Guidelines
+**Documentation locations**:
+- User guides: `/docs/guides/`
+- API reference: `/docs/api/`
+- Architecture: `CLAUDE.md`
+- Changelog: `CHANGELOG.md`
 
-### TypeScript
+## Style Guides
 
-- Use TypeScript for all new code
-- Avoid `any` type - use proper typing
-- Use interfaces for object shapes
-- Export types that might be reused
+### Git Commit Messages
 
-```typescript
-// Good
-interface User {
-  id: string;
-  email: string;
-  role: 'admin' | 'user';
-}
-
-function getUser(id: string): Promise<User> {
-  // ...
-}
-
-// Bad
-function getUser(id: any): Promise<any> {
-  // ...
-}
-```
-
-### React Components
-
-- Use functional components with hooks
-- Keep components focused and single-purpose
-- Extract reusable logic into custom hooks
-- Use proper prop types
-
-```tsx
-// Good
-interface ButtonProps {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}
-
-export function Button({ label, onClick, disabled = false }: ButtonProps) {
-  return (
-    <button onClick={onClick} disabled={disabled}>
-      {label}
-    </button>
-  );
-}
-
-// Bad
-export function Button(props: any) {
-  return <button onClick={props.onClick}>{props.label}</button>;
-}
-```
-
-### File Organization
-
-```
-src/
-├── components/       # React components
-├── hooks/           # Custom React hooks
-├── utils/           # Utility functions
-├── types/           # TypeScript types
-├── store/           # State management (Zustand)
-├── backend/         # Backend services
-│   ├── auth/        # Authentication
-│   ├── database/    # Database services
-│   └── security/    # Security utilities
-└── tests/           # Test files
-```
-
-### Naming Conventions
-
-- **Components**: PascalCase (`Button.tsx`, `WorkflowEditor.tsx`)
-- **Hooks**: camelCase with `use` prefix (`useAuth.ts`, `useWorkflow.ts`)
-- **Utils**: camelCase (`formatDate.ts`, `validateEmail.ts`)
-- **Types**: PascalCase (`User.ts`, `Workflow.ts`)
-- **Constants**: UPPER_SNAKE_CASE (`API_URL`, `MAX_RETRIES`)
-
-### Code Style
-
-We use Prettier for code formatting. Run `npm run format` before committing.
-
-Key points:
-- 2 spaces for indentation
-- Single quotes for strings
-- Semicolons required
-- 100 character line length
-- Trailing commas in ES5
-
-## Commit Messages
-
-We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>(<scope>): <subject>
@@ -221,143 +205,387 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 <footer>
 ```
 
-### Types
-
+**Types**:
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
+- `style`: Code style changes (formatting, no logic change)
 - `refactor`: Code refactoring
 - `perf`: Performance improvements
 - `test`: Adding or updating tests
-- `chore`: Build process or auxiliary tool changes
+- `chore`: Maintenance tasks
+- `ci`: CI/CD changes
 
-### Examples
-
+**Examples**:
 ```
-feat(auth): add OAuth2 support for GitHub
+feat(nodes): add Salesforce integration
 
-Implement GitHub OAuth2 authentication flow with proper
-error handling and token refresh.
+Implement complete Salesforce CRUD operations with OAuth2
+authentication and query builder.
 
 Closes #123
 ```
 
 ```
-fix(workflow): resolve execution race condition
+fix(execution): prevent memory leak in long-running workflows
 
-Fix race condition when multiple nodes complete simultaneously.
-Added proper locking mechanism.
+Added proper cleanup of event listeners and disposed resources
+after workflow completion.
 
 Fixes #456
 ```
 
-```
-docs(readme): update installation instructions
+### TypeScript Code Style
 
-Add Supabase setup steps and clarify environment variables.
-```
+We use **ESLint** and **Prettier** for consistent code formatting.
 
-## Pull Request Process
-
-1. **Update the README** if you've added features or changed behavior
-2. **Add tests** for your changes
-3. **Ensure all tests pass**: `npm run test`
-4. **Run linting**: `npm run lint`
-5. **Run type checking**: `npm run typecheck`
-6. **Update CHANGELOG.md** with your changes
-7. **Request review** from maintainers
-
-### PR Checklist
-
-- [ ] Code follows project style guidelines
-- [ ] Self-review completed
-- [ ] Comments added for complex code
-- [ ] Documentation updated
-- [ ] Tests added and passing
-- [ ] No console errors or warnings
-- [ ] Tested in multiple browsers
-- [ ] Mobile responsive (if UI changes)
-- [ ] Accessibility considered (WCAG 2.1)
-
-## Testing
-
-### Unit Tests
-
+**Before committing**:
 ```bash
-# Run all tests
-npm run test
-
-# Watch mode
-npm run test:watch
-
-# Coverage
-npm run test:coverage
+npm run lint        # Check for issues
+npm run lint:fix    # Auto-fix issues
+npm run format      # Format with Prettier
+npm run typecheck   # Verify types
 ```
 
-Write tests for:
-- All new features
-- Bug fixes
-- Utility functions
-- Complex logic
+**Key conventions**:
+- **Indentation**: 2 spaces
+- **Quotes**: Single quotes for strings
+- **Semicolons**: Always use semicolons
+- **Line length**: Max 100 characters
+- **Naming**:
+  - `camelCase` for variables and functions
+  - `PascalCase` for classes and types
+  - `UPPER_SNAKE_CASE` for constants
+  - Prefix interfaces with `I` when needed (e.g., `IWorkflowNode`)
 
-### E2E Tests
+**TypeScript specific**:
+- Always define types explicitly (avoid `any`)
+- Use strict mode (`strict: true` in tsconfig.json)
+- Prefer interfaces over type aliases for object shapes
+- Use generics for reusable components
 
-```bash
-# Run E2E tests
-npm run test:e2e
-
-# Run in UI mode
-npx playwright test --ui
-```
-
-Test critical user flows:
-- Workflow creation
-- Node configuration
-- Execution
-- Authentication
-
-## Documentation
-
-### Code Documentation
-
-- Add JSDoc comments for public APIs
-- Explain complex algorithms
-- Document edge cases
-
+**Example**:
 ```typescript
-/**
- * Executes a workflow with the given configuration
- * @param workflow - The workflow to execute
- * @param options - Execution options
- * @returns Promise resolving to execution results
- * @throws {ExecutionError} If workflow execution fails
- */
-async function executeWorkflow(
-  workflow: Workflow,
-  options: ExecutionOptions
-): Promise<ExecutionResult> {
-  // ...
+// Good
+interface INodeConfig {
+  id: string;
+  type: string;
+  config: Record<string, unknown>;
+}
+
+async function executeNode(config: INodeConfig): Promise<NodeOutput> {
+  const result = await processNode(config);
+  return result;
+}
+
+// Avoid
+function executeNode(config: any) {
+  const result = processNode(config);
+  return result;
 }
 ```
 
-### README Updates
+### React Component Style
 
-Update README.md when:
-- Adding new features
-- Changing installation steps
-- Modifying configuration
-- Adding dependencies
+**Functional components with TypeScript**:
+```typescript
+import React, { useState, useEffect } from 'react';
 
-## Need Help?
+interface MyComponentProps {
+  title: string;
+  onSubmit: (data: FormData) => void;
+  children?: React.ReactNode;
+}
 
-- 📖 Read the [documentation](./README.md)
-- 💬 Join our [Discord community](https://discord.gg/workflow)
-- 🐛 Check [existing issues](https://github.com/org/workflowbuilder-pro/issues)
-- 📧 Email: support@workflowbuilder.app
+export const MyComponent: React.FC<MyComponentProps> = ({
+  title,
+  onSubmit,
+  children
+}) => {
+  const [state, setState] = useState<string>('');
 
-## License
+  useEffect(() => {
+    // Effect logic
+  }, []);
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+  return (
+    <div className="my-component">
+      <h1>{title}</h1>
+      {children}
+    </div>
+  );
+};
+```
 
-Thank you for contributing to WorkflowBuilder Pro! 🚀
+**Component file structure**:
+1. Imports (external, then internal)
+2. Type/Interface definitions
+3. Component definition
+4. Styled components (if any)
+5. Export
+
+### CSS/Tailwind Style
+
+- Use **Tailwind CSS** utility classes
+- Custom styles in `src/styles/` when needed
+- Follow design system in `src/styles/design-system.css`
+- Responsive design: mobile-first approach
+- Dark mode support via CSS variables
+
+## Testing Requirements
+
+All contributions **must include tests**. We maintain high test coverage (>80%).
+
+### Running Tests
+
+```bash
+npm run test                # Run all tests (watch mode)
+npm run test:coverage       # Generate coverage report
+npm run test:integration    # Run integration tests
+npm run test:e2e            # Run E2E tests with Playwright
+npm run test:ui             # Open Vitest UI
+```
+
+### Test Types
+
+1. **Unit Tests** (Vitest):
+   - Test individual functions and components
+   - Location: `src/__tests__/` or alongside source files
+   - File naming: `*.test.ts` or `*.test.tsx`
+
+   ```typescript
+   import { describe, it, expect } from 'vitest';
+   import { myFunction } from './myFunction';
+
+   describe('myFunction', () => {
+     it('should return expected result', () => {
+       const result = myFunction('input');
+       expect(result).toBe('expected');
+     });
+   });
+   ```
+
+2. **Integration Tests** (Vitest):
+   - Test component interactions and API endpoints
+   - Location: `src/__tests__/`
+   - File naming: `*.integration.test.ts`
+
+3. **E2E Tests** (Playwright):
+   - Test complete user workflows
+   - Location: `src/__tests__/`
+   - File naming: `*.e2e.test.ts`
+
+### Test Coverage Requirements
+
+- **Minimum coverage**: 80% overall
+- **New features**: 90%+ coverage required
+- **Bug fixes**: Add regression tests
+- **Critical paths**: 100% coverage (authentication, execution engine, data storage)
+
+### Writing Good Tests
+
+**Do**:
+- Test behavior, not implementation
+- Use descriptive test names
+- One assertion per test when possible
+- Test edge cases and error conditions
+- Mock external dependencies
+- Clean up resources (timers, listeners, etc.)
+
+**Don't**:
+- Test private methods directly
+- Use brittle selectors in E2E tests
+- Share state between tests
+- Test framework internals
+- Skip flaky tests (fix them instead)
+
+## Pull Request Process
+
+### Before Submitting
+
+**Checklist**:
+- [ ] Code follows style guidelines
+- [ ] Tests added/updated and passing
+- [ ] TypeScript compilation successful
+- [ ] Documentation updated (if needed)
+- [ ] Commit messages follow convention
+- [ ] No console.log() or debug code
+- [ ] Changes work on multiple browsers
+- [ ] Responsive design verified
+
+**Run these commands**:
+```bash
+npm run typecheck       # Check TypeScript
+npm run lint            # Check linting
+npm run test:coverage   # Run tests
+npm run build           # Test production build
+```
+
+### Creating the Pull Request
+
+1. **Push your branch**:
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+2. **Create PR on GitHub** with:
+   - **Clear title**: Following commit message convention
+   - **Description**: What changes and why
+   - **Screenshots**: For UI changes
+   - **Testing**: How to test the changes
+   - **Related issues**: `Closes #123` or `Fixes #456`
+
+**PR Template**:
+```markdown
+## Description
+[Clear description of changes]
+
+## Type of Change
+- [ ] Bug fix (non-breaking change which fixes an issue)
+- [ ] New feature (non-breaking change which adds functionality)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Documentation update
+
+## How Has This Been Tested?
+[Describe the tests you ran]
+
+## Screenshots (if applicable)
+[Add screenshots]
+
+## Checklist
+- [ ] My code follows the style guidelines
+- [ ] I have performed a self-review
+- [ ] I have commented my code, particularly in hard-to-understand areas
+- [ ] I have made corresponding changes to the documentation
+- [ ] My changes generate no new warnings
+- [ ] I have added tests that prove my fix is effective or that my feature works
+- [ ] New and existing unit tests pass locally with my changes
+- [ ] Any dependent changes have been merged and published
+
+## Related Issues
+Closes #[issue number]
+```
+
+### Review Process
+
+1. **Automated checks**: CI/CD pipeline runs tests and linting
+2. **Code review**: At least one maintainer reviews
+3. **Feedback**: Address review comments
+4. **Approval**: Once approved, maintainers will merge
+
+**Review timeline**:
+- Initial review: Within 2-3 business days
+- Follow-up reviews: Within 1-2 business days
+- Complex PRs may take longer
+
+### After Merge
+
+- Delete your feature branch
+- Update your local main branch
+- Close related issues (if not auto-closed)
+
+## Community
+
+### Communication Channels
+
+- **GitHub Issues**: Bug reports and feature requests
+- **GitHub Discussions**: Questions and general discussion
+- **Pull Requests**: Code contributions
+- **Email**: security@example.com (for security issues only)
+
+### Getting Help
+
+See [SUPPORT.md](SUPPORT.md) for:
+- Documentation resources
+- FAQ
+- Community support options
+- Commercial support
+
+### Recognition
+
+Contributors are recognized in:
+- [Contributors page](https://github.com/OWNER/workflow/graphs/contributors)
+- Release notes (for significant contributions)
+- Special mentions in the README
+
+## Development Tips
+
+### Useful Commands
+
+```bash
+# Development
+npm run dev              # Start dev servers
+npm run dev:frontend     # Frontend only
+npm run dev:backend      # Backend only
+
+# Database
+npm run migrate:dev      # Create and apply migration
+npm run studio           # Open Prisma Studio
+npm run seed             # Seed database
+
+# Quality
+npm run lint             # Check linting
+npm run lint:fix         # Fix linting issues
+npm run format           # Format code
+npm run typecheck        # Check types
+
+# Testing
+npm run test             # Run tests
+npm run test:ui          # Visual test UI
+npm run test:coverage    # Coverage report
+npm run test:e2e         # E2E tests
+
+# Build
+npm run build            # Production build
+npm run preview          # Preview build
+```
+
+### Debugging
+
+**Frontend**:
+- React DevTools browser extension
+- Redux DevTools for state inspection
+- Vite's HMR for instant updates
+- Browser developer tools
+
+**Backend**:
+- VS Code debugger configuration provided
+- Node.js inspector: `node --inspect`
+- Detailed logging with structured logger
+- Prisma Studio for database inspection
+
+**Workflow Execution**:
+- Built-in debugger with breakpoints
+- Data pinning for testing nodes
+- Execution viewer with step-by-step playback
+- Performance profiler
+
+### Performance Considerations
+
+- Use React.memo for expensive components
+- Implement proper code splitting
+- Optimize database queries (use Prisma efficiently)
+- Monitor bundle size (aim for <500KB initial)
+- Use virtualization for long lists (react-window)
+- Lazy load heavy components
+- Optimize images and assets
+
+### Security Considerations
+
+- Never commit secrets or credentials
+- Validate all user inputs
+- Sanitize data before rendering
+- Use parameterized queries (Prisma handles this)
+- Implement CSRF protection
+- Follow OWASP guidelines
+- See [SECURITY.md](SECURITY.md) for more details
+
+## Questions?
+
+Don't hesitate to ask! We're here to help:
+- Open a [GitHub Discussion](https://github.com/OWNER/workflow/discussions)
+- Check [SUPPORT.md](SUPPORT.md) for resources
+- Read the [documentation](./docs/)
+- Look at existing [issues](https://github.com/OWNER/workflow/issues)
+
+Thank you for contributing! 🎉

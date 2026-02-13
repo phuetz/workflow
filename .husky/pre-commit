@@ -1,0 +1,20 @@
+#!/bin/sh
+# Husky pre-commit hook
+# Lance les tests rapides avant chaque commit
+
+echo ""
+echo "🔍 Pre-commit: Validation rapide du code..."
+echo ""
+
+# 1. TypeScript type checking
+echo "📝 TypeScript type checking..."
+npm run typecheck || exit 1
+
+# 2. Quick tests (backend + frontend + typescript)
+echo ""
+echo "⚡ Tests rapides..."
+npm run test:quick || exit 1
+
+echo ""
+echo "✅ Pre-commit validation réussie!"
+echo ""

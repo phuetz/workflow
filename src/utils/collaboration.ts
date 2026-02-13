@@ -3,7 +3,7 @@
  * Real-time collaboration features for workflows
  */
 
-import type { Node, Edge } from 'reactflow';
+import type { Node, Edge } from '@xyflow/react';
 
 export enum CollaboratorRole {
   OWNER = 'owner',

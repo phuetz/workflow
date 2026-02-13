@@ -1,54 +1,80 @@
 /**
- * useMediaQuery Hook
- * Tracks media query matches
+ * Media Query Hook
+ *
+ * A responsive design hook that detects screen sizes and breakpoints.
+ * Provides utility hooks for common breakpoints.
  */
 
 import { useState, useEffect } from 'react';
 
+// Tailwind CSS default breakpoints
+const breakpoints = {
+  sm: '640px',
+  md: '768px',
+  lg: '1024px',
+  xl: '1280px',
+  '2xl': '1536px',
+} as const;
+
+type Breakpoint = keyof typeof breakpoints;
+
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia(query).matches;
-    }
-    return false;
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(query).matches;
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
     const mediaQuery = window.matchMedia(query);
-    const handler = (event: MediaQueryListEvent) => setMatches(event.matches);
-
-    // Initial check
+    const handleChange = (event: MediaQueryListEvent) => setMatches(event.matches);
     setMatches(mediaQuery.matches);
-
-    // Listen for changes
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handler);
-      return () => mediaQuery.removeEventListener('change', handler);
-    } else {
-      // Fallback for older browsers
-      mediaQuery.addListener(handler);
-      return () => mediaQuery.removeListener(handler);
-    }
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, [query]);
 
   return matches;
 }
 
-// Predefined breakpoint hooks
-export function useIsMobile(): boolean {
-  return useMediaQuery('(max-width: 768px)');
+export function useBreakpoint(breakpoint: Breakpoint): boolean {
+  return useMediaQuery(\`(min-width: \${breakpoints[breakpoint]})\`);
 }
 
-export function useIsTablet(): boolean {
-  return useMediaQuery('(min-width: 769px) and (max-width: 1024px)');
+export function useBreakpointDown(breakpoint: Breakpoint): boolean {
+  return useMediaQuery(\`(max-width: \${breakpoints[breakpoint]})\`);
 }
 
-export function useIsDesktop(): boolean {
-  return useMediaQuery('(min-width: 1025px)');
+export function useBreakpointBetween(min: Breakpoint, max: Breakpoint): boolean {
+  return useMediaQuery(\`(min-width: \${breakpoints[min]}) and (max-width: \${breakpoints[max]})\`);
 }
 
-export function useIsDarkMode(): boolean {
-  return useMediaQuery('(prefers-color-scheme: dark)');
+export function useIsMobile(): boolean { return useBreakpointDown('md'); }
+export function useIsTablet(): boolean { return useBreakpointBetween('md', 'lg'); }
+export function useIsDesktop(): boolean { return useBreakpoint('lg'); }
+export function useIsLargeDesktop(): boolean { return useBreakpoint('xl'); }
+
+export function useCurrentBreakpoint(): Breakpoint | 'xs' {
+  const is2xl = useBreakpoint('2xl');
+  const isXl = useBreakpoint('xl');
+  const isLg = useBreakpoint('lg');
+  const isMd = useBreakpoint('md');
+  const isSm = useBreakpoint('sm');
+  if (is2xl) return '2xl';
+  if (isXl) return 'xl';
+  if (isLg) return 'lg';
+  if (isMd) return 'md';
+  if (isSm) return 'sm';
+  return 'xs';
+}
+
+export function usePrefersReducedMotion(): boolean {
+  return useMediaQuery('(prefers-reduced-motion: reduce)');
+}
+
+export function usePrefersColorScheme(): 'light' | 'dark' {
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
+  return prefersDark ? 'dark' : 'light';
+}
+
+export function usePrefersHighContrast(): boolean {
+  return useMediaQuery('(prefers-contrast: high)');
 }
