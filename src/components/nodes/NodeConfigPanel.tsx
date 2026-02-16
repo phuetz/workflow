@@ -143,16 +143,7 @@ const NodeConfigPanel = memo(function NodeConfigPanel({ onClose }: { onClose?: (
   } = useWorkflowStore();
   const [activeTab, setActiveTab] = useState('config');
 
-  if (!selectedNode) return null;
-
-  // Extract type and config from selectedNode
-  const type = selectedNode.data?.type || '';
-  const config = selectedNode.data?.config || {};
-
-  // Get the configuration definition for this node type
-  const configDefinition = hasNodeConfig(type) ? getNodeConfig(type) : null;
-
-  // Update node config helper
+  // Update node config helper - must be before early return to respect hook rules
   const updateNodeConfig = useCallback((field: string, value: unknown) => {
     if (!selectedNode) return;
     updateNode(selectedNode.id, {
@@ -166,6 +157,15 @@ const NodeConfigPanel = memo(function NodeConfigPanel({ onClose }: { onClose?: (
   const handleConfigChange = useCallback((field: string, value: unknown) => {
     updateNodeConfig(field, value);
   }, [updateNodeConfig]);
+
+  if (!selectedNode) return null;
+
+  // Extract type and config from selectedNode
+  const type = selectedNode.data?.type || '';
+  const config = selectedNode.data?.config || {};
+
+  // Get the configuration definition for this node type
+  const configDefinition = hasNodeConfig(type) ? getNodeConfig(type) : null;
 
   // Get the node type info from nodeTypes
   const nodeType = nodeTypes[type] || { color: 'bg-gray-500', label: type, description: '' };

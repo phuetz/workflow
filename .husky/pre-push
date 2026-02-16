@@ -17,10 +17,10 @@ npm run lint || {
     echo "⚠️  Warnings ESLint détectés (non-bloquant)"
 }
 
-# 3. Smoke tests complets
+# 3. Unit tests
 echo ""
-echo "🔥 Smoke tests..."
-npm run test:smoke || exit 1
+echo "🧪 Unit tests..."
+npm run test -- --run || exit 1
 
 # 4. Build test
 echo ""
