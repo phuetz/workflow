@@ -90,6 +90,7 @@ import secretRemediationRoutes from './routes/secret-remediation';
 import monitoringRoutes from './routes/monitoring';
 import versionsRoutes from './routes/versions';
 import approvalsRoutes from './routes/approvals';
+import schedulesRoutes from './routes/schedules';
 import { startScheduler } from './services/scheduler';
 import { startWorker } from './services/queue';
 import { setupSockets } from './services/events';
@@ -451,6 +452,7 @@ export function createApp(): Application {
   app.use('/api/monitoring', monitoringRoutes);
   app.use('/api/versions', versionsRoutes);
   app.use('/api/approvals', approvalsRoutes);
+  app.use('/api/schedules', schedulesRoutes);
 
   // API Routes - v1 versioned paths (explicit v1 prefix)
   app.use('/api/v1/workflows', workflowRoutes);
@@ -568,6 +570,11 @@ export function startServer(app: Application, port: number | string = 3000): voi
     logger.info(`🔷 Swagger UI: http://localhost:${port}/api/docs/swagger`);
     logger.info(`📕 ReDoc: http://localhost:${port}/api/docs/redoc`);
 
+    // Start scheduler for cron/interval workflow triggers
+    import('../../backend/services/SchedulerService').then(({ schedulerService }) => {
+      schedulerService.start().catch(err => logger.warn('Scheduler start deferred', { error: String(err) }));
+    }).catch(() => {});
+
     // Log configuration warnings
     if (!process.env.JWT_SECRET) {
       logger.warn('⚠️ JWT_SECRET not configured - using random secret (not suitable for production)');
@@ -583,7 +590,12 @@ export function startServer(app: Application, port: number | string = 3000): voi
   // Graceful shutdown
   const gracefulShutdown = () => {
     logger.info('Received shutdown signal, closing server gracefully...');
-    
+
+    // Shutdown scheduler
+    import('../../backend/services/SchedulerService').then(({ schedulerService }) => {
+      schedulerService.shutdown().catch(() => {});
+    }).catch(() => {});
+
     server.close(() => {
       logger.info('Server closed');
       process.exit(0);
