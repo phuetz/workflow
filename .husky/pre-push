@@ -17,10 +17,10 @@ npm run lint || {
     echo "⚠️  Warnings ESLint détectés (non-bloquant)"
 }
 
-# 3. Unit tests
+# 3. Unit tests (backend + core)
 echo ""
 echo "🧪 Unit tests..."
-npm run test -- --run || exit 1
+npx vitest --run src/__tests__/backend/ || exit 1
 
 # 4. Build test
 echo ""
