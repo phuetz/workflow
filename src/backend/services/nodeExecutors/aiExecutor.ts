@@ -1,13 +1,12 @@
 /**
  * AI Node Executor
- * Integrates with AI/ML services for intelligent processing
+ * Real integration with OpenAI, Anthropic, and custom AI endpoints
  */
 
-import { Node } from '@xyflow/react';
-import { NodeExecutor } from './index';
+import { NodeExecutor, NodeExecutionContext, NodeExecutionResult } from './types';
+import axios from 'axios';
 import { logger } from '../../../services/SimpleLogger';
 
-// Helper functions for AI operations
 function processTemplate(template: string, context: Record<string, unknown>): string {
   return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
     const value = getValueFromPath(context, path.trim());
@@ -24,63 +23,86 @@ function getValueFromPath(obj: Record<string, unknown>, path: string): unknown {
   }, obj);
 }
 
-// AI execution methods
 async function executeOpenAI(options: {
   model: string;
-  operation: string;
   prompt: string;
+  systemPrompt?: string;
   temperature: number;
   maxTokens: number;
   apiKey: string;
-}): Promise<unknown> {
-  // In production, use the actual OpenAI SDK
-  logger.info('🤖 Executing OpenAI request:', {
-    model: options.model,
-    promptLength: options.prompt.length
-  });
+}): Promise<any> {
+  const response = await axios.post(
+    'https://api.openai.com/v1/chat/completions',
+    {
+      model: options.model,
+      messages: [
+        ...(options.systemPrompt ? [{ role: 'system', content: options.systemPrompt }] : []),
+        { role: 'user', content: options.prompt },
+      ],
+      temperature: options.temperature,
+      max_tokens: options.maxTokens,
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${options.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 120000,
+    }
+  );
 
-  // Simulate OpenAI response
+  const data = response.data;
   return {
     provider: 'openai',
     model: options.model,
     response: {
-      text: `AI response to: ${options.prompt.substring(0, 50)}...`,
-      usage: {
-        prompt_tokens: Math.floor(options.prompt.length / 4),
-        completion_tokens: 150,
-        total_tokens: Math.floor(options.prompt.length / 4) + 150
-      }
+      text: data.choices?.[0]?.message?.content || '',
+      finishReason: data.choices?.[0]?.finish_reason,
+      usage: data.usage,
     },
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
 async function executeAnthropic(options: {
   model: string;
-  operation: string;
   prompt: string;
+  systemPrompt?: string;
   temperature: number;
   maxTokens: number;
   apiKey: string;
-}): Promise<unknown> {
-  // In production, use the actual Anthropic SDK
-  logger.info('🤖 Executing Anthropic request:', {
-    model: options.model,
-    promptLength: options.prompt.length
-  });
+}): Promise<any> {
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: options.model,
+      max_tokens: options.maxTokens,
+      ...(options.systemPrompt ? { system: options.systemPrompt } : {}),
+      messages: [
+        { role: 'user', content: options.prompt },
+      ],
+      temperature: options.temperature,
+    },
+    {
+      headers: {
+        'x-api-key': options.apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      timeout: 120000,
+    }
+  );
 
-  // Simulate Anthropic response
+  const data = response.data;
   return {
     provider: 'anthropic',
     model: options.model,
     response: {
-      text: `Claude response to: ${options.prompt.substring(0, 50)}...`,
-      usage: {
-        input_tokens: Math.floor(options.prompt.length / 4),
-        output_tokens: 150
-      }
+      text: data.content?.[0]?.text || '',
+      stopReason: data.stop_reason,
+      usage: data.usage,
     },
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
 }
 
@@ -88,110 +110,114 @@ async function executeCustomAI(options: {
   endpoint: string;
   prompt: string;
   apiKey: string;
-}): Promise<unknown> {
-  // Custom AI endpoint integration
-  logger.info('🤖 Executing custom AI request');
+  model?: string;
+}): Promise<any> {
+  const response = await axios.post(
+    options.endpoint,
+    {
+      prompt: options.prompt,
+      model: options.model,
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${options.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 120000,
+    }
+  );
 
   return {
     provider: 'custom',
     endpoint: options.endpoint,
-    response: {
-      text: `Custom AI response`,
-      metadata: {}
-    },
-    timestamp: new Date().toISOString()
+    response: response.data,
+    timestamp: new Date().toISOString(),
   };
 }
 
 export const aiExecutor: NodeExecutor = {
-  async execute(node: Node, context: unknown): Promise<unknown> {
-    // Extract config from node data
-    const config = (node.data?.config || {}) as Record<string, unknown>;
+  async execute(context: NodeExecutionContext): Promise<NodeExecutionResult> {
+    const config = context.config || {};
+    const credentials = context.credentials || {};
 
     const provider = (config.provider || 'openai') as string;
     const model = config.model as string | undefined;
-    const operation = (config.operation || 'completion') as string;
     const prompt = config.prompt as string | undefined;
-    const temperature = (config.temperature || 0.7) as number;
+    const systemPrompt = config.systemPrompt as string | undefined;
+    const temperature = (config.temperature ?? 0.7) as number;
     const maxTokens = (config.maxTokens || 1000) as number;
-    const apiKey = config.apiKey as string | undefined;
     const endpoint = config.endpoint as string | undefined;
 
+    // API key from credentials or config
+    const apiKey = credentials.apiKey || config.apiKey as string | undefined;
+
     if (!apiKey) {
-      throw new Error('API key is required for AI operations');
+      throw new Error('API key is required for AI operations (provide via credentials)');
     }
 
     if (!prompt) {
       throw new Error('Prompt is required');
     }
 
-    try {
-      // Process prompt with context variables
-      const contextRecord = (context || {}) as Record<string, unknown>;
-      const processedPrompt = processTemplate(prompt, contextRecord);
+    const inputContext = (context.input || {}) as Record<string, unknown>;
+    const processedPrompt = processTemplate(prompt, inputContext);
 
-      // Execute AI operation based on provider
+    logger.info('Executing AI request', { provider, model });
+
+    try {
+      let result: any;
+
       switch (provider) {
         case 'openai':
-          return await executeOpenAI({
-            model: model || 'gpt-3.5-turbo',
-            operation,
+          result = await executeOpenAI({
+            model: model || 'gpt-4o-mini',
             prompt: processedPrompt,
+            systemPrompt,
             temperature,
             maxTokens,
-            apiKey
+            apiKey,
           });
+          break;
 
         case 'anthropic':
-          return await executeAnthropic({
-            model: model || 'claude-2',
-            operation,
+          result = await executeAnthropic({
+            model: model || 'claude-sonnet-4-5-20250929',
             prompt: processedPrompt,
+            systemPrompt,
             temperature,
             maxTokens,
-            apiKey
+            apiKey,
           });
+          break;
 
         case 'custom':
           if (!endpoint) {
             throw new Error('Custom endpoint is required for custom provider');
           }
-          return await executeCustomAI({
+          result = await executeCustomAI({
             endpoint,
             prompt: processedPrompt,
-            apiKey
+            apiKey,
+            model,
           });
+          break;
 
         default:
           throw new Error(`Unknown AI provider: ${provider}`);
       }
 
+      return {
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+      };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      throw new Error(`AI operation failed: ${errorMessage}`);
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const data = error.response?.data;
+        throw new Error(`AI API error (${status}): ${JSON.stringify(data)}`);
+      }
+      throw error;
     }
   },
-
-  validate(node: Node): string[] {
-    const errors: string[] = [];
-    const config = (node.data?.config || {}) as Record<string, unknown>;
-
-    if (!config.apiKey) {
-      errors.push('API key is required');
-    }
-
-    if (!config.prompt) {
-      errors.push('Prompt is required');
-    }
-
-    if (!config.provider) {
-      errors.push('AI provider is required');
-    }
-
-    if (config.provider === 'custom' && !config.endpoint) {
-      errors.push('Custom endpoint is required for custom provider');
-    }
-
-    return errors;
-  }
 };

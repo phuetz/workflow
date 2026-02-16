@@ -1230,4 +1230,233 @@ router.post('/batch/tag', validateBody(batchTagSchema), async (req: Request, res
   }
 });
 
+// ===== Import/Export (n8n compatible) =====
+
+interface N8nNode {
+  id: string;
+  name: string;
+  type: string;
+  position: [number, number];
+  parameters: Record<string, unknown>;
+  credentials?: Record<string, { id: string; name: string }>;
+  typeVersion?: number;
+}
+
+interface N8nConnectionEntry {
+  node: string;
+  type: string;
+  index: number;
+}
+
+interface N8nWorkflow {
+  name: string;
+  nodes: N8nNode[];
+  connections: Record<string, { main: N8nConnectionEntry[][] }>;
+  settings?: Record<string, unknown>;
+  staticData?: unknown;
+  tags?: Array<{ name: string }>;
+}
+
+function stripN8nPrefix(type: string): string {
+  return type
+    .replace(/^n8n-nodes-base\./, '')
+    .replace(/^@n8n\/n8n-nodes-/, '')
+    .replace(/^n8n-nodes-/, '');
+}
+
+function toN8nType(type: string): string {
+  return `n8n-nodes-base.${type}`;
+}
+
+// POST /api/workflows/import/n8n - Import workflow from n8n JSON format
+router.post('/import/n8n', async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.user?.id || 'system';
+    const n8nData = req.body as N8nWorkflow;
+
+    if (!n8nData || !n8nData.nodes || !n8nData.connections) {
+      return res.status(400).json({
+        error: 'Invalid n8n workflow format',
+        message: 'Request body must contain nodes and connections',
+      });
+    }
+
+    // Convert n8n nodes to internal format
+    const nodes = n8nData.nodes.map((n8nNode) => ({
+      id: n8nNode.id || `node_${Math.random().toString(36).slice(2, 10)}`,
+      type: stripN8nPrefix(n8nNode.type),
+      position: { x: n8nNode.position[0], y: n8nNode.position[1] },
+      data: {
+        label: n8nNode.name,
+        type: stripN8nPrefix(n8nNode.type),
+        ...n8nNode.parameters,
+        ...(n8nNode.credentials ? { credentialId: Object.values(n8nNode.credentials)[0]?.id } : {}),
+      },
+    }));
+
+    // Convert n8n connections to edges
+    const edges: Array<{ id: string; source: string; target: string; sourceHandle: string; targetHandle: string }> = [];
+    for (const [sourceId, connectionMap] of Object.entries(n8nData.connections)) {
+      if (connectionMap.main) {
+        for (let outputIndex = 0; outputIndex < connectionMap.main.length; outputIndex++) {
+          for (const conn of connectionMap.main[outputIndex]) {
+            edges.push({
+              id: `e_${sourceId}_${conn.node}_${outputIndex}_${conn.index}`,
+              source: sourceId,
+              target: conn.node,
+              sourceHandle: outputIndex === 0 ? 'output' : `output_${outputIndex}`,
+              targetHandle: conn.index === 0 ? 'input' : `input_${conn.index}`,
+            });
+          }
+        }
+      }
+    }
+
+    const tags = n8nData.tags?.map((t) => t.name) || [];
+
+    // Create workflow in DB
+    const workflow = await prisma.workflow.create({
+      data: {
+        name: n8nData.name || 'Imported n8n Workflow',
+        description: `Imported from n8n format on ${new Date().toISOString()}`,
+        tags,
+        nodes: nodes as unknown as Prisma.InputJsonValue,
+        edges: edges as unknown as Prisma.InputJsonValue,
+        settings: (n8nData.settings || {}) as Prisma.InputJsonValue,
+        status: WorkflowStatus.DRAFT,
+        userId,
+        variables: {},
+        statistics: {},
+      },
+    });
+
+    logger.info(`Imported n8n workflow as ${workflow.id}`, {
+      name: n8nData.name,
+      nodeCount: nodes.length,
+      edgeCount: edges.length,
+    });
+
+    res.status(201).json({
+      id: workflow.id,
+      name: workflow.name,
+      nodeCount: nodes.length,
+      edgeCount: edges.length,
+      tags,
+      message: 'Workflow imported successfully from n8n format',
+    });
+  } catch (error: unknown) {
+    logger.error('Error importing n8n workflow:', error);
+    res.status(500).json({
+      error: 'Failed to import n8n workflow',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// GET /api/workflows/:id/export/n8n - Export workflow in n8n JSON format
+router.get('/:id/export/n8n', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const workflow = await prisma.workflow.findUnique({ where: { id } });
+    if (!workflow) {
+      return res.status(404).json({ error: 'Workflow not found' });
+    }
+
+    const nodes = (workflow.nodes || []) as unknown as WorkflowNode[];
+    const edges = (workflow.edges || []) as unknown as WorkflowEdge[];
+
+    // Convert to n8n node format
+    const n8nNodes: N8nNode[] = nodes.map((node) => ({
+      id: node.id,
+      name: node.data?.label || node.type || 'Unknown',
+      type: toN8nType(node.type || (node.data?.type as string) || 'noOp'),
+      position: [node.position?.x || 0, node.position?.y || 0] as [number, number],
+      parameters: {
+        ...((node.data || {}) as Record<string, unknown>),
+        label: undefined,
+        type: undefined,
+      },
+      typeVersion: 1,
+    }));
+
+    // Convert edges to n8n connections
+    const connections: Record<string, { main: N8nConnectionEntry[][] }> = {};
+    for (const edge of edges) {
+      if (!connections[edge.source]) {
+        connections[edge.source] = { main: [[]] };
+      }
+      const outputIndex = edge.sourceHandle?.startsWith('output_')
+        ? parseInt(edge.sourceHandle.replace('output_', ''))
+        : 0;
+      const inputIndex = edge.targetHandle?.startsWith('input_')
+        ? parseInt(edge.targetHandle.replace('input_', ''))
+        : 0;
+
+      while (connections[edge.source].main.length <= outputIndex) {
+        connections[edge.source].main.push([]);
+      }
+      connections[edge.source].main[outputIndex].push({
+        node: edge.target,
+        type: 'main',
+        index: inputIndex,
+      });
+    }
+
+    const n8nWorkflow: N8nWorkflow = {
+      name: workflow.name,
+      nodes: n8nNodes,
+      connections,
+      settings: (workflow.settings || {}) as Record<string, unknown>,
+      staticData: null,
+      tags: (workflow.tags || []).map((t: string) => ({ name: t })),
+    };
+
+    res.setHeader('Content-Disposition', `attachment; filename="${workflow.name.replace(/[^a-zA-Z0-9]/g, '_')}.json"`);
+    res.json(n8nWorkflow);
+  } catch (error: unknown) {
+    logger.error('Error exporting n8n workflow:', error);
+    res.status(500).json({
+      error: 'Failed to export workflow',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// POST /api/workflows/:id/export - Export workflow in native format
+router.get('/:id/export', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const workflow = await prisma.workflow.findUnique({ where: { id } });
+    if (!workflow) {
+      return res.status(404).json({ error: 'Workflow not found' });
+    }
+
+    const exported = {
+      format: 'workflow-platform-v1',
+      exportedAt: new Date().toISOString(),
+      workflow: {
+        name: workflow.name,
+        description: workflow.description,
+        tags: workflow.tags,
+        nodes: workflow.nodes,
+        edges: workflow.edges,
+        settings: workflow.settings,
+        variables: workflow.variables,
+      },
+    };
+
+    res.setHeader('Content-Disposition', `attachment; filename="${workflow.name.replace(/[^a-zA-Z0-9]/g, '_')}.json"`);
+    res.json(exported);
+  } catch (error: unknown) {
+    logger.error('Error exporting workflow:', error);
+    res.status(500).json({
+      error: 'Failed to export workflow',
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 export default router;

@@ -1,15 +1,16 @@
 /**
  * Workflow Execution Service
- * Handles real workflow execution with node processing
+ * Handles real workflow execution with node processing and credential resolution
  */
 
-import { Node, Edge } from '@xyflow/react';
 import { Workflow, workflowRepository } from '../database/workflowRepository';
-import { nodeExecutors } from './nodeExecutors';
+import { getNodeExecutor, NodeExecutionContext } from './nodeExecutors';
+import { credentialResolver } from './CredentialResolver';
 import { analyticsService } from './analyticsService';
 import { emailService } from './emailService';
 import { userRepository } from '../database/userRepository';
 import { logger } from '../../services/SimpleLogger';
+import type { BackendNode } from './nodeExecutors/types';
 
 export interface WorkflowExecution {
   id: string;
@@ -55,6 +56,26 @@ export interface ExecutionContext {
   results: Record<string, any>;
 }
 
+/** Backend-native edge (no React dependency) */
+interface BackendEdge {
+  id: string;
+  source: string;
+  target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
+  data?: { condition?: string; [key: string]: unknown };
+}
+
+function getEnvVars(): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith('WORKFLOW_ENV_') && value !== undefined) {
+      env[key.replace('WORKFLOW_ENV_', '')] = value;
+    }
+  }
+  return env;
+}
+
 export class ExecutionService {
   private executions: Map<string, WorkflowExecution> = new Map();
   private activeExecutions: Set<string> = new Set();
@@ -85,7 +106,6 @@ export class ExecutionService {
     this.executions.set(execution.id, execution);
     this.activeExecutions.add(execution.id);
 
-    // Set timeout if configured
     if (workflow.settings.timeout) {
       const timeout = setTimeout(() => {
         this.timeoutExecution(execution.id);
@@ -112,7 +132,6 @@ export class ExecutionService {
       execution.status = 'running';
       this.log(execution, 'info', 'Workflow execution started');
 
-      // Track workflow start
       analyticsService.trackEvent({
         type: 'workflow_start',
         timestamp: new Date(),
@@ -120,14 +139,15 @@ export class ExecutionService {
         userId: execution.executedBy
       });
 
-      // Find start nodes (nodes with no incoming edges)
-      const startNodes = this.findStartNodes(workflow.nodes, workflow.edges);
+      const nodes = workflow.nodes as BackendNode[];
+      const edges = workflow.edges as BackendEdge[];
+
+      const startNodes = this.findStartNodes(nodes, edges);
 
       if (startNodes.length === 0) {
         throw new Error('No start nodes found in workflow');
       }
 
-      // Execute workflow starting from start nodes
       const context: ExecutionContext = {
         input: execution.input,
         variables: {},
@@ -138,7 +158,6 @@ export class ExecutionService {
         await this.executeNode(startNode, workflow, execution, context);
       }
 
-      // Mark execution as successful
       execution.status = 'success';
       execution.output = context.results;
       execution.endTime = new Date();
@@ -146,13 +165,11 @@ export class ExecutionService {
 
       this.log(execution, 'info', 'Workflow execution completed successfully');
 
-      // Update workflow statistics
       await workflowRepository.updateStatistics(workflow.id, {
         success: true,
         duration: execution.duration
       });
 
-      // Send notification if configured
       await this.sendNotification(execution, workflow);
 
     } catch (error) {
@@ -163,18 +180,18 @@ export class ExecutionService {
 
       this.log(execution, 'error', 'Workflow execution failed', { error: execution.error });
 
-      // Update workflow statistics
       await workflowRepository.updateStatistics(workflow.id, {
         success: false,
         duration: execution.duration
       });
 
-      // Handle retry if configured
+      // Trigger error workflow if configured
+      await this.triggerErrorWorkflow(execution, workflow);
+
       if (workflow.settings.retryOnFailure &&
           execution.retryCount < (workflow.settings.maxRetries || 3)) {
         await this.retryExecution(execution, workflow);
       } else {
-        // Send failure notification
         await this.sendNotification(execution, workflow);
       }
     } finally {
@@ -182,21 +199,20 @@ export class ExecutionService {
       this.cleanupExecution(execution.id);
     }
 
-    // Track execution metrics
     await this.trackExecutionMetrics(execution);
   }
 
   /**
-   * Execute a single node
+   * Execute a single node with credential resolution
    */
   private async executeNode(
-    node: Node,
+    node: BackendNode,
     workflow: Workflow,
     execution: WorkflowExecution,
     context: ExecutionContext
   ): Promise<void> {
-    const nodeData = node.data as Record<string, unknown>;
-    const nodeType = nodeData.type as string;
+    const nodeData = node.data;
+    const nodeType = nodeData.type || node.type;
     const nodeResult: NodeExecutionResult = {
       nodeId: node.id,
       nodeType,
@@ -211,33 +227,50 @@ export class ExecutionService {
       this.log(execution, 'debug', `Executing node: ${node.id} (${nodeType})`);
       execution.executionPath.push(node.id);
 
-      // Get node executor
-      const executor = nodeExecutors[nodeType];
-
-      if (!executor) {
-        throw new Error(`No executor found for node type: ${nodeType}`);
+      // Resolve credentials if configured
+      let credentials: Record<string, any> | undefined;
+      const credentialId = nodeData.credentialId || nodeData.config?.credentialId;
+      if (credentialId) {
+        try {
+          credentials = await credentialResolver.resolve(credentialId as string, execution.executedBy);
+        } catch (err) {
+          logger.warn(`Failed to resolve credential ${credentialId} for node ${node.id}`, { error: String(err) });
+        }
       }
 
-      // Execute node
-      const output = await executor.execute(nodeData as any, context);
+      // Build execution context for the executor
+      const execContext: NodeExecutionContext = {
+        nodeId: node.id,
+        workflowId: workflow.id,
+        executionId: execution.id,
+        input: context.results[node.id] || context.input,
+        config: nodeData.config || nodeData,
+        credentials,
+        env: getEnvVars(),
+        previousNodes: context.results,
+      };
+
+      const executor = getNodeExecutor(nodeType);
+      const output = await executor.execute(execContext);
 
       nodeResult.output = output;
       nodeResult.endTime = new Date();
       nodeResult.duration = nodeResult.endTime.getTime() - nodeResult.startTime.getTime();
 
-      // Store result in context
-      context.results[node.id] = output;
+      // Store result in context (unwrap NodeExecutionResult.data for downstream nodes)
+      context.results[node.id] = output.data !== undefined ? output.data : output;
 
-      this.log(execution, 'debug', `Node ${node.id} executed successfully`, { output });
+      this.log(execution, 'debug', `Node ${node.id} executed successfully`);
 
       // Find and execute next nodes
-      const nextEdges = workflow.edges.filter((edge: Edge) => edge.source === node.id);
+      const edges = workflow.edges as BackendEdge[];
+      const nextEdges = edges.filter(edge => edge.source === node.id);
 
       for (const edge of nextEdges) {
-        const nextNode = workflow.nodes.find((n: Node) => n.id === edge.target);
+        const nodes = workflow.nodes as BackendNode[];
+        const nextNode = nodes.find(n => n.id === edge.target);
 
         if (nextNode) {
-          // Check if condition is met (for conditional nodes)
           if (await this.evaluateCondition(edge, context)) {
             await this.executeNode(nextNode, workflow, execution, context);
           }
@@ -251,8 +284,6 @@ export class ExecutionService {
       nodeResult.duration = nodeResult.endTime.getTime() - nodeResult.startTime.getTime();
 
       this.log(execution, 'error', `Node ${node.id} failed`, { error: nodeResult.error });
-
-      // Rethrow error to stop execution
       throw error;
     } finally {
       execution.nodeResults.set(node.id, nodeResult);
@@ -260,39 +291,61 @@ export class ExecutionService {
   }
 
   /**
-   * Find start nodes (nodes with no incoming edges)
+   * Trigger error workflow if configured
    */
-  private findStartNodes(nodes: Node[], edges: Edge[]): Node[] {
+  private async triggerErrorWorkflow(
+    execution: WorkflowExecution,
+    workflow: Workflow
+  ): Promise<void> {
+    const errorWorkflowId = workflow.settings?.errorWorkflow;
+    if (!errorWorkflowId) return;
+
+    try {
+      const errorWorkflow = await workflowRepository.findById(errorWorkflowId);
+      if (!errorWorkflow) {
+        logger.warn(`Error workflow not found: ${errorWorkflowId}`);
+        return;
+      }
+
+      const errorContext = {
+        $error: {
+          message: execution.error,
+          workflowId: execution.workflowId,
+          workflowName: execution.workflowName,
+          executionId: execution.id,
+          failedNodeId: execution.executionPath[execution.executionPath.length - 1],
+          timestamp: new Date().toISOString(),
+        }
+      };
+
+      logger.info('Triggering error workflow', { errorWorkflowId, executionId: execution.id });
+      await this.startExecution(errorWorkflow, errorContext, execution.executedBy);
+    } catch (err) {
+      logger.error('Failed to trigger error workflow', { errorWorkflowId, error: String(err) });
+    }
+  }
+
+  private findStartNodes(nodes: BackendNode[], edges: BackendEdge[]): BackendNode[] {
     const nodesWithIncoming = new Set(edges.map(edge => edge.target));
     return nodes.filter(node => !nodesWithIncoming.has(node.id));
   }
 
-  /**
-   * Evaluate edge condition
-   */
-  private async evaluateCondition(edge: Edge, context: ExecutionContext): Promise<boolean> {
-    // If no condition, always proceed
-    if (!(edge.data as Record<string, unknown>)?.condition) {
-      return true;
-    }
+  private async evaluateCondition(edge: BackendEdge, context: ExecutionContext): Promise<boolean> {
+    if (!edge.data?.condition) return true;
 
     try {
-      // Simple condition evaluation
-      // In production, use a proper expression evaluator
-      const condition = String((edge.data as Record<string, unknown>)?.condition ?? '');
+      const condition = String(edge.data.condition);
 
-      // Handle basic comparisons
       if (condition.includes('===')) {
-        const [left, right] = condition.split('===').map((s: string) => s.trim());
+        const [left, right] = condition.split('===').map(s => s.trim());
         return this.resolveValue(left, context) === this.resolveValue(right, context);
       }
 
       if (condition.includes('!==')) {
-        const [left, right] = condition.split('!==').map((s: string) => s.trim());
+        const [left, right] = condition.split('!==').map(s => s.trim());
         return this.resolveValue(left, context) !== this.resolveValue(right, context);
       }
 
-      // Default to true if we can't evaluate
       return true;
     } catch (error) {
       logger.error('Error evaluating condition:', error);
@@ -300,37 +353,20 @@ export class ExecutionService {
     }
   }
 
-  /**
-   * Resolve value from context
-   */
   private resolveValue(path: string, context: ExecutionContext): any {
-    // Remove quotes if present
-    if (path.startsWith('"') && path.endsWith('"')) {
-      return path.slice(1, -1);
-    }
+    if (path.startsWith('"') && path.endsWith('"')) return path.slice(1, -1);
+    if (!isNaN(Number(path))) return Number(path);
 
-    // Parse numbers
-    if (!isNaN(Number(path))) {
-      return Number(path);
-    }
-
-    // Navigate context path
     const parts = path.split('.');
     let value: any = context;
-
     for (const part of parts) {
       value = value?.[part];
     }
-
     return value;
   }
 
-  /**
-   * Timeout execution
-   */
   private async timeoutExecution(executionId: string): Promise<void> {
     const execution = this.executions.get(executionId);
-
     if (!execution || execution.status !== 'running') return;
 
     execution.status = 'timeout';
@@ -343,49 +379,35 @@ export class ExecutionService {
     this.cleanupExecution(executionId);
   }
 
-  /**
-   * Retry execution
-   */
   private async retryExecution(
     execution: WorkflowExecution,
     workflow: Workflow
   ): Promise<void> {
     execution.retryCount++;
-
     this.log(execution, 'info', `Retrying execution (attempt ${execution.retryCount})`);
 
-    // Wait before retry
     await new Promise(resolve =>
       setTimeout(resolve, workflow.settings.retryDelay || 1000)
     );
 
-    // Reset execution state
     execution.status = 'pending';
     execution.error = undefined;
     execution.nodeResults.clear();
     execution.executionPath = [];
 
-    // Retry execution
     await this.executeWorkflow(execution, workflow);
   }
 
-  /**
-   * Send execution notification
-   */
   private async sendNotification(
     execution: WorkflowExecution,
     workflow: Workflow
   ): Promise<void> {
     try {
       const user = await userRepository.findById(execution.executedBy);
-
       if (!user || !user.emailVerified) return;
 
       await emailService.sendWorkflowNotification(
-        {
-          email: user.email,
-          firstName: user.firstName
-        },
+        { email: user.email, firstName: user.firstName },
         {
           name: workflow.name,
           status: execution.status === 'success' ? 'success' : 'failure',
@@ -398,11 +420,7 @@ export class ExecutionService {
     }
   }
 
-  /**
-   * Track execution metrics
-   */
   private async trackExecutionMetrics(execution: WorkflowExecution): Promise<void> {
-    // Track workflow metrics
     if (execution.status === 'success' || execution.status === 'failure') {
       analyticsService.trackEvent({
         type: execution.status === 'success' ? 'workflow_complete' : 'workflow_error',
@@ -422,7 +440,6 @@ export class ExecutionService {
       });
     }
 
-    // Track node metrics
     const nodeResultsArray = Array.from(execution.nodeResults.entries());
     for (const [nodeId, result] of nodeResultsArray) {
       analyticsService.trackEvent({
@@ -436,59 +453,35 @@ export class ExecutionService {
           type: 'NodeError',
           message: result.error
         } : undefined,
-        metadata: {
-          nodeType: result.nodeType
-        }
+        metadata: { nodeType: result.nodeType }
       });
     }
   }
 
-  /**
-   * Cleanup execution
-   */
   private cleanupExecution(executionId: string): void {
     const timeout = this.executionTimeouts.get(executionId);
-
     if (timeout) {
       clearTimeout(timeout);
       this.executionTimeouts.delete(executionId);
     }
   }
 
-  /**
-   * Log execution event
-   */
   private log(
     execution: WorkflowExecution,
     level: ExecutionLog['level'],
     message: string,
     data?: any
   ): void {
-    execution.logs.push({
-      timestamp: new Date(),
-      level,
-      message,
-      data
-    });
+    execution.logs.push({ timestamp: new Date(), level, message, data });
   }
 
-  /**
-   * Get execution by ID
-   */
   async getExecution(executionId: string): Promise<WorkflowExecution | null> {
     return this.executions.get(executionId) || null;
   }
 
-  /**
-   * Get executions for workflow
-   */
   async getExecutions(
     workflowId: string,
-    options?: {
-      page?: number;
-      limit?: number;
-      status?: string;
-    }
+    options?: { page?: number; limit?: number; status?: string }
   ): Promise<WorkflowExecution[]> {
     let executions = Array.from(this.executions.values())
       .filter(e => e.workflowId === workflowId);
@@ -497,10 +490,8 @@ export class ExecutionService {
       executions = executions.filter(e => e.status === options.status);
     }
 
-    // Sort by start time (newest first)
     executions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime());
 
-    // Apply pagination
     const page = options?.page || 1;
     const limit = options?.limit || 20;
     const start = (page - 1) * limit;
@@ -508,15 +499,9 @@ export class ExecutionService {
     return executions.slice(start, start + limit);
   }
 
-  /**
-   * Cancel execution
-   */
   async cancelExecution(executionId: string): Promise<boolean> {
     const execution = this.executions.get(executionId);
-
-    if (!execution || execution.status !== 'running') {
-      return false;
-    }
+    if (!execution || execution.status !== 'running') return false;
 
     execution.status = 'cancelled';
     execution.endTime = new Date();
@@ -529,9 +514,6 @@ export class ExecutionService {
     return true;
   }
 
-  /**
-   * Get active executions
-   */
   getActiveExecutions(): string[] {
     return Array.from(this.activeExecutions);
   }

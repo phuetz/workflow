@@ -13,6 +13,7 @@ export interface NodeData {
   inputs: number;
   outputs: number;
   config?: Record<string, unknown>;
+  credentialId?: string;
   enabled?: boolean;
   disabled?: boolean;
   /** Per-node timeout in milliseconds. Default is 30000 (30 seconds). */

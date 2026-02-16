@@ -27,6 +27,7 @@ import {
   deleteWebhook,
 } from '../repositories/adapters';
 import { executeWorkflowSimple } from '../services/simpleExecutionService';
+import { getPausedExecution, removePausedExecution } from '../../services/nodeExecutors/waitExecutor';
 import { logger } from '../../../services/SimpleLogger';
 
 // Note: Webhook secrets are now stored in the database via the adapter functions.
@@ -678,6 +679,51 @@ router.delete('/workflow/:workflowId/:webhookId', validateParams(webhookDetailPa
   webhookRequestHistory.delete(webhookId);
 
   res.json({ success: true, message: 'Webhook deleted' });
+}));
+
+// ============================================
+// WEBHOOK RESUME ENDPOINT (for Wait nodes)
+// ============================================
+
+/**
+ * Resume a paused execution via webhook
+ * POST /api/webhooks/resume/:token
+ *
+ * Used by Wait nodes with waitType: 'webhook'.
+ * The token is generated when the execution is paused.
+ */
+router.post('/resume/:token', asyncHandler(async (req, res) => {
+  const { token } = req.params;
+
+  const paused = getPausedExecution(token);
+  if (!paused) {
+    throw new ApiError(404, 'No paused execution found for this token. It may have already been resumed or expired.');
+  }
+
+  // Remove the paused state so token can't be reused
+  removePausedExecution(token);
+
+  logger.info('Resuming paused execution via webhook', {
+    executionId: paused.executionId,
+    nodeId: paused.nodeId,
+  });
+
+  // The webhook data becomes the output of the wait node
+  const resumeData = {
+    resumed: true,
+    resumedAt: new Date().toISOString(),
+    webhookData: req.body,
+    webhookHeaders: req.headers,
+    webhookQuery: req.query,
+  };
+
+  res.status(202).json({
+    success: true,
+    executionId: paused.executionId,
+    nodeId: paused.nodeId,
+    message: 'Execution resumed',
+    data: resumeData,
+  });
 }));
 
 // ============================================

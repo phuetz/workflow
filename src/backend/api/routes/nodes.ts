@@ -72,17 +72,14 @@ router.post('/validate', authHandler, asyncHandler(async (req, res) => {
     throw new ApiError(400, `No executor found for node type: ${nodeType}`);
   }
 
-  const errors = executor.validate ?
-    executor.validate({
-      id: 'test',
-      type: 'custom',
-      position: { x: 0, y: 0 },
-      data: { type: nodeType, config }
-    }) : [];
+  let valid = true;
+  if (executor.validate) {
+    valid = await executor.validate(config);
+  }
 
   res.json({
-    valid: errors.length === 0,
-    errors
+    valid,
+    errors: valid ? [] : ['Validation failed']
   });
 }));
 

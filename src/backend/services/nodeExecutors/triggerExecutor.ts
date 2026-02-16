@@ -3,47 +3,31 @@
  * Base trigger node that starts workflow execution
  */
 
-import { Node } from '@xyflow/react';
-import { NodeExecutor } from './index';
+import { NodeExecutor, NodeExecutionContext, NodeExecutionResult } from './types';
 
 export const triggerExecutor: NodeExecutor = {
-  async execute(node: Node, context: unknown): Promise<Record<string, unknown>> {
-    // Extract config from node data
-    const config = (node.data?.config || {}) as {
-      triggerType?: string;
-      description?: string;
-    };
+  async execute(context: NodeExecutionContext): Promise<NodeExecutionResult> {
+    const config = context.config || {};
 
-    const {
-      triggerType = 'manual',
-      description = 'Workflow triggered'
-    } = config;
+    const triggerType = (config.triggerType || 'manual') as string;
+    const description = (config.description || 'Workflow triggered') as string;
 
-    // Cast context to expected type
-    const ctx = (context || {}) as Record<string, unknown>;
-    const input = ctx.input as Record<string, unknown> | undefined;
-
-    // Trigger nodes primarily pass through their input
-    // and add metadata about the trigger
     return {
-      ...(input || {}),
-      trigger: {
-        type: triggerType,
-        nodeId: node.id,
-        description,
-        timestamp: new Date().toISOString(),
-        metadata: {
-          workflowId: ctx.workflowId,
-          executionId: ctx.executionId,
-          userId: ctx.userId
+      success: true,
+      data: {
+        ...(typeof context.input === 'object' && context.input !== null ? context.input : {}),
+        trigger: {
+          type: triggerType,
+          nodeId: context.nodeId,
+          description,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            workflowId: context.workflowId,
+            executionId: context.executionId,
+          }
         }
-      }
+      },
+      timestamp: new Date().toISOString(),
     };
   },
-
-  validate(): string[] {
-    // Simplified validation without node parameter
-    // Trigger nodes don't require validation
-    return [];
-  }
 };

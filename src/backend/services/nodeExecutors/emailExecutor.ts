@@ -1,34 +1,12 @@
 /**
  * Email Node Executor
- * Sends emails through configured email service
+ * Sends emails via SMTP using nodemailer
  */
 
-import { Node } from '@xyflow/react';
+import { NodeExecutor, NodeExecutionContext, NodeExecutionResult } from './types';
+import nodemailer from 'nodemailer';
 import { logger } from '../../../services/SimpleLogger';
 
-// Email configuration interface
-interface EmailConfig {
-  to?: string | string[];
-  cc?: string | string[];
-  bcc?: string | string[];
-  subject?: string;
-  body?: string;
-  bodyType?: string;
-  attachments?: Array<{ filename: string; content: string }>;
-}
-
-// Email send options interface
-interface EmailSendOptions {
-  to: string[];
-  cc?: string[];
-  bcc?: string[];
-  subject: string;
-  body: string;
-  bodyType: string;
-  attachments: Array<{ filename: string; content: string }>;
-}
-
-// Helper function to get value from nested path
 function getValueFromPath(obj: unknown, path: string): unknown {
   return path.split('.').reduce((current: unknown, key) => {
     const objCurrent = current as Record<string, unknown>;
@@ -36,113 +14,85 @@ function getValueFromPath(obj: unknown, path: string): unknown {
   }, obj);
 }
 
-// Helper function to process template
 function processTemplate(template: string, context: unknown): string {
-  // Replace {{variable}} with values from context
   return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (match, path) => {
     const value = getValueFromPath(context, path);
     return value !== undefined ? String(value) : match;
   });
 }
 
-// Helper function to validate email
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-}
+export const emailExecutor: NodeExecutor = {
+  async execute(context: NodeExecutionContext): Promise<NodeExecutionResult> {
+    const config = context.config || {};
+    const credentials = context.credentials || {};
 
-// Helper function to send email
-async function sendEmail(options: EmailSendOptions): Promise<{ messageId: string; status: string }> {
-  // In production, integrate with actual email service
-  // For now, use the emailService to log
-  logger.info('📧 Sending email:', {
-    to: options.to,
-    subject: options.subject
-  });
+    const to = config.to as string | string[] | undefined;
+    const cc = config.cc as string | string[] | undefined;
+    const bcc = config.bcc as string | string[] | undefined;
+    const subject = config.subject as string | undefined;
+    const body = config.body as string | undefined;
+    const bodyType = (config.bodyType || 'text') as string;
+    const attachments = (config.attachments || []) as Array<{ filename: string; content: string }>;
 
-  // Simulate email sending
-  return {
-    messageId: `msg_${Math.random().toString(36).substring(2, 15)}`,
-    status: 'sent'
-  };
-}
+    if (!to) throw new Error('Recipient email is required');
+    if (!subject) throw new Error('Email subject is required');
+    if (!body) throw new Error('Email body is required');
 
-export const emailExecutor = {
-  async execute(node: Node, context: unknown): Promise<unknown> {
-    // Extract config
-    const config = (node.data?.config || node.data || {}) as EmailConfig;
+    // Process template variables
+    const processedSubject = processTemplate(subject, context.input);
+    const processedBody = processTemplate(body, context.input);
 
-    const {
-      to,
-      cc,
-      bcc,
-      subject,
-      body,
-      bodyType = 'text',
-      attachments = []
-    } = config;
+    // Build SMTP transport from credentials
+    const host = credentials.host || credentials.smtpHost || 'localhost';
+    const port = credentials.port || credentials.smtpPort || 587;
+    const user = credentials.user || credentials.username || credentials.email;
+    const pass = credentials.pass || credentials.password;
+    const secure = credentials.secure !== undefined ? credentials.secure : port === 465;
 
-    if (!to) {
-      throw new Error('Recipient email is required');
-    }
-
-    if (!subject) {
-      throw new Error('Email subject is required');
-    }
-
-    if (!body) {
-      throw new Error('Email body is required');
-    }
+    const transport = nodemailer.createTransport({
+      host,
+      port: Number(port),
+      secure: Boolean(secure),
+      auth: user && pass ? { user, pass } : undefined,
+    });
 
     try {
-      // Process template variables in subject and body
-      const processedSubject = processTemplate(subject, context);
-      const processedBody = processTemplate(body, context);
-
-      // Send email
-      const result = await sendEmail({
-        to: Array.isArray(to) ? to : [to],
-        cc: cc ? (Array.isArray(cc) ? cc : [cc]) : undefined,
-        bcc: bcc ? (Array.isArray(bcc) ? bcc : [bcc]) : undefined,
+      const mailOptions: nodemailer.SendMailOptions = {
+        from: credentials.from || credentials.email || user,
+        to: Array.isArray(to) ? to.join(', ') : to,
+        cc: cc ? (Array.isArray(cc) ? cc.join(', ') : cc) : undefined,
+        bcc: bcc ? (Array.isArray(bcc) ? bcc.join(', ') : bcc) : undefined,
         subject: processedSubject,
-        body: processedBody,
-        bodyType,
-        attachments
+        attachments: attachments.map(a => ({
+          filename: a.filename,
+          content: a.content,
+        })),
+      };
+
+      if (bodyType === 'html') {
+        mailOptions.html = processedBody;
+      } else {
+        mailOptions.text = processedBody;
+      }
+
+      const info = await transport.sendMail(mailOptions);
+
+      logger.info('Email sent', {
+        messageId: info.messageId,
+        to: mailOptions.to,
       });
 
       return {
         success: true,
-        messageId: result.messageId,
-        timestamp: new Date().toISOString()
+        data: {
+          messageId: info.messageId,
+          accepted: info.accepted,
+          rejected: info.rejected,
+        },
+        timestamp: new Date().toISOString(),
       };
-
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to send email: ${errorMessage}`);
+    } finally {
+      transport.close();
     }
   },
-
-  validate(node: Node): string[] {
-    const errors: string[] = [];
-    const config = (node.data?.config || node.data || {}) as EmailConfig;
-
-    if (!config.to) {
-      errors.push('Recipient email is required');
-    } else {
-      const emailToValidate = Array.isArray(config.to) ? config.to[0] : config.to;
-      if (emailToValidate && !isValidEmail(emailToValidate)) {
-        errors.push('Invalid recipient email format');
-      }
-    }
-
-    if (!config.subject) {
-      errors.push('Email subject is required');
-    }
-
-    if (!config.body) {
-      errors.push('Email body is required');
-    }
-
-    return errors;
-  }
 };
