@@ -497,25 +497,28 @@ async function installPlugin(pluginId: string, userId: string): Promise<{
   // Update download count
   plugin.downloads += 1;
 
-  // Try to persist to database
+  // Persist to database
   try {
-    // Note: pluginInstallation table may not exist in all environments
-    // This is a best-effort persistence attempt
-    const prismaAny = prisma as unknown as Record<string, unknown>;
-    if (typeof prismaAny.pluginInstallation === 'object' && prismaAny.pluginInstallation !== null) {
-      await (prismaAny.pluginInstallation as { create: (args: unknown) => Promise<unknown> }).create({
-        data: {
-          pluginId,
-          userId,
-          version: plugin.version,
-          enabled: true,
-          config: {},
-          installedAt: new Date()
-        }
-      });
-    }
+    await (prisma as any).pluginInstallation?.upsert?.({
+      where: { pluginId_userId: { pluginId, userId } },
+      create: {
+        pluginId,
+        userId,
+        version: plugin.version,
+        isEnabled: true,
+        settings: {},
+      },
+      update: {
+        version: plugin.version,
+        isEnabled: true,
+      },
+    });
+    // Update download count in DB
+    await (prisma as any).plugin?.update?.({
+      where: { name: pluginId },
+      data: { downloads: { increment: 1 } },
+    }).catch(() => {});
   } catch (error) {
-    // Database table might not exist, continue with in-memory storage
     logger.debug('Plugin installation stored in memory (database table not available)');
   }
 
@@ -540,20 +543,12 @@ async function uninstallPlugin(pluginId: string, userId: string): Promise<{
   // Remove installation
   userPlugins.delete(pluginId);
 
-  // Try to remove from database
+  // Remove from database
   try {
-    // Note: pluginInstallation table may not exist in all environments
-    const prismaAny = prisma as unknown as Record<string, unknown>;
-    if (typeof prismaAny.pluginInstallation === 'object' && prismaAny.pluginInstallation !== null) {
-      await (prismaAny.pluginInstallation as { deleteMany: (args: unknown) => Promise<unknown> }).deleteMany({
-        where: {
-          pluginId,
-          userId
-        }
-      });
-    }
+    await (prisma as any).pluginInstallation?.deleteMany?.({
+      where: { pluginId, userId },
+    });
   } catch (error) {
-    // Database table might not exist, continue with in-memory storage
     logger.debug('Plugin uninstallation processed in memory (database table not available)');
   }
 

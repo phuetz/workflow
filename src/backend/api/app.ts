@@ -87,6 +87,9 @@ import chatRoutes from './routes/chat';
 import reviewsRoutes from './routes/reviews';
 import secretScanningRoutes from './routes/secret-scanning';
 import secretRemediationRoutes from './routes/secret-remediation';
+import monitoringRoutes from './routes/monitoring';
+import versionsRoutes from './routes/versions';
+import approvalsRoutes from './routes/approvals';
 import { startScheduler } from './services/scheduler';
 import { startWorker } from './services/queue';
 import { setupSockets } from './services/events';
@@ -445,6 +448,9 @@ export function createApp(): Application {
   app.use('/api/reviews', reviewsRoutes);
   app.use('/api/security/secret-scanning', secretScanningRoutes);
   app.use('/api/security/remediation', secretRemediationRoutes);
+  app.use('/api/monitoring', monitoringRoutes);
+  app.use('/api/versions', versionsRoutes);
+  app.use('/api/approvals', approvalsRoutes);
 
   // API Routes - v1 versioned paths (explicit v1 prefix)
   app.use('/api/v1/workflows', workflowRoutes);

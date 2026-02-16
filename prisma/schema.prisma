@@ -1026,3 +1026,166 @@ enum FormSubmissionStatus {
   COMPLETED
   FAILED
 }
+
+// ================================
+// ENVIRONMENT ISOLATION
+// ================================
+
+model Environment {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String
+  description String?
+  type        EnvironmentType @default(DEVELOPMENT)
+  color       String   @default("#6366f1")
+  isLocked    Boolean  @default(false)
+  lockedBy    String?
+  lockedAt    DateTime?
+  settings    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+
+  variables   EnvironmentVariable[]
+  promotions  EnvironmentPromotion[] @relation("TargetEnv")
+  sourceProm  EnvironmentPromotion[] @relation("SourceEnv")
+
+  @@index([type])
+}
+
+model EnvironmentVariable {
+  id            String   @id @default(cuid())
+  environmentId String
+  key           String
+  value         String
+  isSecret      Boolean  @default(false)
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([environmentId, key])
+  @@index([environmentId])
+}
+
+model EnvironmentPromotion {
+  id              String   @id @default(cuid())
+  workflowId      String
+  sourceEnvId     String
+  targetEnvId     String
+  status          PromotionStatus @default(PENDING)
+  version         Int
+  snapshot        Json
+  testResults     Json?
+  approvedBy      String?
+  approvedAt      DateTime?
+  completedAt     DateTime?
+  error           String?
+  createdAt       DateTime @default(now())
+  createdBy       String
+
+  sourceEnv       Environment @relation("SourceEnv", fields: [sourceEnvId], references: [id])
+  targetEnv       Environment @relation("TargetEnv", fields: [targetEnvId], references: [id])
+
+  @@index([workflowId])
+  @@index([sourceEnvId])
+  @@index([targetEnvId])
+}
+
+enum EnvironmentType {
+  DEVELOPMENT
+  STAGING
+  PRODUCTION
+  TESTING
+}
+
+enum PromotionStatus {
+  PENDING
+  TESTING
+  AWAITING_APPROVAL
+  APPROVED
+  PROMOTING
+  COMPLETED
+  FAILED
+  ROLLED_BACK
+}
+
+// ================================
+// PLUGIN MARKETPLACE
+// ================================
+
+model Plugin {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  displayName  String
+  description  String
+  version      String
+  author       String
+  authorId     String?
+  category     String
+  icon         String?
+  tags         String[]
+  downloads    Int      @default(0)
+  rating       Float    @default(0)
+  ratingCount  Int      @default(0)
+  isVerified   Boolean  @default(false)
+  isOfficial   Boolean  @default(false)
+  source       String?
+  repository   String?
+  license      String?
+  readme       String?
+  changelog    String?
+  config       Json     @default("{}")
+  nodeTypes    Json     @default("[]")
+  status       PluginStatus @default(ACTIVE)
+  publishedAt  DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  installations PluginInstallation[]
+  reviews       PluginReview[]
+
+  @@index([category])
+  @@index([authorId])
+}
+
+model PluginInstallation {
+  id         String   @id @default(cuid())
+  pluginId   String
+  userId     String
+  version    String
+  isEnabled  Boolean  @default(true)
+  settings   Json     @default("{}")
+  installedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  plugin     Plugin @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@unique([pluginId, userId])
+  @@index([userId])
+  @@index([pluginId])
+}
+
+model PluginReview {
+  id        String   @id @default(cuid())
+  pluginId  String
+  userId    String
+  rating    Int
+  title     String?
+  body      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plugin    Plugin @relation(fields: [pluginId], references: [id], onDelete: Cascade)
+
+  @@unique([pluginId, userId])
+  @@index([pluginId])
+}
+
+enum PluginStatus {
+  ACTIVE
+  DEPRECATED
+  SUSPENDED
+  PENDING_REVIEW
+}

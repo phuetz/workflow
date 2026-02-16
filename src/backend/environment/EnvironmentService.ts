@@ -25,15 +25,139 @@ import { logger } from '../services/LogService';
 import { getAuditService } from '../audit/AuditService';
 import { AuditAction, AuditCategory, AuditSeverity } from '../audit/AuditTypes';
 
+// Prisma persistence helper - gracefully degrades if tables don't exist yet
+async function getPrisma() {
+  try {
+    const { prisma } = await import('../database/prisma');
+    return prisma;
+  } catch {
+    return null;
+  }
+}
+
 export class EnvironmentService {
   private environments: Map<string, Environment> = new Map();
   private promotions: Map<string, WorkflowPromotion> = new Map();
   private envCredentials: Map<string, EnvironmentCredential[]> = new Map();
   private envVariables: Map<string, EnvironmentVariable[]> = new Map();
   private envWorkflows: Map<string, EnvironmentWorkflow[]> = new Map();
+  private dbLoaded = false;
 
   constructor() {
     this.initializeDefaultEnvironments();
+    // Async load from DB in background - overrides defaults if data exists
+    this.loadFromDatabase().catch(() => {});
+  }
+
+  /**
+   * Load environments from Prisma DB (if table exists).
+   */
+  private async loadFromDatabase(): Promise<void> {
+    try {
+      const prisma = await getPrisma();
+      if (!prisma) return;
+      const dbEnvs = await (prisma as any).environment?.findMany?.({ include: { variables: true } });
+      if (!dbEnvs || dbEnvs.length === 0) {
+        // No DB data yet - persist current in-memory defaults
+        await this.persistAllToDatabase();
+        this.dbLoaded = true;
+        return;
+      }
+
+      // Load from DB into memory
+      this.environments.clear();
+      for (const dbEnv of dbEnvs) {
+        const settings = (typeof dbEnv.settings === 'object' ? dbEnv.settings : {}) as Record<string, any>;
+        const env: Environment = {
+          id: dbEnv.id,
+          name: dbEnv.displayName || dbEnv.name,
+          type: dbEnv.type.toLowerCase() as EnvironmentType,
+          description: dbEnv.description || '',
+          createdAt: dbEnv.createdAt,
+          updatedAt: dbEnv.updatedAt,
+          isActive: !dbEnv.isLocked,
+          config: {
+            variables: settings.variables || {},
+            credentialMappings: settings.credentialMappings || {},
+            features: settings.features || {},
+            rateLimits: settings.rateLimits || { maxExecutionsPerMinute: 100, maxConcurrentExecutions: 10 },
+          },
+        };
+        this.environments.set(env.id, env);
+
+        // Load variables
+        if (dbEnv.variables?.length) {
+          this.envVariables.set(env.id, dbEnv.variables.map((v: any) => ({
+            id: v.id,
+            environmentId: v.environmentId,
+            key: v.key,
+            value: v.value,
+            description: v.description,
+            isSecret: v.isSecret,
+            createdAt: v.createdAt,
+            updatedAt: v.updatedAt,
+          })));
+        }
+      }
+
+      this.dbLoaded = true;
+      logger.info(`Loaded ${dbEnvs.length} environments from database`);
+    } catch (error) {
+      // Table might not exist yet - that's ok, will use in-memory
+      logger.debug('Could not load environments from DB, using in-memory defaults', { error: String(error) });
+    }
+  }
+
+  /**
+   * Persist all in-memory environments to DB.
+   */
+  private async persistAllToDatabase(): Promise<void> {
+    try {
+      const prisma = await getPrisma();
+      if (!prisma) return;
+      for (const env of this.environments.values()) {
+        await this.persistEnvironmentToDb(env);
+      }
+    } catch {
+      // Silently ignore - DB might not have the table yet
+    }
+  }
+
+  /**
+   * Persist a single environment to DB.
+   */
+  private async persistEnvironmentToDb(env: Environment): Promise<void> {
+    try {
+      const prisma = await getPrisma();
+      if (!prisma) return;
+      const typeMap: Record<string, string> = {
+        development: 'DEVELOPMENT',
+        staging: 'STAGING',
+        production: 'PRODUCTION',
+        testing: 'TESTING',
+      };
+      await (prisma as any).environment?.upsert?.({
+        where: { id: env.id },
+        create: {
+          id: env.id,
+          name: env.name.toLowerCase().replace(/\s+/g, '-'),
+          displayName: env.name,
+          description: env.description || null,
+          type: typeMap[env.type] || 'DEVELOPMENT',
+          isLocked: !env.isActive,
+          settings: env.config as any,
+        },
+        update: {
+          displayName: env.name,
+          description: env.description || null,
+          type: typeMap[env.type] || 'DEVELOPMENT',
+          isLocked: !env.isActive,
+          settings: env.config as any,
+        },
+      });
+    } catch {
+      // Silently ignore
+    }
   }
 
   /**
@@ -170,6 +294,7 @@ export class EnvironmentService {
     };
 
     this.environments.set(env.id, env);
+    this.persistEnvironmentToDb(env).catch(() => {});
     return env;
   }
 
@@ -239,6 +364,7 @@ export class EnvironmentService {
 
     env.updatedAt = new Date();
     this.environments.set(envId, env);
+    this.persistEnvironmentToDb(env).catch(() => {});
 
     // Audit log
     const auditService = getAuditService();
@@ -284,6 +410,8 @@ export class EnvironmentService {
     this.envCredentials.delete(envId);
     this.envVariables.delete(envId);
     this.envWorkflows.delete(envId);
+    // Persist deletion to DB
+    getPrisma().then(prisma => prisma && (prisma as any).environment?.delete?.({ where: { id: envId } }).catch(() => {})).catch(() => {});
 
     // Audit log
     const auditService = getAuditService();
@@ -347,6 +475,13 @@ export class EnvironmentService {
     }
 
     this.envVariables.set(envId, variables);
+
+    // Persist variable to DB
+    getPrisma().then(prisma => prisma && (prisma as any).environmentVariable?.upsert?.({
+      where: { environmentId_key: { environmentId: envId, key } },
+      create: { id: variable.id, environmentId: envId, key, value, isSecret: variable.isSecret, description: variable.description || null },
+      update: { value, isSecret: variable.isSecret, description: variable.description || null },
+    }).catch(() => {})).catch(() => {});
 
     // Also update in environment config
     env.config.variables[key] = value;

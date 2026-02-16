@@ -50,60 +50,76 @@ const quickSuggestions = [
 ];
 
 // ============================================================================
-// Sample Responses (would be replaced by actual AI in production)
+// AI Response via Backend LLM Service
 // ============================================================================
 
+const CHAT_API_BASE = '/api/chat';
+
+let chatSessionId: string | null = null;
+
 const getAIResponse = async (query: string): Promise<{ content: string; actions?: CopilotAction[] }> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+  try {
+    // Create session on first message
+    if (!chatSessionId) {
+      const sessionRes = await fetch(`${CHAT_API_BASE}/copilot/session/main`, { method: 'POST' });
+      if (sessionRes.ok) {
+        const session = await sessionRes.json();
+        chatSessionId = session.id || 'main';
+      }
+    }
 
-  const queryLower = query.toLowerCase();
+    const response = await fetch(`${CHAT_API_BASE}/copilot/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: query,
+        sessionId: chatSessionId,
+        context: { type: 'copilot' },
+      }),
+    });
 
-  if (queryLower.includes('create') && queryLower.includes('workflow')) {
-    return {
-      content: "I'll help you create a new workflow! Here are some options to get started:",
-      actions: [
-        { id: 'blank', label: 'Start from scratch', icon: <Plus className="w-4 h-4" />, action: () => {}, variant: 'primary' },
-        { id: 'template', label: 'Use a template', icon: <Workflow className="w-4 h-4" />, action: () => {}, variant: 'secondary' },
-        { id: 'ai', label: 'Describe what you need', icon: <Sparkles className="w-4 h-4" />, action: () => {}, variant: 'secondary' },
-      ]
-    };
+    if (!response.ok) {
+      throw new Error(`AI request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.content || data.message || 'I could not generate a response.';
+
+    // Parse action suggestions from AI response
+    const actions = parseActionsFromResponse(content, query);
+
+    return { content, actions };
+  } catch (error) {
+    // Fallback to basic pattern matching if backend is unavailable
+    return getLocalFallbackResponse(query);
   }
-
-  if (queryLower.includes('slack')) {
-    return {
-      content: "To connect to Slack:\n\n1. Add a **Slack** node to your workflow\n2. Click on the node to configure it\n3. Select **Create New Credential**\n4. Follow the OAuth flow to authorize\n\nWould you like me to add a Slack node to your current workflow?",
-      actions: [
-        { id: 'add-slack', label: 'Add Slack node', icon: <Plus className="w-4 h-4" />, action: () => {}, variant: 'primary' },
-        { id: 'docs', label: 'View documentation', icon: <HelpCircle className="w-4 h-4" />, action: () => {}, variant: 'secondary' },
-      ]
-    };
-  }
-
-  if (queryLower.includes('debug') || queryLower.includes('failing') || queryLower.includes('error')) {
-    return {
-      content: "I can help debug your workflow. Here's what I found:\n\n⚠️ **Potential Issues:**\n- The HTTP Request node might be missing authentication\n- Check if the API endpoint is correct\n- Verify your credentials are valid\n\nWould you like me to run a diagnostic check?",
-      actions: [
-        { id: 'diagnose', label: 'Run diagnostics', icon: <Play className="w-4 h-4" />, action: () => {}, variant: 'primary' },
-        { id: 'logs', label: 'View error logs', icon: <Settings className="w-4 h-4" />, action: () => {}, variant: 'secondary' },
-      ]
-    };
-  }
-
-  if (queryLower.includes('email') || queryLower.includes('notification')) {
-    return {
-      content: "Great choice! Email notifications are one of the most popular automations. Here's a quick setup:\n\n1. **Trigger**: Choose what starts the workflow (webhook, schedule, etc.)\n2. **Process**: Add any data transformation needed\n3. **Send Email**: Use Gmail, Outlook, or SMTP node\n\nI can create this workflow for you automatically!",
-      actions: [
-        { id: 'create-email', label: 'Create email workflow', icon: <Zap className="w-4 h-4" />, action: () => {}, variant: 'primary' },
-        { id: 'customize', label: 'Customize first', icon: <Settings className="w-4 h-4" />, action: () => {}, variant: 'secondary' },
-      ]
-    };
-  }
-
-  return {
-    content: "I understand you're looking for help with your workflow. Here are some things I can assist with:\n\n• Creating new workflows from scratch or templates\n• Connecting to 400+ integrations\n• Debugging execution errors\n• Optimizing workflow performance\n• Explaining how nodes work\n\nWhat would you like to explore?",
-  };
 };
+
+function parseActionsFromResponse(content: string, query: string): CopilotAction[] | undefined {
+  const queryLower = query.toLowerCase();
+  if (queryLower.includes('create') && queryLower.includes('workflow')) {
+    return [
+      { id: 'blank', label: 'Start from scratch', icon: <Plus className="w-4 h-4" />, action: () => {}, variant: 'primary' },
+      { id: 'template', label: 'Use a template', icon: <Workflow className="w-4 h-4" />, action: () => {}, variant: 'secondary' },
+    ];
+  }
+  if (queryLower.includes('debug') || queryLower.includes('error') || queryLower.includes('failing')) {
+    return [
+      { id: 'diagnose', label: 'Run diagnostics', icon: <Play className="w-4 h-4" />, action: () => {}, variant: 'primary' },
+    ];
+  }
+  return undefined;
+}
+
+function getLocalFallbackResponse(query: string): { content: string } {
+  return {
+    content: "I'm currently unable to connect to the AI service. Here are some things I can help with:\n\n" +
+      "- Creating workflows: Use the + button or templates\n" +
+      "- Debugging: Check the execution logs panel\n" +
+      "- Integrations: Browse the node panel on the left\n\n" +
+      "Please check that the backend is running and an AI API key is configured.",
+  };
+}
 
 // ============================================================================
 // Message Component
