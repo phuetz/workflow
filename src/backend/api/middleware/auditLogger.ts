@@ -383,7 +383,7 @@ export function createAuditLogger(options?: {
 
     // Check additional paths first, then fall back to default
     const key = `${req.method} ${req.path.split('?')[0].replace(/\/+$/, '')}`;
-    let auditConfig = additionalPaths[key] || matchPath(req.method, req.path);
+    const auditConfig = additionalPaths[key] || matchPath(req.method, req.path);
 
     if (!auditConfig) {
       return next();

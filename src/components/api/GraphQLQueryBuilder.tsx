@@ -153,7 +153,7 @@ export default function GraphQLQueryBuilder() {
       return;
     }
 
-    let queryFields: string[] = [];
+    const queryFields: string[] = [];
 
     selectedFields.forEach(field => {
       let fieldString = field.name;

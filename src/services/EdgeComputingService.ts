@@ -800,7 +800,7 @@ export class EdgeComputingService {
     return analytics;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async getFleetAnalytics(nodeIds: string[], _timeRange: { start: Date; end: Date }): Promise<{
     overview: {
       totalNodes: number;
@@ -932,7 +932,7 @@ export class EdgeComputingService {
   }
 
   // Network Optimization
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async optimizeNetworkTopology(_nodeIds: string[]): Promise<{
     recommendations: Array<{
       type: 'routing' | 'bandwidth' | 'latency' | 'redundancy';
@@ -1133,7 +1133,7 @@ export class EdgeComputingService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async executeCommand(device: IoTDevice, actuator: IoTActuator, command: ActuatorCommand, _parameters: unknown): Promise<{
     output: unknown;
     newState: unknown;

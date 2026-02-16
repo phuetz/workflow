@@ -28,7 +28,7 @@ export class MarketplaceManager {
     allNodes: IntegrationNode[],
     filters?: MarketplaceFilters
   ): IntegrationMarketplace {
-    let nodes = this.applyFilters(allNodes, filters);
+    const nodes = this.applyFilters(allNodes, filters);
 
     const popular = this.getPopularNodes(nodes);
     const recent = this.getRecentNodes(nodes);

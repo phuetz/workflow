@@ -134,7 +134,7 @@ export default function ScheduleManager() {
     const parts = cron.split(' ');
 
     if (parts.length === 5) {
-      const [_minute, _hour, _day, _month, _dayOfWeek] = parts; // eslint-disable-line @typescript-eslint/no-unused-vars
+      const [_minute, _hour, _day, _month, _dayOfWeek] = parts;  
 
       if (cron === '* * * * *') return 'Every minute';
       if (cron === '*/5 * * * *') return 'Every 5 minutes';

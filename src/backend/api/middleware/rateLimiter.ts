@@ -32,7 +32,7 @@ export function createRateLimiter(options: RateLimitOptions = {}) {
   const {
     windowMs = 60 * 1000,  // 1 minute default
     max = 100,             // 100 requests per window default
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     _message = 'Too many requests, please try again later.',
     skipSuccessfulRequests = false,
     skipFailedRequests = false,
@@ -167,7 +167,7 @@ export const authRateLimiter = createRateLimiter({
   max: 5,                     // 5 attempts per window
   message: 'Too many authentication attempts, please try again later.',
   skipSuccessfulRequests: true,  // Only count failed attempts
-  onLimitReached: (req, _res) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  onLimitReached: (req, _res) => {  
     logger.error('Authentication rate limit exceeded', {
       ip: req.ip,
       path: req.path,

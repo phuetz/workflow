@@ -281,7 +281,7 @@ export class AgentIdentityManager extends EventEmitter {
       rotationPolicy,
     };
 
-    let creds = this.credentials.get(agentId) || [];
+    const creds = this.credentials.get(agentId) || [];
     creds.push(credential);
     this.credentials.set(agentId, creds);
 

@@ -35,7 +35,7 @@ export class FeedbackLoopPattern implements AgenticPatternExecutor {
       metadata: {},
     };
     let iteration = 0;
-    let feedbackHistory: Array<{ iteration: number; feedback: unknown; quality: number }> = [];
+    const feedbackHistory: Array<{ iteration: number; feedback: unknown; quality: number }> = [];
 
     while (iteration < maxIterations) {
       iteration++;

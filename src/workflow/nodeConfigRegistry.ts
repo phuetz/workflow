@@ -374,7 +374,7 @@ import MCPClientConfig from './nodes/config/MCPClientConfig';
 import JWTConfig from './nodes/config/JWTConfig';
 import SSHConfig from './nodes/config/SSHConfig';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const registry: Record<string, React.ComponentType<any>> = {
   httpRequest: HttpRequestConfig,
   email: EmailConfig,

@@ -266,7 +266,7 @@ export class MemoryStore extends EventEmitter {
 
     try {
       // Get candidate memories based on filters
-      let candidates = this.filterMemories(query);
+      const candidates = this.filterMemories(query);
 
       // Generate query embedding if text provided
       let queryEmbedding = query.embedding;

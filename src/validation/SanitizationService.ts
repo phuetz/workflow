@@ -240,7 +240,7 @@ export class SanitizationService {
     const removedPatterns: string[] = [];
 
     // Remove shell metacharacters
-    let sanitized = input.replace(DANGEROUS_PATTERNS.command[0], '');
+    const sanitized = input.replace(DANGEROUS_PATTERNS.command[0], '');
 
     if (sanitized !== original) {
       removedPatterns.push('shell-metacharacters');
@@ -315,7 +315,7 @@ export class SanitizationService {
     const removedPatterns: string[] = [];
 
     // Remove dangerous XML constructs
-    let sanitized = input
+    const sanitized = input
       .replace(/<!\[CDATA\[[\s\S]*?\]\]>/gi, '')
       .replace(/<!ENTITY[\s\S]*?>/gi, '')
       .replace(/<!DOCTYPE[\s\S]*?>/gi, '');

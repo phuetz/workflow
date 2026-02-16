@@ -3,7 +3,7 @@
  * Built-in data transformation functions and expressions
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 export interface DataTransformFunction {
   id: string;

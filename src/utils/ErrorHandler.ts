@@ -471,7 +471,7 @@ export class ErrorHandler {
 
   private static isActionableByDefault(
     category: ErrorCategory,
-    _severity: ErrorSeverity // eslint-disable-line @typescript-eslint/no-unused-vars
+    _severity: ErrorSeverity  
   ): boolean {
     // Non-actionable categories (user can't do anything about them)
     const nonActionableCategories = [

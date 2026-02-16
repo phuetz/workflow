@@ -141,7 +141,7 @@ export class RealTimeCollaborationService extends EventEmitter {
   }
 
   private handleWebSocketMessage(data: unknown): void {
-    const { type, payload, userId, _sessionId } = data as { type: string; payload: any; userId: string; _sessionId: string }; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { type, payload, userId, _sessionId } = data as { type: string; payload: any; userId: string; _sessionId: string };  
 
     switch (type) {
       case 'collaboration:join':
@@ -736,7 +736,7 @@ export class RealTimeCollaborationService extends EventEmitter {
     for (const session of Array.from(this.sessions.values())) {
       let hasChanges = false;
 
-      for (const [_userId, participant] of Array.from(session.participants)) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      for (const [_userId, participant] of Array.from(session.participants)) {  
         const timeSinceActivity = now - participant.lastActivity.getTime();
         let newStatus: 'active' | 'idle' | 'away';
 

@@ -632,7 +632,7 @@ export class APIBuilderService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async checkRateLimit(endpoint: APIEndpoint, _request: unknown): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
     if (!endpoint.rateLimit.enabled) {
       return { allowed: true, remaining: 999, resetTime: Date.now() + 3600000 };

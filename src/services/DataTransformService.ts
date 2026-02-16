@@ -3,7 +3,7 @@
  * Built-in data transformation functions and expression evaluation
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 
 import { BaseService } from './BaseService';
 import type {

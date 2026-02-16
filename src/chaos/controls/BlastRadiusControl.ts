@@ -240,7 +240,7 @@ export class SafetyValidator {
     warnings: string[];
   } {
     const warnings: string[] = [];
-    let safe = true;
+    const safe = true;
 
     if (environment === 'production') {
       warnings.push(

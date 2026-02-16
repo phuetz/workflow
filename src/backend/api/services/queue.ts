@@ -10,7 +10,7 @@ let workerStarted = false;
 const QUEUE = 'exec_queue';
 
 // Queue statistics
-let queueStats = {
+const queueStats = {
   enqueued: 0,
   processed: 0,
   failed: 0,

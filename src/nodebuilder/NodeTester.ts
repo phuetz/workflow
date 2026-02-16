@@ -42,7 +42,7 @@ export class NodeTester {
 
     let passed = 0;
     let failed = 0;
-    let skipped = 0;
+    const skipped = 0;
 
     for (const testCase of this.testConfig.testCases) {
       try {

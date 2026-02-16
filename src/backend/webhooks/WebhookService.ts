@@ -661,7 +661,7 @@ export class WebhookService extends EventEmitter {
   ): Promise<WebhookResponse> {
     const responseConfig = config.response || { mode: 'lastNode' as ResponseMode };
     const statusCode = responseConfig.statusCode || 200;
-    let headers: Record<string, string> = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(responseConfig.headers || {})
     };

@@ -169,12 +169,12 @@ export class ConnectionPool extends EventEmitter {
     throw new Error('createRawConnection must be implemented by database-specific class');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   protected async executeQuery(_connection: unknown, _query: string, _params: unknown[]): Promise<unknown> {
     throw new Error('executeQuery must be implemented by database-specific class');
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   protected async setQueryTimeout(_connection: unknown, _timeout: number): Promise<void> {}
 
   private destroyConnection(pooled: PooledConnection): void {

@@ -32,8 +32,27 @@ export class TemplateService extends BaseService implements ITemplateService {
   }
 
   private async initializeTemplates(): Promise<void> {
+    // Try loading from backend API first
+    try {
+      const res = await fetch('/api/templates');
+      if (res.ok) {
+        const data = await res.json() as any;
+        const items = data.templates || data.data || data;
+        if (Array.isArray(items) && items.length > 0) {
+          for (const t of items) {
+            this.registerTemplate(t);
+          }
+          logger.info(`Loaded ${items.length} templates from API`);
+          return;
+        }
+      }
+    } catch {
+      // API unavailable, use built-in templates
+    }
+
+    // Fallback to built-in templates
     await this.createBuiltInTemplates();
-    logger.info('Template service initialized', {
+    logger.info('Template service initialized (built-in)', {
       totalTemplates: this.templates.size,
       categories: this.categories.size
     });

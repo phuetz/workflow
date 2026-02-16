@@ -32,7 +32,7 @@ export function useLocalStorage<T>(
       setStoredValue(valueToStore);
       window.dispatchEvent(new StorageEvent('storage', { key, newValue: JSON.stringify(valueToStore) }));
     } catch (error) {
-      console.warn(\`Error setting localStorage key "\${key}":\`, error);
+      console.warn(`Error setting localStorage key "\${key}":`, error);
     }
   }, [key, storedValue]);
 
@@ -41,7 +41,7 @@ export function useLocalStorage<T>(
       window.localStorage.removeItem(key);
       setStoredValue(initialValue);
     } catch (error) {
-      console.warn(\`Error removing localStorage key "\${key}":\`, error);
+      console.warn(`Error removing localStorage key "\${key}":`, error);
     }
   }, [key, initialValue]);
 

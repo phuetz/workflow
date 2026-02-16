@@ -733,7 +733,7 @@ export class MicrosoftService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async getAvailableServices(_credentials: MicrosoftCredentials): Promise<string[]> {
     const services = [
       'excel365',

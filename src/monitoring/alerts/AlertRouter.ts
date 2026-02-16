@@ -302,7 +302,7 @@ export class AlertRouter extends EventEmitter {
       });
     }
 
-    let totalDeliveryTimes: Map<string, number[]> = new Map();
+    const totalDeliveryTimes: Map<string, number[]> = new Map();
 
     for (const delivery of this.deliveryStatus) {
       const stat = stats.get(delivery.channel);

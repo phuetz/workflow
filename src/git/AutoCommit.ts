@@ -146,7 +146,7 @@ export class AutoCommit {
     const changes = this.analyzeWorkflowChanges(workflow);
 
     let type: AICommitMessage['type'] = 'chore';
-    let breaking = false;
+    const breaking = false;
 
     if (changes.nodesAdded > 0 || changes.majorChanges) {
       type = 'feat';

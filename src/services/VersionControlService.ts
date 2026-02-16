@@ -1180,7 +1180,7 @@ export class VersionControlService {
     this.branches.set(sampleRepo.id, new Map());
 
     // Create initial commit and branch
-    void this.createBranch(sampleRepo.id, 'main').then(_branch => { // eslint-disable-line @typescript-eslint/no-unused-vars
+    void this.createBranch(sampleRepo.id, 'main').then(_branch => {  
       // Create some sample commits
       void this.createSampleCommits(sampleRepo.id, 'main');
     });

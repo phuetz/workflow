@@ -577,7 +577,7 @@ export class CanvasPlanningManager extends EventEmitter {
         elementToNodeId.set(element.id, nodeId);
 
         // Infer node type from content
-        let nodeType = element.content.nodeType || this.inferNodeType(element);
+        const nodeType = element.content.nodeType || this.inferNodeType(element);
 
         nodes.push({
           id: nodeId,

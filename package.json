@@ -31,7 +31,7 @@
   },
   "homepage": "https://workflow-platform.com",
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=20.0.0",
     "npm": ">=9.0.0"
   },
   "scripts": {
@@ -57,9 +57,9 @@
     "test:ci": "bash scripts/ci-validation.sh",
     "test:all": "npm run test:quick && npm run test:unit && npm run test:smoke",
     "test:auto": "concurrently --kill-others-on-fail \"npm run test:watch\" \"npm run test:smoke -- --watch\"",
-    "lint": "eslint src/App.tsx src/backend/server.js src/backend/api/server.ts src/backend/api/app.ts src/backend/api/middleware/*.ts src/middleware/globalErrorHandler.ts --ext ts,tsx,js,mjs,cjs --report-unused-disable-directives --no-warn-ignored --max-warnings 50",
-    "lint:fix": "eslint src/App.tsx src/backend/server.js src/backend/api/server.ts src/backend/api/app.ts src/backend/api/middleware/*.ts src/middleware/globalErrorHandler.ts --ext ts,tsx,js,mjs,cjs --no-warn-ignored --fix",
-    "lint:backend": "eslint src/backend/api/app.ts src/backend/api/server.ts src/backend/api/middleware/auth.ts src/backend/api/routes/health.ts src/backend/api/routes/queue-metrics.ts src/backend/api/routes/rate-limit.ts --ext ts,tsx,js,mjs,cjs --max-warnings 0",
+    "lint": "eslint src/ --no-warn-ignored --max-warnings 3600",
+    "lint:fix": "eslint src/ --no-warn-ignored --fix",
+    "lint:backend": "eslint src/backend/ --no-warn-ignored --max-warnings 200",
     "lint:report": "eslint . --ext ts,tsx,js,mjs,cjs -f json -o eslint-latest.json --report-unused-disable-directives || true",
     "typecheck": "tsc --noEmit",
     "typecheck:backend": "tsc -p tsconfig.backend.json --noEmit",

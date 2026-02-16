@@ -281,6 +281,51 @@ class MonitoringService {
   }
 
   /**
+   * Fetch real backend metrics from /api/monitoring/metrics.
+   */
+  async getBackendMetrics(): Promise<Record<string, any> | null> {
+    try {
+      const res = await fetch('/api/monitoring/metrics');
+      if (res.ok) return await res.json() as Record<string, any>;
+    } catch {
+      // Backend unavailable
+    }
+    return null;
+  }
+
+  /**
+   * Fetch execution timeline from backend.
+   */
+  async getExecutionTimeline(hours = 24): Promise<any[]> {
+    try {
+      const res = await fetch(`/api/monitoring/timeline?hours=${hours}`);
+      if (res.ok) {
+        const data = await res.json() as any;
+        return data.timeline || data || [];
+      }
+    } catch {
+      // Backend unavailable
+    }
+    return [];
+  }
+
+  /**
+   * Fetch top failing workflows from backend.
+   */
+  async getTopFailures(limit = 10): Promise<any[]> {
+    try {
+      const res = await fetch(`/api/monitoring/failures?limit=${limit}`);
+      if (res.ok) {
+        const data = await res.json() as any;
+        return data.failures || data || [];
+      }
+    } catch {
+      // Backend unavailable
+    }
+    return [];
+  }
+
+  /**
    * Reset des métriques (utile pour les tests)
    */
   reset() {

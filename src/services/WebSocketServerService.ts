@@ -189,7 +189,7 @@ export class WebSocketServerService {
     socket.on('error', (error: Error) => logger.error(`WebSocket error for user ${user.userId}:`, error));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async handleJoinRoom(socketId: string, roomId: string, _password?: string): Promise<void> {
     const user = this.connectionManager.getUser(socketId);
     if (!user) throw new Error('User not found');

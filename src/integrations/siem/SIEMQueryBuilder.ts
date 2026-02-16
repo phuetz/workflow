@@ -762,7 +762,7 @@ export class SIEMQueryBuilder {
     const aggs: Record<string, unknown> = {}
 
     if (this.grouping && this.grouping.fields.length > 0) {
-      let currentAgg: Record<string, unknown> = aggs
+      const currentAgg: Record<string, unknown> = aggs
       const field = this.grouping.fields[0]
 
       currentAgg['group_by'] = {

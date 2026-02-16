@@ -36,15 +36,15 @@ export function useMediaQuery(query: string): boolean {
 }
 
 export function useBreakpoint(breakpoint: Breakpoint): boolean {
-  return useMediaQuery(\`(min-width: \${breakpoints[breakpoint]})\`);
+  return useMediaQuery(`(min-width: \${breakpoints[breakpoint]})`);
 }
 
 export function useBreakpointDown(breakpoint: Breakpoint): boolean {
-  return useMediaQuery(\`(max-width: \${breakpoints[breakpoint]})\`);
+  return useMediaQuery(`(max-width: \${breakpoints[breakpoint]})`);
 }
 
 export function useBreakpointBetween(min: Breakpoint, max: Breakpoint): boolean {
-  return useMediaQuery(\`(min-width: \${breakpoints[min]}) and (max-width: \${breakpoints[max]})\`);
+  return useMediaQuery(`(min-width: \${breakpoints[min]}) and (max-width: \${breakpoints[max]})`);
 }
 
 export function useIsMobile(): boolean { return useBreakpointDown('md'); }

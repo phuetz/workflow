@@ -387,7 +387,7 @@ export async function executeEditFields(
   inputData: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   const operations = (config.operations as EditFieldOperation[]) || [];
-  let result = { ...inputData };
+  const result = { ...inputData };
 
   for (const op of operations) {
     switch (op.action) {

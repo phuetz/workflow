@@ -25,9 +25,10 @@ echo ""
 
 FAILED=0
 
-# Backend Health
+# Backend Unit Tests
 echo -e "${BLUE}[1/3]${NC} Test Backend... "
-if bash "$SCRIPT_DIR/test-backend-health.sh" > /dev/null 2>&1; then
+cd "$(dirname "$SCRIPT_DIR")"
+if npx vitest --run src/__tests__/backend/ > /dev/null 2>&1; then
   echo -e "      ${GREEN}✓ Backend OK${NC}"
 else
   echo -e "      ${RED}✗ Backend FAIL${NC}"

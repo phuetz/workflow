@@ -403,8 +403,8 @@ export class GamificationService {
   private async checkAchievementConditions(
     userId: string,
     achievement: Achievement,
-    _eventType: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _eventData: unknown // eslint-disable-line @typescript-eslint/no-unused-vars
+    _eventType: string,  
+    _eventData: unknown  
   ): Promise<boolean> {
     const userStats = await this.getUserStats(userId);
 
@@ -685,7 +685,7 @@ export class GamificationService {
     await this.checkAchievements(userId, eventType, data);
   }
 
-  private async handleWorkflowCreated(userId: string, _data: unknown): Promise<void> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  private async handleWorkflowCreated(userId: string, _data: unknown): Promise<void> {  
     const stats = await this.getUserStats(userId);
     await this.updateUserStats(userId, {
       totalWorkflows: stats.totalWorkflows + 1
@@ -722,7 +722,7 @@ export class GamificationService {
     }
   }
 
-  private async handleCollaboration(userId: string, _data: unknown): Promise<void> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  private async handleCollaboration(userId: string, _data: unknown): Promise<void> {  
     const stats = await this.getUserStats(userId);
     await this.updateUserStats(userId, {
       collaborations: stats.collaborations + 1
@@ -811,7 +811,7 @@ export class GamificationService {
     return rewards;
   }
 
-  private getAchievementProgress(_userId: string, _achievementId: string): number { // eslint-disable-line @typescript-eslint/no-unused-vars
+  private getAchievementProgress(_userId: string, _achievementId: string): number {  
     // Mock implementation - would calculate actual progress
     return Math.floor(Math.random() * 100);
   }

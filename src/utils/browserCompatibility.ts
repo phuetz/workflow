@@ -341,7 +341,7 @@ export function createIntersectionObserverPolyfill() {
       private elements: Element[] = [];
       private intervalId: number | null = null;
 
-      constructor(callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) { // eslint-disable-line @typescript-eslint/no-unused-vars
+      constructor(callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {  
         this.callback = callback;
 
         // Simple polling-based implementation

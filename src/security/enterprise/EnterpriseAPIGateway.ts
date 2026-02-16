@@ -643,7 +643,7 @@ export class EnterpriseAPIGateway extends EventEmitter {
    * Apply transformations
    */
   applyTransformations(context: RequestContext): RequestContext {
-    let transformed = { ...context }
+    const transformed = { ...context }
 
     for (const rule of this.transformationRules) {
       if (!rule.enabled) continue

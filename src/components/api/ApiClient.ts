@@ -247,7 +247,7 @@ export class ApiClient {
   // ================================
 
   // Workflows API
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async getWorkflows(_params: unknown = {}) {
     return this.get('/workflows', { headers: { 'X-Resource': 'workflows' } });
   }
@@ -269,7 +269,7 @@ export class ApiClient {
   }
 
   // Executions API
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async getExecutions(workflowId?: string, _params: unknown = {}) {
     const endpoint = workflowId ? `/executions?workflowId=${workflowId}` : '/executions';
     return this.get(endpoint, { headers: { 'X-Resource': 'executions' } });
@@ -326,7 +326,7 @@ export class ApiClient {
   }
 
   // Users API (Admin only)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async getUsers(_params: unknown = {}) {
     return this.get('/users', { headers: { 'X-Admin-Required': 'true' } });
   }
@@ -344,7 +344,7 @@ export class ApiClient {
   }
 
   // Analytics API
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   async getAnalytics(_params: unknown = {}) {
     return this.get('/analytics', { headers: { 'X-Resource': 'analytics' } });
   }

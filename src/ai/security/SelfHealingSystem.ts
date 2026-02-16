@@ -444,7 +444,7 @@ export class SelfHealingSecuritySystem extends EventEmitter {
    */
   private selectRemediationStrategy(controlId: string): RecoveryStrategy | undefined {
     // Try exact control ID match first
-    let strategy = this.recoveryStrategies.get(`remediate-${controlId}`)
+    const strategy = this.recoveryStrategies.get(`remediate-${controlId}`)
     if (strategy) return strategy
 
     // Fall back to generic failed control strategy

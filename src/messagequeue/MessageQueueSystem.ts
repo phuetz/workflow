@@ -528,7 +528,7 @@ export class MessageQueueSystem extends EventEmitter {
     const visibilityTimeout = options?.visibilityTimeout || queue.config.visibilityTimeout || 30000;
 
     // Get messages based on queue type
-    let availableMessages = this.getAvailableMessages(queue, maxMessages);
+    const availableMessages = this.getAvailableMessages(queue, maxMessages);
 
     for (const msg of availableMessages) {
       // Mark message as in-flight

@@ -556,19 +556,19 @@ export class MarketplaceService {
     logger.info(`Extracting plugin ${pluginId}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async removePluginFiles(pluginId: string): Promise<void> {
     // Remove plugin directory and files
     logger.info(`Removing plugin files for ${pluginId}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async initializePlugin(pluginId: string): Promise<void> {
     // Load and initialize plugin
     logger.info(`Initializing plugin ${pluginId}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async shutdownPlugin(pluginId: string): Promise<void> {
     // Gracefully shutdown plugin
     logger.info(`Shutting down plugin ${pluginId}`);
@@ -587,13 +587,13 @@ export class MarketplaceService {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async backupPlugin(pluginId: string): Promise<void> {
     // Create backup of current plugin
     logger.info(`Backing up plugin ${pluginId}`);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   private async restorePlugin(pluginId: string): Promise<void> {
     // Restore plugin from backup
     logger.info(`Restoring plugin ${pluginId}`);

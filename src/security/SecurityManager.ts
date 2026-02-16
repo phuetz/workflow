@@ -106,7 +106,7 @@ export class SecurityManager {
   }
 
   // SECURITY FIX: Validate and sanitize URLs to prevent SSRF attacks
-  validateUrl(url: string, _context: string = 'general'): boolean { // eslint-disable-line @typescript-eslint/no-unused-vars
+  validateUrl(url: string, _context: string = 'general'): boolean {  
     try {
       const parsedUrl = new URL(url);
       const hostname = parsedUrl.hostname;

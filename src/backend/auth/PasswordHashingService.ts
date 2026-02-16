@@ -166,7 +166,7 @@ export class PasswordHashingService {
     const testPassword = 'benchmark-test-password-12345';
 
     // Start with minimal options
-    let options: HashOptions = {
+    const options: HashOptions = {
       memoryCost: 16384,  // 16 MB
       timeCost: 2,
       parallelism: 2,

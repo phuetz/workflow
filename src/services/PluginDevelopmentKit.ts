@@ -686,11 +686,11 @@ export class PluginDevelopmentKit {
   }
 
   async trackUsage(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     pluginId: string, 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     userId: string, 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     action: string
   ): Promise<void> {
     // Implementation for usage tracking
@@ -723,9 +723,9 @@ export class PluginDevelopmentKit {
   }
 
   async unpublishPlugin(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     pluginId: string, 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     version: string
   ): Promise<boolean> {
     // Implementation for unpublishing
@@ -857,7 +857,7 @@ export class PluginDevelopmentKit {
 
   private generateManifest(
     name: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     template: PluginTemplate,
     options: unknown
   ): string {
@@ -876,7 +876,7 @@ export class PluginDevelopmentKit {
 
   private generatePackageJson(
     name: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     template: PluginTemplate,
     options: unknown
   ): string {
@@ -914,7 +914,7 @@ export class PluginDevelopmentKit {
 
   private generateReadme(
     name: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     template: PluginTemplate,
     options: unknown
   ): string {

@@ -42,10 +42,23 @@ export interface ServiceCredentials {
   custom?: Record<string, unknown>;
 }
 
+const API_BASE = '/api/credentials';
+
+async function apiFetch(path: string, options?: RequestInit): Promise<Response | null> {
+  try {
+    return await fetch(`${API_BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+  } catch {
+    return null;
+  }
+}
+
 export class CredentialsService extends BaseService {
   private static instance: CredentialsService;
   private credentials: Map<string, Credentials> = new Map();
-  
+
   public static getInstance(): CredentialsService {
     if (!CredentialsService.instance) {
       CredentialsService.instance = new CredentialsService();
@@ -59,8 +72,40 @@ export class CredentialsService extends BaseService {
   }
 
   protected async initializeService(): Promise<void> {
-    // Load credentials from store
-    this.loadCredentialsFromStore();
+    // Try loading from backend API first
+    await this.loadCredentialsFromAPI();
+    // Fallback to store if API unavailable
+    if (this.credentials.size === 0) {
+      this.loadCredentialsFromStore();
+    }
+  }
+
+  private async loadCredentialsFromAPI(): Promise<void> {
+    try {
+      const res = await apiFetch('');
+      if (res?.ok) {
+        const data = await res.json() as any;
+        const items = data.credentials || data.data || data;
+        if (Array.isArray(items)) {
+          for (const item of items) {
+            const cred: Credentials = {
+              id: item.id,
+              name: item.name,
+              type: item.type,
+              data: item.data || {},
+              createdAt: new Date(item.createdAt),
+              updatedAt: new Date(item.updatedAt),
+              lastUsed: item.lastUsedAt ? new Date(item.lastUsedAt) : undefined,
+              isValid: true,
+            };
+            this.credentials.set(cred.id, cred);
+          }
+          logger.info(`Loaded ${items.length} credentials from API`);
+        }
+      }
+    } catch {
+      // API unavailable, will use store fallback
+    }
   }
 
   private loadCredentialsFromStore(): void {
@@ -112,6 +157,29 @@ export class CredentialsService extends BaseService {
   }
 
   async createCredential(credential: Omit<Credentials, 'id' | 'createdAt' | 'updatedAt'>): Promise<Credentials> {
+    // Try creating via API
+    const res = await apiFetch('', {
+      method: 'POST',
+      body: JSON.stringify({ name: credential.name, type: credential.type, data: credential.data }),
+    });
+
+    if (res?.ok) {
+      const apiCred = await res.json() as any;
+      const newCredential: Credentials = {
+        id: apiCred.id || apiCred.credential?.id || `cred_${credential.type}_${Date.now()}`,
+        name: credential.name,
+        type: credential.type,
+        data: credential.data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isValid: true,
+      };
+      this.credentials.set(newCredential.id, newCredential);
+      logger.info(`Created credential via API: ${newCredential.id}`);
+      return newCredential;
+    }
+
+    // Fallback to in-memory
     const newCredential: Credentials = {
       ...credential,
       id: `cred_${credential.type}_${Date.now()}`,
@@ -121,11 +189,9 @@ export class CredentialsService extends BaseService {
     };
 
     this.credentials.set(newCredential.id, newCredential);
-    
-    // Update store
     this.updateStore(credential.type, credential.data);
-    
-    logger.info(`Created credential: ${newCredential.id}`);
+
+    logger.info(`Created credential (local): ${newCredential.id}`);
     return newCredential;
   }
 
@@ -159,9 +225,10 @@ export class CredentialsService extends BaseService {
       return false;
     }
 
-    this.credentials.delete(id);
+    // Try deleting via API
+    await apiFetch(`/${id}`, { method: 'DELETE' });
 
-    // Clear from store
+    this.credentials.delete(id);
     this.updateStore(credential.type, {});
 
     logger.info(`Deleted credential: ${id}`);

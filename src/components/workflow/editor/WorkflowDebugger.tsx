@@ -51,9 +51,9 @@ export const WorkflowDebugger: React.FC<WorkflowDebuggerProps> = ({
   const [breakpoints, setBreakpoints] = useState<BreakpointConfig[]>([]);
   const [watches, setWatches] = useState<VariableWatch[]>([]);
   const [activeTab, setActiveTab] = useState<DebuggerTab>('breakpoints');
-  const [_isRunning, setIsRunning] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_isRunning, setIsRunning] = useState(false);  
   const [showBreakpointDialog, setShowBreakpointDialog] = useState(false);
-  const [_selectedNodeId, setSelectedNodeId] = useState<string>(''); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_selectedNodeId, setSelectedNodeId] = useState<string>('');  
   const [evaluationExpression, setEvaluationExpression] = useState('');
   const [evaluationResult, setEvaluationResult] = useState<{ value: unknown; error?: string } | null>(null);
 

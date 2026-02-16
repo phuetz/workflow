@@ -46,7 +46,7 @@ export const WorkflowTesting: React.FC<WorkflowTestingProps> = ({
 }) => {
   const toast = useToast();
   const [testCases, setTestCases] = useState<WorkflowTestCase[]>([]);
-  const [_selectedTest, setSelectedTest] = useState<WorkflowTestCase | null>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_selectedTest, setSelectedTest] = useState<WorkflowTestCase | null>(null);  
   const [testResults, setTestResults] = useState<Map<string, WorkflowTestResult>>(new Map());
   const [isRunning, setIsRunning] = useState(false);
   const [showCreateTest, setShowCreateTest] = useState(false);
@@ -62,7 +62,7 @@ export const WorkflowTesting: React.FC<WorkflowTestingProps> = ({
     assertions: [] as TestAssertion[]
   });
 
-  const { nodes: _nodes, edges: _edges } = useWorkflowStore(); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const { nodes: _nodes, edges: _edges } = useWorkflowStore();  
 
   // Load existing test cases
   useEffect(() => {

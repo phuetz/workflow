@@ -861,7 +861,7 @@ export class VariablesService extends BaseService implements IVariablesService {
    */
   private safeEvaluateExpression(expression: string, variables: Record<string, unknown>): unknown {
     // Remove 'return' if present
-    let expr = expression.replace(/^return\s+/, '').trim();
+    const expr = expression.replace(/^return\s+/, '').trim();
 
     // Handle template literals ${...}
     if (expr.includes('${')) {

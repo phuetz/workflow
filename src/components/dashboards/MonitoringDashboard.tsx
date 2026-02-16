@@ -24,7 +24,7 @@ const MonitoringDashboard = memo(function MonitoringDashboard() {
   } = useWorkflowStore();
 
   const [selectedMetric, setSelectedMetric] = useState('overview');
-  const [_timeRange, _setTimeRange] = useState('24h'); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_timeRange, _setTimeRange] = useState('24h');  
   const [realTimeData, setRealTimeData] = useState<{
     timestamp: string;
     executions: number;

@@ -18,7 +18,7 @@ import { logger } from './SimpleLogger';
 let Redis: any = null;
 let redisImportPromise: Promise<any> | null = null;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 if (typeof (globalThis as any).window === 'undefined') {
   redisImportPromise = import('ioredis').then(module => {
     Redis = module.default || module;
@@ -149,7 +149,7 @@ export class CacheLayer extends EventEmitter {
     }
 
     // Skip Redis in browser environment
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     if (typeof (globalThis as any).window !== 'undefined') {
       logger.debug('CacheLayer: Browser environment detected, using memory cache only');
       this.isRedisAvailable = false;

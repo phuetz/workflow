@@ -240,7 +240,7 @@ export async function fixDatabaseIssues(): Promise<{
   failed: number;
 }> {
   let fixed = 0;
-  let failed = 0;
+  const failed = 0;
 
   try {
     logger.info('Fixing database issues...');

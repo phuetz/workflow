@@ -101,28 +101,28 @@ export class OpenTelemetryTracing extends EventEmitter {
 
       try {
         // Using require() with type suppression to avoid TypeScript compile-time module resolution
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         NodeSDK = require('@opentelemetry/sdk-node').NodeSDK;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         getNodeAutoInstrumentations = require('@opentelemetry/auto-instrumentations-node').getNodeAutoInstrumentations;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         Resource = require('@opentelemetry/resources').Resource;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         SemanticResourceAttributes = require('@opentelemetry/semantic-conventions').SemanticResourceAttributes;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         trace = require('@opentelemetry/api').trace;
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         BatchSpanProcessor = require('@opentelemetry/sdk-trace-base').BatchSpanProcessor;
 
         try {
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
+           
           JaegerExporter = require('@opentelemetry/exporter-jaeger').JaegerExporter;
         } catch {
           // Jaeger exporter optional
         }
 
         try {
-          // eslint-disable-next-line @typescript-eslint/no-require-imports
+           
           OTLPTraceExporter = require('@opentelemetry/exporter-trace-otlp-grpc').OTLPTraceExporter;
         } catch {
           // OTLP exporter optional
@@ -436,7 +436,7 @@ export class OpenTelemetryTracing extends EventEmitter {
     try {
       let trace: any = null;
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         trace = require('@opentelemetry/api').trace;
       } catch {
         // OpenTelemetry API not installed

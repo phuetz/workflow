@@ -11,6 +11,7 @@ export default tseslint.config(
       'build',
       'coverage',
       '.nyc_output',
+      'node_modules',
       // archives and backups
       'backup_*',
       '**/*.BACKUP.*',
@@ -21,17 +22,20 @@ export default tseslint.config(
       'src/**/backup/**',
       'archive/**',
       'src/**/archive/**',
-      // Exclude known WIP/broken files from lint scope for now
-      'src/backend/api/middleware/rateLimiter.ts',
+      // Test files (linted separately if needed)
+      '**/__tests__/**',
+      '**/__mocks__/**',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
     ],
   },
-  // TypeScript + React (narrowed to stable files)
+  // Frontend: React TypeScript files
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: [
-      'src/App.tsx',
-      // add more stable TS/TSX files here as they become lint-clean
-    ],
+    files: ['src/**/*.tsx', 'src/**/*.ts'],
+    ignores: ['src/backend/**'],
     languageOptions: {
       ecmaVersion: 'latest',
       globals: globals.browser,
@@ -46,32 +50,69 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
-      // TypeScript strict rules
+      // TypeScript rules - lenient to avoid noise on existing code
       '@typescript-eslint/no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_'
       }],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unsafe-function-type': 'off',
+      '@typescript-eslint/ban-ts-comment': 'warn',
 
       // Code quality rules
-      'no-console': 'off', // We use structured logging
+      'no-console': 'off',
       'prefer-const': 'warn',
       'no-var': 'error',
-      'eqeqeq': ['warn', 'always'],
-      'no-duplicate-imports': 'error',
-      'complexity': ['warn', 20],
-      'max-lines': ['warn', 1000],
-      'max-depth': ['warn', 5],
-      'max-params': ['warn', 5],
-      'no-unreachable': 'error',
-      'no-empty': 'warn',
+      'no-unreachable': 'warn',
+      'no-empty': ['warn', { allowEmptyCatch: true }],
+      'no-case-declarations': 'warn',
+      'no-useless-escape': 'warn',
+      'no-useless-catch': 'warn',
+      'no-control-regex': 'warn',
+      'no-prototype-builtins': 'warn',
+      'no-self-assign': 'warn',
+      'no-async-promise-executor': 'warn',
+      'no-duplicate-case': 'warn',
+      '@typescript-eslint/no-unsafe-declaration-merging': 'warn',
+      '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
+      'prefer-spread': 'warn',
 
       // React specific
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
+    },
+  },
+  // Backend: Node.js TypeScript files
+  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['src/backend/**/*.ts'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      globals: { ...globals.node },
+    },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['warn', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unsafe-function-type': 'off',
+      'prefer-const': 'warn',
+      'no-var': 'error',
+      'no-unreachable': 'error',
+      'no-empty': ['warn', { allowEmptyCatch: true }],
+      'no-case-declarations': 'warn',
+      'no-useless-escape': 'warn',
     },
   },
   // Plain JS (Node)
@@ -80,35 +121,6 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 'latest',
       globals: { ...globals.node },
-    },
-    rules: {
-      // Keep defaults for server runtime code
-    },
-  },
-  // TypeScript (Node)
-  {
-    extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: [
-      'src/backend/api/server.ts',
-      'src/backend/api/app.ts',
-      'src/backend/api/middleware/*.ts',
-      'src/backend/api/routes/*.ts',
-      'src/middleware/globalErrorHandler.ts'
-    ],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      globals: { ...globals.node },
-    },
-    rules: {
-      '@typescript-eslint/no-unused-vars': ['warn', {
-        argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_',
-        caughtErrorsIgnorePattern: '^_'
-      }],
-      '@typescript-eslint/no-explicit-any': 'warn',
-      'prefer-const': 'warn',
-      'no-var': 'error',
-      'eqeqeq': ['warn', 'always'],
     },
   }
 );

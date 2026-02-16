@@ -766,8 +766,8 @@ export class EnvironmentService {
       throw new Error('Source or target environment not found');
     }
 
-    let workflowsSynced = 0;
-    let credentialsSynced = 0;
+    const workflowsSynced = 0;
+    const credentialsSynced = 0;
     let variablesSynced = 0;
     const errors: string[] = [];
     const warnings: string[] = [];

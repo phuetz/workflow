@@ -859,7 +859,7 @@ export class IdentityVerification extends EventEmitter {
     // Count method types by strength
     let hardwareTokenCount = 0
     let softwareTokenCount = 0
-    let passwordOnly = enabledMethods.length === 0
+    const passwordOnly = enabledMethods.length === 0
 
     for (const method of enabledMethods) {
       if (method.method === MFAMethod.FIDO2 || method.method === MFAMethod.BIOMETRIC) {

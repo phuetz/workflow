@@ -70,10 +70,10 @@ export const InteractiveOnboarding: React.FC<InteractiveOnboardingProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
-  const [_isPlaying, _setIsPlaying] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_isPlaying, _setIsPlaying] = useState(false);  
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [_showTranscript, _setShowTranscript] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_showTranscript, _setShowTranscript] = useState(false);  
   const [interactionData, setInteractionData] = useState<Record<string, unknown>>({});
   const videoRef = useRef<HTMLVideoElement>(null);
 

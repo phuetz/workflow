@@ -142,7 +142,7 @@ export class QualityAnalyzer {
    * Score error handling coverage (0-100)
    */
   private scoreErrorHandling(nodes: WorkflowNode[], edges: WorkflowEdge[]): number {
-    let score = 100;
+    const score = 100;
 
     const errorProneNodes = nodes.filter(n =>
       ['httpRequest', 'database', 'webhook', 'email', 'stripe'].includes(n.type)

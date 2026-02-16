@@ -28,10 +28,10 @@ type ImapConnection = {
 };
 
 // Lazy-loaded dependencies with availability flags
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let chokidar: any = null;
 let chokidarAvailable = false;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 let imapSimple: any = null;
 let imapAvailable = false;
 
@@ -57,7 +57,7 @@ async function loadChokidar(): Promise<boolean> {
 async function loadImapSimple(): Promise<boolean> {
   if (imapAvailable) return true;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+     
     const module = await import(/* webpackIgnore: true */ 'imap-simple' as string);
     imapSimple = module.default || module;
     imapAvailable = true;
@@ -979,7 +979,7 @@ export class TriggerService extends BaseService {
     const poll = async () => {
       try {
         // Try dynamic import of imap module
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
+         
         const Imap = await import(/* webpackIgnore: true */ 'imap' as string).catch(() => null);
 
         if (Imap && Imap.default) {

@@ -33,7 +33,7 @@ export default function VersionControlHub({ isOpen, onClose }: VersionControlHub
   const [snapshots, setSnapshots] = useState<WorkflowSnapshot[]>([]);
   const [statistics, setStatistics] = useState<RepositoryStatistics | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [_showCreateRepo, setShowCreateRepo] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_showCreateRepo, setShowCreateRepo] = useState(false);  
   const [showCommitDiff, setShowCommitDiff] = useState<WorkflowCommit | null>(null);
 
   const loadRepositories = useCallback(async () => {

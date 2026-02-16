@@ -71,7 +71,7 @@ export class StripeNodeExecutor implements NodeExecutor {
     }
     // Dynamic require to avoid compile-time dependency
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+       
       const StripeClass = require('stripe');
       return new StripeClass(apiKey, {
         apiVersion: '2023-10-16' as any
@@ -293,7 +293,7 @@ export class StripeNodeExecutor implements NodeExecutor {
       );
 
       // Process different event types
-      let result: any = { success: true, event: event.type };
+      const result: any = { success: true, event: event.type };
 
       switch (event.type) {
         case 'payment_intent.succeeded':

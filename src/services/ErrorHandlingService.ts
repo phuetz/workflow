@@ -110,7 +110,7 @@ export class ErrorHandlingService extends BaseService implements IErrorHandlingS
       name: 'Rate Limit Backoff',
       description: 'Wait and retry when rate limited',
       applicable: (error) => error.category === 'rate_limit',
-      execute: async (error, _context) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+      execute: async (error, _context) => {  
         // Extract retry-after header or use default
         const retryAfter = error.context.metadata?.retryAfter as number || 60000;
 
@@ -158,7 +158,7 @@ export class ErrorHandlingService extends BaseService implements IErrorHandlingS
               variables: new Map([...Array.from(context.variables), ['credentials_refreshed', true]])
             }
           };
-        } catch (_refreshError) { // eslint-disable-line @typescript-eslint/no-unused-vars
+        } catch (_refreshError) {  
           return {
             success: false,
             action: 'escalate',
@@ -236,7 +236,7 @@ export class ErrorHandlingService extends BaseService implements IErrorHandlingS
       name: 'Graceful Degradation',
       description: 'Continue with reduced functionality',
       applicable: (error) => error.severity !== 'critical' && error.severity !== 'fatal',
-      execute: async (_error, _context) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+      execute: async (_error, _context) => {  
         return {
           success: true,
           action: 'fail_gracefully',
@@ -321,7 +321,7 @@ export class ErrorHandlingService extends BaseService implements IErrorHandlingS
   }
 
   private async performAllHealthChecks(): Promise<void> {
-    for (const [id, _healthCheck] of Array.from(this.healthChecks.entries())) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    for (const [id, _healthCheck] of Array.from(this.healthChecks.entries())) {  
       try {
         await this.performHealthCheck(id);
       } catch (error) {
@@ -983,7 +983,7 @@ export class ErrorHandlingService extends BaseService implements IErrorHandlingS
     return Array.from(causes);
   }
 
-  private generateRecommendedActions(category: ErrorCategory, _code: string): string[] { // eslint-disable-line @typescript-eslint/no-unused-vars
+  private generateRecommendedActions(category: ErrorCategory, _code: string): string[] {  
     const actions: string[] = [];
 
     switch (category) {
@@ -1369,11 +1369,11 @@ export class ErrorHandlingService extends BaseService implements IErrorHandlingS
   }
 
   // Additional utility methods for fault tolerance features
-  public async enableFaultTolerance(_workflowId: string, _config: FaultToleranceConfig): Promise<void> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  public async enableFaultTolerance(_workflowId: string, _config: FaultToleranceConfig): Promise<void> {  
     // Implementation for enabling fault tolerance
   }
 
-  public async disableFaultTolerance(_workflowId: string): Promise<void> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  public async disableFaultTolerance(_workflowId: string): Promise<void> {  
     // Implementation for disabling fault tolerance
   }
 
@@ -1381,7 +1381,7 @@ export class ErrorHandlingService extends BaseService implements IErrorHandlingS
     return this.faultToleranceConfigs.get(workflowId) || null;
   }
 
-  public async updateCircuitBreaker(_breakerId: string, _updates: Partial<CircuitBreaker>): Promise<void> { // eslint-disable-line @typescript-eslint/no-unused-vars
+  public async updateCircuitBreaker(_breakerId: string, _updates: Partial<CircuitBreaker>): Promise<void> {  
     // Implementation for updating circuit breaker
   }
 

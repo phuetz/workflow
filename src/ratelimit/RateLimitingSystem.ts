@@ -395,7 +395,7 @@ export class RateLimitingSystem extends EventEmitter {
     const windowStart = Math.floor(now / rule.window) * rule.window;
     const windowKey = `${key}:${windowStart}`;
 
-    let count = this.getWindowCount(windowKey);
+    const count = this.getWindowCount(windowKey);
     const cost = rule.cost || 1;
 
     if (count + cost <= rule.limit) {

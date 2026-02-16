@@ -415,7 +415,7 @@ export class StorageManager {
   private async storeWithAdapter(
     key: string,
     item: StorageItem,
-    _options: Required<Omit<StorageOptions, 'ttl'>> & { ttl?: number } // eslint-disable-line @typescript-eslint/no-unused-vars
+    _options: Required<Omit<StorageOptions, 'ttl'>> & { ttl?: number }  
   ): Promise<boolean> {
     const serialized = JSON.stringify(item);
 

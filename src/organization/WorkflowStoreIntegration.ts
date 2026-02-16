@@ -214,7 +214,7 @@ export class WorkflowOrganizationManager {
     const folder = folderService.getFolder(folderId);
     if (!folder) return [];
 
-    let workflowIds = [...folder.workflowIds];
+    const workflowIds = [...folder.workflowIds];
 
     if (includeSubfolders) {
       const descendants = folderService.getDescendants(folderId);

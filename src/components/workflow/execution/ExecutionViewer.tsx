@@ -51,7 +51,7 @@ const ExecutionViewer = memo(function ExecutionViewer() {
     darkMode
   } = useWorkflowStore();
 
-  const [_selectedExecution, setSelectedExecution] = useState<string | null>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_selectedExecution, setSelectedExecution] = useState<string | null>(null);  
   const [showRawData, setShowRawData] = useState(false);
   const [activeTab, setActiveTab] = useState('results');
 

@@ -475,7 +475,7 @@ export class StreamProcessor extends EventEmitter {
 
     // Parse string function (simple eval for expressions)
     try {
-      // eslint-disable-next-line no-new-func
+       
       return new Function('event', 'index', `return ${fn}`) as TransformFunction;
     } catch {
       return (event) => event;

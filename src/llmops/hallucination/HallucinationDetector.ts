@@ -112,7 +112,7 @@ export class HallucinationDetector {
     const truthFacts = this.extractFacts(groundTruth);
 
     let consistentFacts = 0;
-    let totalFacts = responseFacts.length;
+    const totalFacts = responseFacts.length;
 
     for (const fact of responseFacts) {
       // Check if fact is supported by ground truth

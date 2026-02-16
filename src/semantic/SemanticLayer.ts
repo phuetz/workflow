@@ -67,7 +67,7 @@ export class SemanticLayer {
    */
   getEntity(idOrName: string): Entity | undefined {
     // Try by ID first
-    let entity = this.entities.get(idOrName);
+    const entity = this.entities.get(idOrName);
     if (entity) return entity;
 
     // Try by name
@@ -138,7 +138,7 @@ export class SemanticLayer {
    */
   getMetric(idOrName: string): Metric | undefined {
     // Try by ID first
-    let metric = this.metrics.get(idOrName);
+    const metric = this.metrics.get(idOrName);
     if (metric) return metric;
 
     // Try by name
@@ -494,7 +494,7 @@ export class SemanticLayer {
    */
   getDimension(idOrName: string): Dimension | undefined {
     // Try by ID first
-    let dimension = this.dimensions.get(idOrName);
+    const dimension = this.dimensions.get(idOrName);
     if (dimension) return dimension;
 
     // Try by name

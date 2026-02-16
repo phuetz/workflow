@@ -487,7 +487,7 @@ async function exportToXLSX(
 
   try {
     // Try to use xlsx library if available
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const XLSX = await import('xlsx' as string) as any;
 
     // Prepare data for worksheet

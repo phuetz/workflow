@@ -29,25 +29,25 @@ interface VariablesManagerProps {
 
 export const VariablesManager: React.FC<VariablesManagerProps> = ({
   workflowId,
-  onVariableSelect: _onVariableSelect // eslint-disable-line @typescript-eslint/no-unused-vars
+  onVariableSelect: _onVariableSelect  
 }) => {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'variables' | 'environments' | 'secrets' | 'groups'>('variables');
   const [variables, setVariables] = useState<WorkflowVariable[]>([]);
   const [environments, setEnvironments] = useState<Environment[]>([]);
-  const [_secrets, _setSecrets] = useState<Secret[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
-  const [_groups, _setGroups] = useState<VariableGroup[]>([]); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_secrets, _setSecrets] = useState<Secret[]>([]);  
+  const [_groups, _setGroups] = useState<VariableGroup[]>([]);  
   const [selectedVariable, setSelectedVariable] = useState<WorkflowVariable | null>(null);
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [_showEditModal, setShowEditModal] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_showEditModal, setShowEditModal] = useState(false);  
   const [createType, setCreateType] = useState<'variable' | 'environment' | 'secret' | 'group'>('variable');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterScope, setFilterScope] = useState<VariableScope | 'all'>('all');
   const [filterType, setFilterType] = useState<VariableType | 'all'>('all');
   const [showHistory, setShowHistory] = useState(false);
   const [variableHistory, setVariableHistory] = useState<VarHistory[]>([]);
-  const [_expandedGroups, _setExpandedGroups] = useState<Set<string>>(new Set()); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [_expandedGroups, _setExpandedGroups] = useState<Set<string>>(new Set());  
 
   // Form states
   const [formData, setFormData] = useState({

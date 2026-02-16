@@ -6,7 +6,7 @@
 // Lazy import to avoid circular dependency during bundling
 const getLogger = () => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     return require('../services/LoggingService').logger;
   } catch {
     // Fallback during build time

@@ -20,10 +20,7 @@
     "**/__tests__/**",
     "tests/**",
     "**/*.tsx",
-    "src/backend/database/ConnectionPool.ts",
     "src/backend/database/testingRepository.ts",
-    "src/backend/services/executionService.ts",
-    "src/backend/services/analyticsService.ts",
     "src/services/TestingService.ts"
   ],
   "include": [

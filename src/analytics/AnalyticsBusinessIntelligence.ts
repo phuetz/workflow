@@ -595,7 +595,7 @@ export class AnalyticsBusinessIntelligence extends EventEmitter {
     }
 
     // Group by dimensions
-    let grouped: Map<string, AnalyticsEvent[]> = new Map();
+    const grouped: Map<string, AnalyticsEvent[]> = new Map();
     
     if (query.groupBy?.length) {
       for (const event of events) {
