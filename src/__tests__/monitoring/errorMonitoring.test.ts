@@ -13,20 +13,37 @@ import { ErrorPatternAnalyzer } from '../../monitoring/ErrorPatternAnalyzer';
 import { AutoCorrection } from '../../monitoring/AutoCorrection';
 import { ErrorStorage } from '../../monitoring/ErrorStorage';
 
+/**
+ * Helper: Reset the ErrorMonitoringSystem singleton between tests.
+ * The class uses a static `instance` field that persists across tests,
+ * causing state leaks. We forcibly clear it via reflection.
+ */
+function resetSingleton(): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (ErrorMonitoringSystem as any).instance = undefined;
+}
+
 describe('ErrorMonitoringSystem', () => {
   let monitor: ErrorMonitoringSystem;
 
   beforeEach(() => {
+    resetSingleton();
     monitor = ErrorMonitoringSystem.getInstance({
       enabled: true,
       captureUnhandledRejections: false, // Disable for tests
       captureConsoleErrors: false,
       sampleRate: 1.0,
     });
+    // The captureError method emits an 'error' event on the EventEmitter.
+    // In Node.js, unhandled 'error' events on EventEmitters throw.
+    // Add a no-op listener so these events are silently consumed.
+    monitor.on('error', () => {});
   });
 
   afterEach(async () => {
     await monitor.shutdown();
+    monitor.removeAllListeners();
+    resetSingleton();
   });
 
   describe('Error Capture', () => {
@@ -62,9 +79,14 @@ describe('ErrorMonitoringSystem', () => {
     });
 
     it('should respect sample rate', () => {
+      // Reset singleton so we can create one with a low sample rate
+      resetSingleton();
       const lowRateMonitor = ErrorMonitoringSystem.getInstance({
         sampleRate: 0.1,
+        captureUnhandledRejections: false,
+        captureConsoleErrors: false,
       });
+      lowRateMonitor.on('error', () => {});
 
       const errors: (ErrorEvent | null)[] = [];
       for (let i = 0; i < 100; i++) {
@@ -73,6 +95,9 @@ describe('ErrorMonitoringSystem', () => {
 
       const captured = errors.filter(e => e !== null).length;
       expect(captured).toBeLessThan(30); // Should capture roughly 10%
+
+      // Clean up this monitor - assign to outer variable so afterEach handles shutdown
+      monitor = lowRateMonitor;
     });
 
     it('should ignore configured error patterns', () => {
@@ -224,26 +249,42 @@ describe('ErrorPatternAnalyzer', () => {
     });
 
     it('should cluster similar patterns', async () => {
+      // The clustering algorithm requires:
+      // 1. Each pattern must have count >= minOccurrences (3)
+      // 2. Multiple patterns must exist with high Jaccard similarity (>= 0.7)
+      // 3. Clusters are only created when cluster.length > 1
+      //
+      // We create errors with different messages that share most words
+      // (high Jaccard similarity) but normalize to different signatures.
+      // Each group of 3+ identical-signature errors creates a pattern that
+      // meets the minOccurrences threshold. The two groups share enough words
+      // to be similar.
       const errors: ErrorEvent[] = [
-        ...Array.from({ length: 5 }, (_, i) => ({
-          id: `error-network-${i}`,
+        // Group 1: "Network timeout on api request" (3 errors -> count=3)
+        ...Array.from({ length: 3 }, (_, i) => ({
+          id: `error-a-${i}`,
           timestamp: new Date(),
           type: 'network' as const,
           severity: 'high' as const,
-          message: `Network timeout on request ${i}`,
-          fingerprint: 'network-timeout',
+          message: 'Network timeout on api request',
+          fingerprint: 'network-timeout-api',
           context: { timestamp: new Date(), environment: 'production' as const },
           metadata: {},
           resolved: false,
           attempts: 0,
         })),
-        ...Array.from({ length: 5 }, (_, i) => ({
-          id: `error-validation-${i}`,
+        // Group 2: "Network timeout on api connection" (3 errors -> count=3)
+        // Jaccard similarity with group 1: intersection={Network,timeout,on,api}=4
+        // union={Network,timeout,on,api,request,connection}=6 => 4/6=0.67
+        // That's below 0.7, so let's adjust to share more words:
+        // Group 2: "Network timeout on api request retry" (different signature due to extra word)
+        ...Array.from({ length: 3 }, (_, i) => ({
+          id: `error-b-${i}`,
           timestamp: new Date(),
-          type: 'validation' as const,
-          severity: 'low' as const,
-          message: `Invalid input field ${i}`,
-          fingerprint: 'validation-error',
+          type: 'network' as const,
+          severity: 'high' as const,
+          message: 'Network timeout on api request retry',
+          fingerprint: 'network-timeout-api-retry',
           context: { timestamp: new Date(), environment: 'production' as const },
           metadata: {},
           resolved: false,
@@ -253,7 +294,9 @@ describe('ErrorPatternAnalyzer', () => {
 
       const analysis = await analyzer.analyzeErrors(errors);
 
-      expect(analysis.clusters).toBeTruthy();
+      // Verify patterns were created (at least 2 distinct patterns meeting threshold)
+      expect(analysis.patterns.length).toBeGreaterThanOrEqual(2);
+      // The two patterns share 5/6 words = Jaccard ~0.83, should cluster
       expect(analysis.clusters.length).toBeGreaterThan(0);
     });
 
@@ -373,6 +416,15 @@ describe('AutoCorrection', () => {
 
   beforeEach(() => {
     autoCorrection = new AutoCorrection();
+    // Mock the sleep method to avoid real delays in tests.
+    // The strategies use this.sleep() for retry backoff, rate limit waits,
+    // and service restart delays. Without mocking, tests timeout at 15s.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    vi.spyOn(autoCorrection as any, 'sleep').mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('Strategy Execution', () => {
@@ -716,8 +768,21 @@ describe('ErrorStorage', () => {
 });
 
 describe('Integration Tests', () => {
+  beforeEach(() => {
+    resetSingleton();
+  });
+
+  afterEach(() => {
+    resetSingleton();
+  });
+
   it('should work end-to-end', async () => {
-    const monitor = ErrorMonitoringSystem.getInstance();
+    const monitor = ErrorMonitoringSystem.getInstance({
+      captureUnhandledRejections: false,
+      captureConsoleErrors: false,
+    });
+    // Prevent unhandled 'error' EventEmitter events from throwing
+    monitor.on('error', () => {});
 
     // Capture errors
     monitor.captureError({ message: 'Error 1', severity: 'high', type: 'network' });
@@ -733,10 +798,16 @@ describe('Integration Tests', () => {
     expect(recentErrors.length).toBeGreaterThan(0);
 
     await monitor.shutdown();
+    monitor.removeAllListeners();
   });
 
   it('should handle high volume of errors', async () => {
-    const monitor = ErrorMonitoringSystem.getInstance();
+    const monitor = ErrorMonitoringSystem.getInstance({
+      captureUnhandledRejections: false,
+      captureConsoleErrors: false,
+    });
+    // Prevent unhandled 'error' EventEmitter events from throwing
+    monitor.on('error', () => {});
 
     // Capture many errors quickly
     const promises = Array.from({ length: 100 }, (_, i) =>
@@ -749,5 +820,6 @@ describe('Integration Tests', () => {
     expect(stats.total).toBeGreaterThanOrEqual(100);
 
     await monitor.shutdown();
+    monitor.removeAllListeners();
   });
 });
