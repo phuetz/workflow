@@ -1,6 +1,5 @@
 import Redis from 'ioredis';
 import { createExecution, updateExecution, getWorkflow } from '../repositories/adapters';
-import { executeWorkflowSimple } from './simpleExecutionService';
 import { emitExecutionQueued, emitExecutionStarted, emitExecutionFinished } from './events';
 import { recordExecutionQueued, recordExecutionStarted, recordExecutionFinished } from './metrics';
 import { logger } from '../../../services/SimpleLogger';
@@ -43,6 +42,37 @@ async function getRedis(): Promise<any | null> {
   }
 }
 
+/** Execute a workflow via the unified executionService (53+ node executors) */
+async function executeViaUnifiedEngine(workflowId: string, input: unknown, execId: string): Promise<void> {
+  const { executionService } = await import('../../../backend/services/executionService');
+  const wf = await getWorkflow(workflowId);
+  if (!wf) throw new Error('Workflow not found');
+
+  // Map the adapter workflow to the shape executionService expects
+  const workflow = {
+    id: wf.id,
+    name: wf.name,
+    nodes: wf.nodes || [],
+    edges: wf.edges || [],
+    settings: (wf.settings as Record<string, any>) || {},
+  };
+
+  const execution = await executionService.startExecution(workflow as any, input || {}, 'queue');
+
+  // Poll for completion (executionService runs async)
+  const deadline = Date.now() + 5 * 60 * 1000;
+  const pollMs = 500;
+  while (Date.now() < deadline) {
+    const current = await executionService.getExecution(execution.id);
+    if (!current) break;
+    if (current.status !== 'pending' && current.status !== 'running') {
+      return;
+    }
+    await new Promise(r => setTimeout(r, pollMs));
+  }
+  throw new Error(`Execution timed out: ${execution.id}`);
+}
+
 export async function enqueueExecution(workflowId: string, input?: unknown) {
   const exec = await createExecution(workflowId, input);
   if (!exec) throw new Error('Failed to create execution');
@@ -64,17 +94,14 @@ export async function enqueueExecution(workflowId: string, input?: unknown) {
     logger.debug('Execution pushed to Redis queue', { executionId: exec.id, queue: QUEUE });
     startWorker();
   } else {
-    // in-memory fallback: immediate execution async
+    // in-memory fallback: immediate execution via unified engine
     logger.debug('Using in-memory execution (no Redis)', { executionId: exec.id });
     setImmediate(async () => {
       try {
-        const wf = await getWorkflow(workflowId);
-        if (!wf) throw new Error('Workflow not found');
         await updateExecution(exec.id, { status: 'running', startedAt: new Date().toISOString() });
-        const res = await executeWorkflowSimple(wf, input);
-        await updateExecution(res.id, res);
+        await executeViaUnifiedEngine(workflowId, input, exec.id);
         queueStats.processed++;
-        logger.debug('In-memory execution completed', { executionId: exec.id, status: res.status });
+        logger.debug('In-memory execution completed', { executionId: exec.id });
       } catch (err: any) {
         queueStats.failed++;
         logger.error('In-memory execution failed', {
@@ -163,32 +190,24 @@ async function processMessage(msg: any) {
     await updateExecution(id, { status: 'running', startedAt });
     emitExecutionStarted({ id, workflowId, startedAt: new Date().toISOString() });
     recordExecutionStarted(workflowId);
-    const wf = await getWorkflow(workflowId);
-    if (!wf) throw new Error('Workflow not found');
-    const result = await executeWorkflowSimple(wf, input);
-    const finishedAt = result.finishedAt || new Date().toISOString();
-    const durationMs = Date.now() - startTime;
 
-    const updated = await updateExecution(id, {
-      status: result.status,
-      output: result.output,
-      error: result.error,
-      finishedAt,
-      durationMs: result.durationMs,
-    });
+    // Delegate to unified execution engine (53+ node types)
+    await executeViaUnifiedEngine(workflowId, input, id);
+
+    const finishedAt = new Date().toISOString();
+    const durationMs = Date.now() - startTime;
 
     queueStats.processed++;
 
     logger.info('Execution completed', {
       executionId: id,
       workflowId,
-      status: updated?.status || result.status,
       durationMs,
       queueStats: { ...queueStats }
     });
 
-    emitExecutionFinished({ id, workflowId, status: String(updated?.status || result.status), finishedAt: String(updated?.finishedAt || new Date().toISOString()), error: updated?.error });
-    recordExecutionFinished(workflowId, String(updated?.status || result.status), updated?.durationMs);
+    emitExecutionFinished({ id, workflowId, status: 'success', finishedAt });
+    recordExecutionFinished(workflowId, 'success', durationMs);
   } catch (err: any) {
     const attempts = (msg.attempts || 0) + 1;
     const max = Number(process.env.MAX_RETRIES || 3);

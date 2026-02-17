@@ -6,11 +6,8 @@
 import { Queue, Worker, Job, QueueEvents, JobsOptions } from 'bullmq';
 import Redis from 'ioredis';
 import { logger } from '../../services/SimpleLogger';
-import { WorkflowExecutor } from '../../components/ExecutionEngine';
 import { prisma } from '../database/prisma';
-import { Prisma, ExecutionStatus } from '@prisma/client';
-import type { NodeExecutionResult } from '../../components/execution/types';
-import type { WorkflowNode, WorkflowEdge } from '../../types/workflow';
+import { ExecutionStatus } from '@prisma/client';
 
 // Job data types
 interface WorkflowExecutionData {
@@ -735,10 +732,10 @@ export class QueueManager {
   }
 
   /**
-   * Process workflow execution job
+   * Process workflow execution job — delegates to backend executionService (50+ executors).
    */
   private async processWorkflowExecution(data: WorkflowExecutionData): Promise<JobResult> {
-    const { executionId, workflowId, inputData, triggeredBy, workflow } = data;
+    const { executionId, workflowId, inputData, triggeredBy } = data;
     const startTime = Date.now();
 
     logger.info(`Processing workflow execution: ${executionId}`, {
@@ -747,90 +744,61 @@ export class QueueManager {
     });
 
     try {
-      // Get workflow data from the job (passed from the API route)
-      const nodes = workflow?.nodes || [];
-      const edges = workflow?.edges || [];
-
-      if (nodes.length === 0) {
-        throw new Error('Workflow has no nodes to execute');
+      // Load workflow from Prisma
+      const workflowRow = await prisma.workflow.findUnique({ where: { id: workflowId } });
+      if (!workflowRow) {
+        throw new Error(`Workflow not found: ${workflowId}`);
       }
 
-      // Create executor with the workflow nodes and edges
-      // Cast nodes since queue data carries a simplified shape without full NodeData/position
-      const executor = new WorkflowExecutor(
-        nodes.map(n => ({ ...n, position: { x: 0, y: 0 } })) as unknown as WorkflowNode[],
-        edges as WorkflowEdge[]
-      );
+      // Import executionService lazily to avoid circular deps
+      const { executionService } = await import('../services/executionService');
 
-      // Track node execution results
-      const nodeResults: Record<string, any> = {};
-      const executedNodes: string[] = [];
-      const errors: Array<{ nodeId: string; error: string }> = [];
-
-      // Execute the workflow
-      const results = await executor.execute(
-        // onNodeStart
-        (nodeId: string) => {
-          logger.debug(`Starting node: ${nodeId}`, { executionId, workflowId });
-        },
-        // onNodeComplete
-        (nodeId: string, inputDataForNode: Record<string, unknown>, result: NodeExecutionResult) => {
-          nodeResults[nodeId] = result;
-          executedNodes.push(nodeId);
-          logger.debug(`Node completed: ${nodeId}`, { executionId, workflowId, status: result.status });
-        },
-        // onNodeError
-        (nodeId: string, error: { message: string; stack?: string; code: string }) => {
-          errors.push({ nodeId, error: error.message });
-          logger.error(`Node error: ${nodeId}`, { error: error.message, executionId, workflowId });
-        }
-      );
-
-      const duration = Date.now() - startTime;
-      const hasErrors = errors.length > 0;
-      const status = hasErrors ? ExecutionStatus.FAILED : ExecutionStatus.SUCCESS;
-
-      // Convert Map results to object
-      const outputData: Record<string, any> = {};
-      Array.from(results.entries()).forEach(([nodeId, nodeResult]) => {
-        outputData[nodeId] = nodeResult;
-      });
-
-      // Update execution record in database
-      await prisma.workflowExecution.update({
-        where: { id: executionId },
-        data: {
-          status,
-          finishedAt: new Date(),
-          duration,
-          executionData: {
-            nodeResults: outputData,
-            executedNodes,
-            errors: errors.length > 0 ? errors : undefined
-          },
-          output: outputData,
-          error: hasErrors ? { errors, message: errors.map(e => `${e.nodeId}: ${e.error}`).join('; ') } : Prisma.DbNull
-        }
-      });
-
-      logger.info(`Workflow execution completed: ${executionId}`, {
-        workflowId,
-        status,
-        duration,
-        nodesExecuted: executedNodes.length,
-        errorsCount: errors.length
-      });
-
-      return {
-        executionId,
-        workflowId,
-        triggeredBy,
-        status: status.toLowerCase(),
-        duration,
-        nodesExecuted: executedNodes.length,
-        output: outputData,
-        errors: errors.length > 0 ? errors : undefined
+      // Map Prisma workflow to the shape executionService expects
+      const workflow = {
+        id: workflowRow.id,
+        name: workflowRow.name,
+        nodes: workflowRow.nodes || [],
+        edges: workflowRow.edges || [],
+        settings: (workflowRow.settings as Record<string, any>) || {},
       };
+
+      // Delegate to the unified execution engine (persists to Prisma, emits SSE)
+      const execution = await executionService.startExecution(
+        workflow as any,
+        inputData || {},
+        triggeredBy || 'queue'
+      );
+
+      // Poll until execution completes (500ms interval, 5min timeout)
+      const maxWaitMs = 5 * 60 * 1000;
+      const pollMs = 500;
+      const deadline = Date.now() + maxWaitMs;
+
+      while (Date.now() < deadline) {
+        const current = await executionService.getExecution(execution.id);
+        if (!current) break;
+        if (current.status !== 'pending' && current.status !== 'running') {
+          const duration = Date.now() - startTime;
+          logger.info(`Workflow execution completed: ${execution.id}`, {
+            workflowId,
+            status: current.status,
+            duration,
+          });
+          return {
+            executionId: execution.id,
+            workflowId,
+            triggeredBy,
+            status: current.status,
+            duration,
+            error: current.error,
+          };
+        }
+        await this.delay(pollMs);
+      }
+
+      // Timeout
+      await executionService.cancelExecution(execution.id);
+      throw new Error(`Execution ${execution.id} timed out after ${maxWaitMs}ms`);
 
     } catch (error: unknown) {
       const duration = Date.now() - startTime;
@@ -842,18 +810,22 @@ export class QueueManager {
         duration
       });
 
-      // Update execution record with failure
-      await prisma.workflowExecution.update({
-        where: { id: executionId },
-        data: {
-          status: ExecutionStatus.FAILED,
-          finishedAt: new Date(),
-          duration,
-          error: { message: err.message, stack: err.stack }
-        }
-      });
+      // Update execution record with failure (best-effort)
+      try {
+        await prisma.workflowExecution.update({
+          where: { id: executionId },
+          data: {
+            status: ExecutionStatus.FAILED,
+            finishedAt: new Date(),
+            duration,
+            error: { message: err.message, stack: err.stack }
+          }
+        });
+      } catch {
+        // executionId may have been generated by executionService — ignore update failures
+      }
 
-      throw err; // Re-throw for retry logic
+      throw err;
     }
   }
 

@@ -39,30 +39,65 @@ import { parsePaginationParams, createPaginatedResponse } from '../utils/paginat
 
 export const executionRouter = Router();
 
-// List all executions
+// List all executions — query Prisma with pagination and optional filters
 executionRouter.get('/', validateQuery(executionListQuerySchema), asyncHandler(async (req, res) => {
-  // In a real implementation, this would query a database
-  // For now, return empty array with standardized pagination
   const paginationParams = parsePaginationParams(req, { page: 1, limit: 50 });
   const workflowId = req.query.workflowId as string | undefined;
+  const status = req.query.status as string | undefined;
 
-  // Return standardized paginated response
-  const response = createPaginatedResponse(
-    [],
-    0,
-    paginationParams,
-    '/api/executions'
-  );
+  const where: Record<string, unknown> = {};
+  if (workflowId) where.workflowId = workflowId;
+  if (status) where.status = String(status).toUpperCase();
 
-  res.json({
-    success: true,
-    ...response
-  });
+  try {
+    const [items, total] = await Promise.all([
+      prisma.workflowExecution.findMany({
+        where,
+        orderBy: { startedAt: 'desc' },
+        skip: (paginationParams.page - 1) * paginationParams.limit,
+        take: paginationParams.limit,
+        select: {
+          id: true,
+          workflowId: true,
+          userId: true,
+          status: true,
+          trigger: true,
+          startedAt: true,
+          finishedAt: true,
+          duration: true,
+          error: true,
+        },
+      }),
+      prisma.workflowExecution.count({ where }),
+    ]);
+
+    const response = createPaginatedResponse(items, total, paginationParams, '/api/executions');
+    res.json({ success: true, ...response });
+  } catch (err) {
+    // Fallback to empty if Prisma unavailable
+    logger.warn('Failed to query executions from Prisma, returning empty', { error: String(err) });
+    const response = createPaginatedResponse([], 0, paginationParams, '/api/executions');
+    res.json({ success: true, ...response });
+  }
 }));
 
-// Get execution detail
+// Get execution detail — Prisma with nodeExecutions, hot cache fallback
 executionRouter.get('/:id', validateParams(executionIdSchema), asyncHandler(async (req, res) => {
-  const exec = getExecution(req.params.id);
+  // Try Prisma first for full data with node executions
+  try {
+    const dbExec = await prisma.workflowExecution.findUnique({
+      where: { id: req.params.id },
+      include: { nodeExecutions: { orderBy: { startedAt: 'asc' } } },
+    });
+    if (dbExec) {
+      return res.json(dbExec);
+    }
+  } catch (err) {
+    logger.warn('Prisma lookup failed, falling back to adapter', { error: String(err) });
+  }
+
+  // Fallback to in-memory adapter
+  const exec = await getExecution(req.params.id);
   if (!exec) throw new ApiError(404, 'Execution not found');
   res.json(exec);
 }));

@@ -34,6 +34,31 @@ import {
   noOperationExecutor, stopAndErrorExecutor, respondToWebhookExecutor,
   errorGeneratorExecutor,
 } from './utilityExecutor';
+import {
+  // CRM / Business
+  salesforceExecutor, hubspotExecutor, pipedriveExecutor, zendeskExecutor,
+  intercomExecutor, freshdeskExecutor,
+  // Project Management
+  jiraExecutor, asanaExecutor, mondayExecutor, clickupExecutor, linearExecutor,
+  notionExecutor, trelloExecutor,
+  // Communication
+  teamsExecutor, twilioExecutor, sendgridExecutor, mailchimpExecutor, telegramExecutor,
+  // Cloud Storage
+  googleDriveExecutor, dropboxExecutor, onedriveExecutor, azureBlobExecutor,
+  // Databases
+  redisExecutor, elasticsearchExecutor, dynamodbExecutor, supabaseExecutor, firebaseExecutor,
+  // Finance / Payments
+  stripeExecutor, paypalExecutor, quickbooksExecutor,
+  // Marketing / Analytics
+  googleAnalyticsExecutor, facebookAdsExecutor, mixpanelExecutor, segmentExecutor,
+  // AI / ML
+  anthropicExecutor, googleAiExecutor, cohereExecutor, pineconeExecutor,
+  // Developer Tools
+  githubExecutor, gitlabExecutor, bitbucketExecutor, dockerExecutor,
+  awsLambdaExecutor, gcpFunctionsExecutor,
+  // Misc / Utilities
+  rssFeedExecutor, xmlExecutor, graphqlExecutor, sshExecutor, ftpExecutor,
+} from './apiExecutors';
 import { logger } from '../../../services/SimpleLogger';
 
 export type { NodeExecutor, NodeExecutionContext, NodeExecutionResult };
@@ -117,6 +142,76 @@ export const nodeExecutors: Record<string, NodeExecutor> = {
 
   // Sub-workflows
   subWorkflow: subWorkflowExecutor,
+
+  // CRM / Business
+  salesforce: salesforceExecutor,
+  hubspot: hubspotExecutor,
+  pipedrive: pipedriveExecutor,
+  zendesk: zendeskExecutor,
+  intercom: intercomExecutor,
+  freshdesk: freshdeskExecutor,
+
+  // Project Management
+  jira: jiraExecutor,
+  asana: asanaExecutor,
+  monday: mondayExecutor,
+  clickup: clickupExecutor,
+  linear: linearExecutor,
+  notion: notionExecutor,
+  trello: trelloExecutor,
+
+  // Communication (extended)
+  microsoftTeams: teamsExecutor,
+  teams: teamsExecutor,
+  twilio: twilioExecutor,
+  sendgrid: sendgridExecutor,
+  mailchimp: mailchimpExecutor,
+  telegram: telegramExecutor,
+
+  // Cloud Storage
+  googleDrive: googleDriveExecutor,
+  dropbox: dropboxExecutor,
+  onedrive: onedriveExecutor,
+  azureBlob: azureBlobExecutor,
+
+  // Databases (extended)
+  redis: redisExecutor,
+  elasticsearch: elasticsearchExecutor,
+  dynamodb: dynamodbExecutor,
+  supabase: supabaseExecutor,
+  firebase: firebaseExecutor,
+
+  // Finance / Payments
+  stripe: stripeExecutor,
+  paypal: paypalExecutor,
+  quickbooks: quickbooksExecutor,
+
+  // Marketing / Analytics
+  googleAnalytics: googleAnalyticsExecutor,
+  facebookAds: facebookAdsExecutor,
+  mixpanel: mixpanelExecutor,
+  segment: segmentExecutor,
+
+  // AI / ML (extended)
+  anthropic: anthropicExecutor,
+  googleAi: googleAiExecutor,
+  cohere: cohereExecutor,
+  pinecone: pineconeExecutor,
+
+  // Developer Tools
+  github: githubExecutor,
+  gitlab: gitlabExecutor,
+  bitbucket: bitbucketExecutor,
+  docker: dockerExecutor,
+  awsLambda: awsLambdaExecutor,
+  gcpFunctions: gcpFunctionsExecutor,
+
+  // Misc / Utilities (extended)
+  rssFeed: rssFeedExecutor,
+  xml: xmlExecutor,
+  graphql: graphqlExecutor,
+  ssh: sshExecutor,
+  ftp: ftpExecutor,
 
   // Default executor for unknown types
   default: {

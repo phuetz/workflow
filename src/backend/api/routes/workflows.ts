@@ -22,6 +22,8 @@ import {
 } from '../middleware/validation';
 import { parsePaginationParams, createPaginatedResponse, toPrismaArgs } from '../utils/pagination';
 import { queueManager } from '../../queue/QueueManager';
+import { schedulerService } from '../../services/SchedulerService';
+import { createWebhook } from '../repositories/adapters';
 
 const router = Router();
 
@@ -408,78 +410,27 @@ router.post('/:id/execute', validateParams(workflowIdSchema), validateBody(execu
       });
     }
 
-    // Create execution record
-    const execution = await prisma.workflowExecution.create({
-      data: {
-        workflowId: id,
-        userId,
-        version: workflow.version,
-        status: ExecutionStatus.PENDING,
-        trigger: { type: 'manual', source: 'api' },
-        input: input || null,
-        executionData: {},
-        metadata: {},
-      },
-    });
+    // Use the unified execution engine directly (creates Prisma record + persists + emits SSE)
+    const { executionService } = await import('../../services/executionService');
+    const workflowData = {
+      id: workflow.id,
+      name: workflow.name,
+      nodes: workflow.nodes || [],
+      edges: workflow.edges || [],
+      settings: (workflow.settings as Record<string, any>) || {},
+    };
+
+    const execution = await executionService.startExecution(workflowData as any, input || {}, userId);
 
     logger.info(`Workflow ${id} execution started with id ${execution.id}`);
-
-    // Queue the execution for processing
-    try {
-      const jobId = await queueManager.addJob('workflow-execution', 'workflow_execution', {
-        executionId: execution.id,
-        workflowId: id,
-        inputData: input || {},
-        userId,
-        triggeredBy: 'manual',
-        workflow: {
-          nodes: workflow.nodes,
-          edges: workflow.edges,
-          settings: workflow.settings
-        } as any
-      }, {
-        priority: 'high',
-        maxAttempts: 3,
-        retryDelay: 5000
-      });
-
-      logger.info(`Workflow ${id} execution queued with job id ${jobId}`, {
-        context: { executionId: execution.id, jobId }
-      });
-
-      // Update execution status to running
-      await prisma.workflowExecution.update({
-        where: { id: execution.id },
-        data: { status: ExecutionStatus.RUNNING }
-      });
-
-    } catch (queueError: unknown) {
-      // If queueing fails, update execution status to failed
-      logger.error('Failed to queue workflow execution:', queueError);
-      const errorMessage = queueError instanceof Error ? queueError.message : 'Unknown error';
-      await prisma.workflowExecution.update({
-        where: { id: execution.id },
-        data: {
-          status: ExecutionStatus.FAILED,
-          error: { message: errorMessage, type: 'QUEUE_ERROR' },
-          finishedAt: new Date()
-        }
-      });
-
-      return res.status(500).json({
-        error: 'Failed to queue workflow execution',
-        message: errorMessage,
-        executionId: execution.id
-      });
-    }
 
     res.status(200).json({
       executionId: execution.id,
       status: 'running',
       workflowId: id,
       userId,
-      startTime: execution.startedAt.toISOString(),
-      message: 'Workflow execution has been queued for processing'
+      startTime: execution.startTime.toISOString(),
+      message: 'Workflow execution started'
     });
   } catch (error: unknown) {
     logger.error('Error executing workflow:', error);
@@ -671,6 +622,41 @@ router.post('/:id/activate', validateParams(workflowIdSchema), async (req: Reque
       data: { status: WorkflowStatus.ACTIVE },
     });
 
+    // Register trigger nodes (schedules + webhooks)
+    const nodes = (updatedWorkflow.nodes as any[]) || [];
+    for (const node of nodes) {
+      const nodeType = node.data?.type || node.type || '';
+      const config = node.data?.config || {};
+
+      // Schedule triggers
+      if (nodeType === 'schedule' || nodeType === 'scheduleTrigger') {
+        if (config.cronExpression || config.interval) {
+          try {
+            await schedulerService.registerSchedule(id, node.id, config);
+            logger.info(`Registered schedule for workflow ${id}, node ${node.id}`);
+          } catch (err) {
+            logger.warn(`Failed to register schedule for node ${node.id}`, { error: String(err) });
+          }
+        }
+      }
+
+      // Webhook triggers
+      if (nodeType === 'webhook' || nodeType === 'webhookTrigger') {
+        try {
+          const webhookPath = config.path || config.webhookPath || node.id;
+          await createWebhook({
+            workflowId: id,
+            name: node.data?.label || `Webhook ${node.id}`,
+            path: webhookPath,
+            method: config.method || 'POST',
+          });
+          logger.info(`Registered webhook for workflow ${id}, node ${node.id}`);
+        } catch (err) {
+          logger.warn(`Failed to register webhook for node ${node.id}`, { error: String(err) });
+        }
+      }
+    }
+
     logger.info(`Workflow ${id} activated successfully`);
 
     res.status(200).json({
@@ -721,6 +707,10 @@ router.post('/:id/deactivate', validateParams(workflowIdSchema), async (req: Req
       where: { id },
       data: { status: WorkflowStatus.INACTIVE },
     });
+
+    // Unregister all schedules for this workflow
+    schedulerService.unregisterWorkflow(id);
+    logger.info(`Unregistered schedules for workflow ${id}`);
 
     logger.info(`Workflow ${id} deactivated successfully`);
 

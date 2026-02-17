@@ -1,6 +1,6 @@
 import { CronExpressionParser } from 'cron-parser';
 import { listWorkflows, Workflow } from '../repositories/workflows';
-import { executeWorkflowSimple } from './simpleExecutionService';
+import { getWorkflow } from '../repositories/adapters';
 import { logger } from '../../../services/SimpleLogger';
 
 const lastRun = new Map<string, number>();
@@ -25,6 +25,30 @@ function nextDue(wf: Workflow): number | null {
   }
 }
 
+/** Execute via the unified executionService (53+ node types) */
+async function executeViaUnifiedEngine(workflowId: string): Promise<void> {
+  const { executionService } = await import('../../../backend/services/executionService');
+  const wf = await getWorkflow(workflowId);
+  if (!wf) {
+    logger.warn('Workflow not found for scheduled execution', { workflowId });
+    return;
+  }
+
+  const workflow = {
+    id: wf.id,
+    name: wf.name,
+    nodes: wf.nodes || [],
+    edges: wf.edges || [],
+    settings: (wf.settings as Record<string, any>) || {},
+  };
+
+  await executionService.startExecution(
+    workflow as any,
+    { trigger: 'schedule', at: new Date().toISOString() },
+    'scheduler'
+  );
+}
+
 async function tick() {
   const now = Date.now();
   for (const wf of listWorkflows().filter(w => w.status === 'active')) {
@@ -42,7 +66,7 @@ async function tick() {
         totalScheduledExecutions: scheduledWorkflowCount
       });
 
-      executeWorkflowSimple(wf, { trigger: 'schedule', at: new Date().toISOString() })
+      executeViaUnifiedEngine(wf.id)
         .then(() => {
           logger.debug('Scheduled workflow execution completed', {
             workflowId: wf.id,
@@ -90,4 +114,3 @@ export function stopScheduler() {
   }
   timer = null;
 }
-

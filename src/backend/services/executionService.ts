@@ -1,6 +1,7 @@
 /**
  * Workflow Execution Service
- * Handles real workflow execution with node processing and credential resolution
+ * Unified execution engine with Prisma persistence and SSE events.
+ * Hot cache (Map) for in-flight executions, Prisma for durable storage.
  */
 
 import { Workflow, workflowRepository } from '../database/workflowRepository';
@@ -11,6 +12,20 @@ import { emailService } from './emailService';
 import { userRepository } from '../database/userRepository';
 import { logger } from '../../services/SimpleLogger';
 import type { BackendNode } from './nodeExecutors/types';
+import {
+  createExecution as prismaCreateExecution,
+  updateExecution as prismaUpdateExecution,
+  getExecution as prismaGetExecution,
+  startNodeExecution,
+  finishNodeExecution,
+} from '../api/repositories/adapters';
+import {
+  emitExecutionStarted,
+  emitExecutionFinished,
+  emitNodeStarted,
+  emitNodeFinished,
+} from '../api/services/events';
+import { evaluateExpression, type EvalContext } from '../api/services/expressions';
 
 export interface WorkflowExecution {
   id: string;
@@ -76,21 +91,81 @@ function getEnvVars(): Record<string, string> {
   return env;
 }
 
+/** Serialize Map<string, NodeExecutionResult> to plain object for Prisma JSON */
+function serializeNodeResults(results: Map<string, NodeExecutionResult>): Record<string, any> {
+  const obj: Record<string, any> = {};
+  for (const [key, val] of results) {
+    obj[key] = {
+      ...val,
+      startTime: val.startTime.toISOString(),
+      endTime: val.endTime.toISOString(),
+    };
+  }
+  return obj;
+}
+
+/** Recursively resolve {{ expr }} in a config object */
+function resolveConfigExpressions(config: any, ctx: EvalContext): any {
+  if (typeof config === 'string') {
+    if (config.includes('{{') && config.includes('}}')) {
+      // If the whole string is one expression, return the raw value (preserve type)
+      const trimmed = config.trim();
+      if (trimmed.startsWith('{{') && trimmed.endsWith('}}') && trimmed.indexOf('{{', 2) === -1) {
+        try {
+          return evaluateExpression(trimmed, ctx);
+        } catch {
+          return config;
+        }
+      }
+      // Inline expressions within a longer string
+      return config.replace(/\{\{(.+?)\}\}/g, (_match: string, expr: string) => {
+        try {
+          const val = evaluateExpression(`{{ ${expr} }}`, ctx);
+          return val == null ? '' : String(val);
+        } catch {
+          return _match;
+        }
+      });
+    }
+    return config;
+  }
+  if (Array.isArray(config)) {
+    return config.map(item => resolveConfigExpressions(item, ctx));
+  }
+  if (config && typeof config === 'object') {
+    const resolved: Record<string, any> = {};
+    for (const [k, v] of Object.entries(config)) {
+      resolved[k] = resolveConfigExpressions(v, ctx);
+    }
+    return resolved;
+  }
+  return config;
+}
+
 export class ExecutionService {
   private executions: Map<string, WorkflowExecution> = new Map();
   private activeExecutions: Set<string> = new Set();
   private executionTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
   /**
-   * Start workflow execution
+   * Start workflow execution — creates a Prisma record, then executes asynchronously.
    */
   async startExecution(
     workflow: Workflow,
     input: any,
     userId: string
   ): Promise<WorkflowExecution> {
+    // Create Prisma-backed execution record
+    let dbId: string | undefined;
+    try {
+      const dbExec = await prismaCreateExecution(workflow.id, input);
+      dbId = dbExec?.id;
+    } catch (err) {
+      logger.warn('Failed to create Prisma execution record, using local ID', { error: String(err) });
+    }
+
     const execution: WorkflowExecution = {
-      id: this.generateExecutionId(),
+      id: dbId || this.generateExecutionId(),
       workflowId: workflow.id,
       workflowName: workflow.name,
       status: 'pending',
@@ -103,6 +178,7 @@ export class ExecutionService {
       logs: []
     };
 
+    // Hot cache for in-flight access
     this.executions.set(execution.id, execution);
     this.activeExecutions.add(execution.id);
 
@@ -122,7 +198,7 @@ export class ExecutionService {
   }
 
   /**
-   * Execute workflow
+   * Execute workflow — updates Prisma on status changes and emits SSE events.
    */
   private async executeWorkflow(
     execution: WorkflowExecution,
@@ -131,6 +207,14 @@ export class ExecutionService {
     try {
       execution.status = 'running';
       this.log(execution, 'info', 'Workflow execution started');
+
+      // Persist running status
+      await this.persistStatus(execution.id, 'running');
+      emitExecutionStarted({
+        id: execution.id,
+        workflowId: execution.workflowId,
+        startedAt: execution.startTime.toISOString(),
+      });
 
       analyticsService.trackEvent({
         type: 'workflow_start',
@@ -165,6 +249,16 @@ export class ExecutionService {
 
       this.log(execution, 'info', 'Workflow execution completed successfully');
 
+      // Persist success to Prisma
+      await this.persistCompletion(execution);
+
+      emitExecutionFinished({
+        id: execution.id,
+        workflowId: execution.workflowId,
+        status: 'success',
+        finishedAt: execution.endTime.toISOString(),
+      });
+
       await workflowRepository.updateStatistics(workflow.id, {
         success: true,
         duration: execution.duration
@@ -179,6 +273,17 @@ export class ExecutionService {
       execution.duration = execution.endTime.getTime() - execution.startTime.getTime();
 
       this.log(execution, 'error', 'Workflow execution failed', { error: execution.error });
+
+      // Persist failure to Prisma
+      await this.persistCompletion(execution);
+
+      emitExecutionFinished({
+        id: execution.id,
+        workflowId: execution.workflowId,
+        status: 'failure',
+        finishedAt: execution.endTime.toISOString(),
+        error: execution.error,
+      });
 
       await workflowRepository.updateStatistics(workflow.id, {
         success: false,
@@ -197,13 +302,18 @@ export class ExecutionService {
     } finally {
       this.activeExecutions.delete(execution.id);
       this.cleanupExecution(execution.id);
+      // Remove from hot cache after a delay (allow SSE clients to catch up)
+      setTimeout(() => {
+        this.executions.delete(execution.id);
+      }, 60_000);
     }
 
     await this.trackExecutionMetrics(execution);
   }
 
   /**
-   * Execute a single node with credential resolution
+   * Execute a single node with credential resolution, expression resolution,
+   * and Prisma per-node persistence.
    */
   private async executeNode(
     node: BackendNode,
@@ -223,6 +333,20 @@ export class ExecutionService {
       input: context
     };
 
+    // Persist node start to Prisma
+    try {
+      await startNodeExecution(execution.id, { id: node.id, name: nodeData.label || node.id, type: nodeType });
+    } catch (err) {
+      logger.warn('Failed to persist node start', { nodeId: node.id, error: String(err) });
+    }
+
+    emitNodeStarted({
+      execId: execution.id,
+      nodeId: node.id,
+      type: nodeType,
+      ts: Date.now(),
+    });
+
     try {
       this.log(execution, 'debug', `Executing node: ${node.id} (${nodeType})`);
       execution.executionPath.push(node.id);
@@ -238,15 +362,27 @@ export class ExecutionService {
         }
       }
 
+      // Resolve expressions in node config
+      const env = getEnvVars();
+      const rawConfig = nodeData.config || nodeData;
+      const evalCtx: EvalContext = {
+        json: context.results[node.id] || context.input || {},
+        node: context.results,
+        env,
+        vars: context.variables,
+        items: Object.values(context.results),
+      };
+      const resolvedConfig = resolveConfigExpressions(rawConfig, evalCtx);
+
       // Build execution context for the executor
       const execContext: NodeExecutionContext = {
         nodeId: node.id,
         workflowId: workflow.id,
         executionId: execution.id,
         input: context.results[node.id] || context.input,
-        config: nodeData.config || nodeData,
+        config: resolvedConfig,
         credentials,
-        env: getEnvVars(),
+        env,
         previousNodes: context.results,
       };
 
@@ -261,6 +397,22 @@ export class ExecutionService {
       context.results[node.id] = output.data !== undefined ? output.data : output;
 
       this.log(execution, 'debug', `Node ${node.id} executed successfully`);
+
+      // Persist node success to Prisma
+      try {
+        await finishNodeExecution(execution.id, node.id, 'success', output);
+      } catch (err) {
+        logger.warn('Failed to persist node finish', { nodeId: node.id, error: String(err) });
+      }
+
+      emitNodeFinished({
+        execId: execution.id,
+        nodeId: node.id,
+        type: nodeType,
+        ts: Date.now(),
+        status: 'success',
+        durationMs: nodeResult.duration,
+      });
 
       // Find and execute next nodes
       const edges = workflow.edges as BackendEdge[];
@@ -284,9 +436,53 @@ export class ExecutionService {
       nodeResult.duration = nodeResult.endTime.getTime() - nodeResult.startTime.getTime();
 
       this.log(execution, 'error', `Node ${node.id} failed`, { error: nodeResult.error });
+
+      // Persist node failure to Prisma
+      try {
+        await finishNodeExecution(execution.id, node.id, 'failure', undefined, nodeResult.error);
+      } catch (err) {
+        logger.warn('Failed to persist node failure', { nodeId: node.id, error: String(err) });
+      }
+
+      emitNodeFinished({
+        execId: execution.id,
+        nodeId: node.id,
+        type: nodeType,
+        ts: Date.now(),
+        status: 'failure',
+        durationMs: nodeResult.duration,
+      });
+
       throw error;
     } finally {
       execution.nodeResults.set(node.id, nodeResult);
+    }
+  }
+
+  /** Persist status change to Prisma (fire-and-forget with warning) */
+  private async persistStatus(executionId: string, status: string): Promise<void> {
+    try {
+      await prismaUpdateExecution(executionId, {
+        status,
+        startedAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      logger.warn('Failed to persist execution status', { executionId, status, error: String(err) });
+    }
+  }
+
+  /** Persist final execution state to Prisma */
+  private async persistCompletion(execution: WorkflowExecution): Promise<void> {
+    try {
+      await prismaUpdateExecution(execution.id, {
+        status: execution.status,
+        finishedAt: execution.endTime?.toISOString(),
+        durationMs: execution.duration,
+        output: serializeNodeResults(execution.nodeResults),
+        error: execution.error,
+      });
+    } catch (err) {
+      logger.warn('Failed to persist execution completion', { executionId: execution.id, error: String(err) });
     }
   }
 
@@ -377,6 +573,15 @@ export class ExecutionService {
     this.log(execution, 'error', 'Workflow execution timed out');
     this.activeExecutions.delete(executionId);
     this.cleanupExecution(executionId);
+
+    await this.persistCompletion(execution);
+    emitExecutionFinished({
+      id: execution.id,
+      workflowId: execution.workflowId,
+      status: 'timeout',
+      finishedAt: execution.endTime.toISOString(),
+      error: execution.error,
+    });
   }
 
   private async retryExecution(
@@ -475,8 +680,38 @@ export class ExecutionService {
     execution.logs.push({ timestamp: new Date(), level, message, data });
   }
 
+  /** Get execution — hot cache first, then Prisma fallback */
   async getExecution(executionId: string): Promise<WorkflowExecution | null> {
-    return this.executions.get(executionId) || null;
+    const cached = this.executions.get(executionId);
+    if (cached) return cached;
+
+    // Fall back to Prisma
+    try {
+      const dbExec = await prismaGetExecution(executionId);
+      if (!dbExec) return null;
+
+      // Map Prisma record to WorkflowExecution shape
+      const record = dbExec as Record<string, any>;
+      return {
+        id: record.id,
+        workflowId: record.workflowId,
+        workflowName: '',
+        status: (record.status || 'pending').toLowerCase() as WorkflowExecution['status'],
+        startTime: record.startedAt ? new Date(record.startedAt) : new Date(),
+        endTime: record.finishedAt ? new Date(record.finishedAt) : undefined,
+        duration: record.durationMs,
+        input: record.input,
+        output: record.output,
+        error: record.error,
+        executionPath: [],
+        nodeResults: new Map(),
+        executedBy: record.userId || '',
+        retryCount: 0,
+        logs: [],
+      };
+    } catch {
+      return null;
+    }
   }
 
   async getExecutions(
@@ -510,6 +745,14 @@ export class ExecutionService {
     this.log(execution, 'info', 'Execution cancelled by user');
     this.activeExecutions.delete(executionId);
     this.cleanupExecution(executionId);
+
+    await this.persistCompletion(execution);
+    emitExecutionFinished({
+      id: execution.id,
+      workflowId: execution.workflowId,
+      status: 'cancelled',
+      finishedAt: execution.endTime.toISOString(),
+    });
 
     return true;
   }

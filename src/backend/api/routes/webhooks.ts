@@ -26,7 +26,7 @@ import {
   updateWebhook,
   deleteWebhook,
 } from '../repositories/adapters';
-import { executeWorkflowSimple } from '../services/simpleExecutionService';
+import { executionService } from '../../services/executionService';
 import { getPausedExecution, removePausedExecution } from '../../services/nodeExecutors/waitExecutor';
 import { logger } from '../../../services/SimpleLogger';
 
@@ -919,8 +919,8 @@ router.post('/:id/replay/:requestId', validateParams(webhookReplayParamsSchema),
     }
   }
 
-  // Execute the workflow with the original request body
-  await executeWorkflowSimple(wf, originalRequest.body);
+  // Execute the workflow with the original request body (unified engine with 50+ executors)
+  await executionService.startExecution(wf as any, originalRequest.body, 'webhook');
 
   res.status(202).json({
     success: true,
@@ -1032,7 +1032,7 @@ router.post('/:workflowId/:webhookPath', validateParams(webhookPathParamsSchema)
     webhookName: webhook.name,
     webhookPath: webhook.path,
   };
-  await executeWorkflowSimple(wf, webhookContext);
+  await executionService.startExecution(wf as any, webhookContext, 'webhook');
 
   // Store successful request in history
   const responseBody = { accepted: true, webhookId: webhook.id, webhookPath: webhook.path };
@@ -1179,8 +1179,8 @@ router.post('/:id', validateParams(simpleIdParamsSchema), asyncHandler(async (re
     }
   }
 
-  // Signature verified and filters passed - execute workflow
-  await executeWorkflowSimple(wf, req.body);
+  // Signature verified and filters passed - execute workflow (unified engine)
+  await executionService.startExecution(wf as any, req.body, 'webhook');
 
   // Store successful request in history
   const responseBody = { accepted: true };

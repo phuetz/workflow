@@ -165,6 +165,12 @@ export class SchedulerService {
         const { executionService } = await import('./executionService');
         const workflow = await prisma.workflow.findUnique({ where: { id: workflowId } });
         if (workflow) {
+          // Verify workflow is still ACTIVE before executing
+          if (workflow.status !== 'ACTIVE') {
+            logger.info('Skipping scheduled execution — workflow is no longer active', { workflowId, status: workflow.status });
+            this.unregisterWorkflow(workflowId);
+            return;
+          }
           await executionService.startExecution(workflow as any, {
             trigger: { type: triggerType, expression, scheduledAt: new Date().toISOString() },
           }, 'scheduler');
